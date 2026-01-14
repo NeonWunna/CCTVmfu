@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef } from 'vue';
+import { useRouter } from 'vue-router';
 import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
-import '../assets/home.css';
+
+const router = useRouter();
 
 const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
@@ -92,9 +94,9 @@ const viewActivity = () => {
 
 const logout = () => {
   if (confirm('Are you sure you want to logout?')) {
-    alert('Logging out...');
+    localStorage.removeItem('isAuthenticated');
     closeDropdown();
-    // Add your logout logic here
+    router.push('/login');
   }
 };
 
@@ -166,16 +168,18 @@ const initMap = () => {
   if (!mapContainer.value) return;
 
   // Initialize map with better styling
-  map.value = L.map(mapContainer.value, {
+  const mapInstance = L.map(mapContainer.value, {
     zoomControl: true,
     attributionControl: true
   }).setView([20.0443, 99.8937], 16);
+  
+  map.value = mapInstance;
 
   // Use a more professional map tile
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 19
-  }).addTo(map.value);
+  }).addTo(mapInstance);
 
   // Add CCTV markers
   cctvs.value.forEach(cctv => {
@@ -194,7 +198,11 @@ onUnmounted(() => {
 
   // Destroy map instance to prevent memory leaks
   if (map.value) {
-    map.value.remove();
+    try {
+      map.value.remove();
+    } catch (e) {
+      console.warn('Map cleanup error:', e);
+    }
     map.value = null;
   }
 });
@@ -306,3 +314,409 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Dashboard Container */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Header Styles */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1001; /* Ensure header is above map */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    height: 60px;
+    width: auto;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+    color: white;
+}
+
+.header-text p {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 400;
+    color: white;
+}
+
+/* Profile Section */
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 16px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-section:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.profile-role {
+    font-size: 12px;
+    opacity: 0.85;
+    line-height: 1.2;
+}
+
+.profile-dropdown-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    transition: transform 0.3s ease;
+}
+
+.profile-dropdown-icon.open {
+    transform: rotate(180deg);
+}
+
+/* Profile Dropdown Menu */
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 30px;
+    margin-top: 10px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 1002;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.profile-dropdown.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.dropdown-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+}
+
+.dropdown-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 24px;
+    margin: 0 auto 10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.dropdown-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.dropdown-role {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.dropdown-menu {
+    padding: 8px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #374151;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background: #f3f4f6;
+}
+
+.dropdown-item svg {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+
+.dropdown-item.logout {
+    color: #ef4444;
+}
+
+.dropdown-item.logout svg {
+    color: #ef4444;
+}
+
+/* Overlay */
+.dropdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    display: none;
+}
+
+.dropdown-overlay.show {
+    display: block;
+}
+
+/* Status Panel */
+.status-panel {
+    background: white;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    z-index: 1000;
+    position: relative;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.up {
+    background-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.legend-dot.down {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* Stats Cards */
+.stats {
+    display: flex;
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-value.up {
+    color: #10b981;
+}
+
+.stat-value.down {
+    color: #ef4444;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Map Container */
+.map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 15px 20px;
+        flex-wrap: wrap;
+    }
+
+    .header-text h1 {
+        font-size: 18px;
+    }
+
+    .header-text p {
+        font-size: 12px;
+    }
+
+    .logo {
+        height: 45px;
+    }
+
+    .profile-section {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    .profile-dropdown {
+        right: 20px;
+        left: 20px;
+        min-width: auto;
+    }
+
+    .status-panel {
+        padding: 12px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .stat-card {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+
+<style>
+/* Global styles for Leaflet popup that can't be scoped easily */
+.leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    overflow: hidden;
+}
+
+.leaflet-popup-content {
+    margin: 0;
+    min-width: 200px;
+}
+
+.popup-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 15px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.popup-body {
+    padding: 15px;
+}
+</style>

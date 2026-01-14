@@ -7,10 +7,14 @@ const router = useRouter();
 
 const loginWithGoogle = () => {
     alert('Google Sign-In will be implemented here');
-    // Add your Google OAuth logic here
+    // For testing, let's also allow Google login to work
+    localStorage.setItem('isAuthenticated', 'true');
+    router.push('/');
 };
 
 const loginWithSSO = () => {
+    // Set authentication token
+    localStorage.setItem('isAuthenticated', 'true');
     // Navigate to the Dashboard
     router.push('/');
 };

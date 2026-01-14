@@ -21,11 +21,14 @@ const router = createRouter({
 
 // Mock authentication guard
 router.beforeEach((to, from, next) => {
-    // In a real app, check for token/session here
-    const isAuthenticated = false; // Mock: set to true to allow easy testing, or false to force login flow
+    // Check for authentication flag in localStorage
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
     if (to.meta.requiresAuth && !isAuthenticated) {
         next('/login');
+    } else if (to.name === 'login' && isAuthenticated) {
+        // Redirect to home if already logged in and trying to access login page
+        next('/');
     } else {
         next();
     }
