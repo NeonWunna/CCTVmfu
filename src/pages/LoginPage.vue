@@ -106,7 +106,7 @@ export default {
 }
 
 .header {
-  padding: 20px 30px;
+  padding: 12px 20px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -115,12 +115,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 15px;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .logo {
-  height: 60px;
+  height: 48px;
   width: auto;
 }
 
@@ -255,7 +255,7 @@ export default {
 
 @media (max-width: 768px) {
   .header {
-    padding: 15px 20px;
+    padding: 10px 14px;
   }
 
   .header-content h1 {
@@ -267,7 +267,7 @@ export default {
   }
 
   .logo {
-    height: 50px;
+    height: 40px;
   }
 
   .login-card {
