@@ -157,6 +157,11 @@ const closeDropdown = () => {
   showDropdown.value = false;
 };
 
+const goToCameraSettings = () => {
+  alert('Navigate to Camera Settings page');
+  closeDropdown();
+};
+
 const logout = () => {
   if (confirm('Are you sure you want to logout?')) {
     localStorage.removeItem('isAuthenticated');
@@ -305,6 +310,13 @@ onUnmounted(() => {
           <div class="dropdown-role">{{ userRole }}</div>
         </div>
         <div class="dropdown-menu">
+          <button class="dropdown-item" @click="goToCameraSettings">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            Camera Settings
+          </button>
+          <div class="dropdown-divider"></div>
           <button class="dropdown-item logout" @click="logout">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -562,6 +574,12 @@ onUnmounted(() => {
     width: 20px;
     height: 20px;
     color: #6b7280;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
 }
 
 .dropdown-item.logout {
