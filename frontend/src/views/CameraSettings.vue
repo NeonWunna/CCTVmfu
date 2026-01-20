@@ -9,7 +9,7 @@ const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
 const searchQuery = ref("");
-const viewMode = ref("grid"); // 'grid' or 'list'
+const viewMode = ref("grid");
 
 const cameras = ref([
   { 
@@ -18,8 +18,7 @@ const cameras = ref([
     status: "up",
     location: "Main Entrance",
     ipAddress: "192.168.1.10",
-    lastUpdate: "2 min ago",
-    category: "entrance"
+    lastUpdate: "2 min ago"
   },
   { 
     id: 2,
@@ -27,8 +26,7 @@ const cameras = ref([
     status: "up",
     location: "Central Library",
     ipAddress: "192.168.1.11",
-    lastUpdate: "1 min ago",
-    category: "academic"
+    lastUpdate: "1 min ago"
   },
   { 
     id: 3,
@@ -36,8 +34,7 @@ const cameras = ref([
     status: "down",
     location: "Student Housing",
     ipAddress: "192.168.1.12",
-    lastUpdate: "15 min ago",
-    category: "residential"
+    lastUpdate: "15 min ago"
   },
   { 
     id: 4,
@@ -45,8 +42,7 @@ const cameras = ref([
     status: "up",
     location: "Parking Area A",
     ipAddress: "192.168.1.13",
-    lastUpdate: "Just now",
-    category: "parking"
+    lastUpdate: "Just now"
   },
   { 
     id: 5,
@@ -54,8 +50,7 @@ const cameras = ref([
     status: "up",
     location: "Athletic Center",
     ipAddress: "192.168.1.14",
-    lastUpdate: "3 min ago",
-    category: "sports"
+    lastUpdate: "3 min ago"
   },
   { 
     id: 6,
@@ -63,8 +58,7 @@ const cameras = ref([
     status: "up",
     location: "Student Cafeteria",
     ipAddress: "192.168.1.15",
-    lastUpdate: "1 min ago",
-    category: "facilities"
+    lastUpdate: "1 min ago"
   },
   { 
     id: 7,
@@ -72,8 +66,7 @@ const cameras = ref([
     status: "up",
     location: "Administration Office",
     ipAddress: "192.168.1.16",
-    lastUpdate: "4 min ago",
-    category: "administrative"
+    lastUpdate: "4 min ago"
   },
   { 
     id: 8,
@@ -81,8 +74,7 @@ const cameras = ref([
     status: "up",
     location: "Science Faculty",
     ipAddress: "192.168.1.17",
-    lastUpdate: "2 min ago",
-    category: "academic"
+    lastUpdate: "2 min ago"
   },
   { 
     id: 9,
@@ -90,8 +82,7 @@ const cameras = ref([
     status: "down",
     location: "Engineering Building",
     ipAddress: "192.168.1.18",
-    lastUpdate: "20 min ago",
-    category: "academic"
+    lastUpdate: "20 min ago"
   },
   { 
     id: 10,
@@ -99,8 +90,7 @@ const cameras = ref([
     status: "up",
     location: "East Entrance",
     ipAddress: "192.168.1.19",
-    lastUpdate: "Just now",
-    category: "entrance"
+    lastUpdate: "Just now"
   },
   { 
     id: 11,
@@ -108,8 +98,7 @@ const cameras = ref([
     status: "up",
     location: "West Entrance",
     ipAddress: "192.168.1.20",
-    lastUpdate: "3 min ago",
-    category: "entrance"
+    lastUpdate: "3 min ago"
   },
   { 
     id: 12,
@@ -117,8 +106,7 @@ const cameras = ref([
     status: "up",
     location: "Parking Lot B",
     ipAddress: "192.168.1.21",
-    lastUpdate: "5 min ago",
-    category: "parking"
+    lastUpdate: "5 min ago"
   },
   { 
     id: 13,
@@ -126,8 +114,7 @@ const cameras = ref([
     status: "up",
     location: "Student Activities Center",
     ipAddress: "192.168.1.22",
-    lastUpdate: "2 min ago",
-    category: "facilities"
+    lastUpdate: "2 min ago"
   },
   { 
     id: 14,
@@ -135,8 +122,7 @@ const cameras = ref([
     status: "up",
     location: "Outdoor Courts",
     ipAddress: "192.168.1.23",
-    lastUpdate: "6 min ago",
-    category: "sports"
+    lastUpdate: "6 min ago"
   },
   { 
     id: 15,
@@ -144,8 +130,7 @@ const cameras = ref([
     status: "up",
     location: "Health Services",
     ipAddress: "192.168.1.24",
-    lastUpdate: "1 min ago",
-    category: "facilities"
+    lastUpdate: "1 min ago"
   }
 ]);
 
@@ -161,6 +146,7 @@ const userInitials = computed(() => {
 const onlineCount = computed(() => cameras.value.filter(c => c.status === "up").length);
 const offlineCount = computed(() => cameras.value.filter(c => c.status === "down").length);
 const totalCount = computed(() => cameras.value.length);
+const uptimePercent = computed(() => Math.round((onlineCount.value / totalCount.value) * 100));
 
 const filteredCameras = computed(() => {
   if (!searchQuery.value) return cameras.value;
@@ -179,10 +165,6 @@ const toggleProfileMenu = () => {
 
 const closeDropdown = () => {
   showDropdown.value = false;
-};
-
-const goToCameraSettings = () => {
-  closeDropdown();
 };
 
 const goToDashboard = () => {
@@ -221,230 +203,233 @@ const toggleViewMode = () => {
 </script>
 
 <template>
-  <div class="settings-container">
+  <div class="page-container">
     <!-- Header -->
     <header class="header">
-      <div class="header-left">
-        <div class="logo-container">
+      <div class="header-content">
+        <div class="header-left">
           <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
-        </div>
-        <div class="header-text">
-          <h1>Camera Management</h1>
-          <p>Mae Fah Luang University Security System</p>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <div class="profile-section" @click="toggleProfileMenu">
-          <div class="profile-avatar">{{ userInitials }}</div>
-          <div class="profile-info">
-            <div class="profile-name">{{ userName }}</div>
-            <div class="profile-role">{{ userRole }}</div>
+          <div class="header-text">
+            <h1>Camera Management</h1>
+            <p>Mae Fah Luang University Security System</p>
           </div>
-          <svg class="profile-dropdown-icon" :class="{ open: showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
+        </div>
+
+        <div class="header-right">
+          <div class="profile-section" @click="toggleProfileMenu">
+            <div class="profile-avatar">{{ userInitials }}</div>
+            <div class="profile-info">
+              <div class="profile-name">{{ userName }}</div>
+              <div class="profile-role">{{ userRole }}</div>
+            </div>
+            <svg class="dropdown-arrow" :class="{ open: showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+
+          <!-- Dropdown Menu -->
+          <transition name="dropdown">
+            <div v-show="showDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">{{ userInitials }}</div>
+                <div class="dropdown-name">{{ userName }}</div>
+                <div class="dropdown-role">{{ userRole }}</div>
+              </div>
+              <div class="dropdown-menu">
+                <button class="dropdown-item">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  Camera Settings
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item logout" @click="logout">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  Logout
+                </button>
+              </div>
+            </div>
+          </transition>
+
+          <div v-show="showDropdown" class="dropdown-overlay" @click="closeDropdown"></div>
         </div>
       </div>
-
-      <!-- Dropdown Menu -->
-      <div class="profile-dropdown" :class="{ show: showDropdown }">
-        <div class="dropdown-header">
-          <div class="dropdown-avatar">{{ userInitials }}</div>
-          <div class="dropdown-name">{{ userName }}</div>
-          <div class="dropdown-role">{{ userRole }}</div>
-        </div>
-        <div class="dropdown-menu">
-          <button class="dropdown-item" @click="goToCameraSettings">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-            </svg>
-            Camera Settings
-          </button>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item logout" @click="logout">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-            </svg>
-            Logout
-          </button>
-        </div>
-      </div>
-
-      <div class="dropdown-overlay" :class="{ show: showDropdown }" @click="closeDropdown"></div>
     </header>
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Navigation -->
-      <div class="navigation-bar">
-        <button class="back-button" @click="goToDashboard">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          Dashboard
-        </button>
-      </div>
-
-      <!-- Stats Overview -->
-      <div class="stats-section">
-        <div class="stat-card stat-total">
-          <div class="stat-icon">
+      <div class="content-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <button class="back-button" @click="goToDashboard">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Total Cameras</div>
-            <div class="stat-value">{{ totalCount }}</div>
-          </div>
-        </div>
+            Dashboard
+          </button>
 
-        <div class="stat-card stat-online">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Online</div>
-            <div class="stat-value">{{ onlineCount }}</div>
-          </div>
-        </div>
-
-        <div class="stat-card stat-offline">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Offline</div>
-            <div class="stat-value">{{ offlineCount }}</div>
-          </div>
-        </div>
-
-        <div class="stat-card stat-uptime">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">System Uptime</div>
-            <div class="stat-value">{{ Math.round((onlineCount / totalCount) * 100) }}%</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controls Section -->
-      <div class="controls-section">
-        <div class="section-header">
-          <h2>Camera Inventory</h2>
-          <p>Manage and monitor all CCTV cameras across campus</p>
-        </div>
-
-        <div class="controls-bar">
-          <div class="search-container">
-            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Search by name, location, or IP address..."
-              class="search-input"
-            >
-          </div>
-
-          <div class="action-buttons">
-            <button class="view-toggle-btn" @click="toggleViewMode" :title="viewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'">
-              <svg v-if="viewMode === 'grid'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-              <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-              </svg>
-            </button>
-            
-            <button class="add-camera-btn" @click="addNewCamera">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              Add Camera
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Camera List -->
-      <div class="camera-section">
-        <div v-if="filteredCameras.length === 0" class="no-results">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <h3>No cameras found</h3>
-          <p>Try adjusting your search criteria</p>
-        </div>
-
-        <div v-else class="camera-grid" :class="{ 'list-view': viewMode === 'list' }">
-          <div v-for="camera in filteredCameras" :key="camera.id" class="camera-card">
-            <div class="camera-header">
-              <div class="camera-icon-wrapper">
-                <svg class="camera-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Stats Cards -->
+          <div class="stats-container">
+            <div class="stat-card stat-total">
+              <div class="stat-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                 </svg>
               </div>
-              <span class="status-indicator" :class="camera.status">
-                <span class="status-dot"></span>
-                {{ camera.status === 'up' ? 'Online' : 'Offline' }}
-              </span>
-            </div>
-
-            <div class="camera-body">
-              <h3 class="camera-name">{{ camera.name }}</h3>
-              
-              <div class="camera-details">
-                <div class="detail-row">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  <span>{{ camera.location }}</span>
-                </div>
-
-                <div class="detail-row">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                  </svg>
-                  <span class="ip-address">{{ camera.ipAddress }}</span>
-                </div>
-
-                <div class="detail-row">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span class="last-update">{{ camera.lastUpdate }}</span>
-                </div>
+              <div class="stat-info">
+                <div class="stat-label">TOTAL CAMERAS</div>
+                <div class="stat-value">{{ totalCount }}</div>
               </div>
             </div>
 
-            <div class="camera-footer">
-              <button class="card-action-btn edit" @click="editCamera(camera)">
+            <div class="stat-card stat-online">
+              <div class="stat-icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Edit
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">ONLINE</div>
+                <div class="stat-value">{{ onlineCount }}</div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-offline">
+              <div class="stat-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">OFFLINE</div>
+                <div class="stat-value">{{ offlineCount }}</div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-uptime">
+              <div class="stat-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">SYSTEM UPTIME</div>
+                <div class="stat-value">{{ uptimePercent }}%</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Area -->
+        <section class="main-area">
+          <!-- Inventory Header -->
+          <div class="inventory-header">
+            <div class="inventory-title">
+              <h2>Camera Inventory</h2>
+              <p>Manage and monitor all CCTV cameras across campus</p>
+            </div>
+            
+            <div class="inventory-controls">
+              <div class="search-box">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input 
+                  v-model="searchQuery"
+                  type="text" 
+                  placeholder="Search by name, location, or IP address..."
+                  class="search-input"
+                >
+              </div>
+
+              <button class="view-toggle" @click="toggleViewMode">
+                <svg v-if="viewMode === 'grid'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+                <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                </svg>
               </button>
-              <button class="card-action-btn delete" @click="removeCamera(camera)">
+
+              <button class="add-button" @click="addNewCamera">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                Remove
+                Add Camera
               </button>
             </div>
           </div>
-        </div>
+
+          <!-- Camera Grid -->
+          <div v-if="filteredCameras.length === 0" class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <h3>No cameras found</h3>
+            <p>Try adjusting your search criteria</p>
+          </div>
+
+          <div v-else class="camera-grid" :class="{ 'list-view': viewMode === 'list' }">
+            <div v-for="camera in filteredCameras" :key="camera.id" class="camera-card">
+              <div class="card-header">
+                <div class="camera-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <span class="status-badge" :class="camera.status">
+                  <span class="status-dot"></span>
+                  {{ camera.status === 'up' ? 'Online' : 'Offline' }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                <h3 class="camera-name">{{ camera.name }}</h3>
+                
+                <div class="camera-meta">
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span>{{ camera.location }}</span>
+                  </div>
+
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                    </svg>
+                    <span>{{ camera.ipAddress }}</span>
+                  </div>
+
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>{{ camera.lastUpdate }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="action-btn edit-btn" @click="editCamera(camera)">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Edit
+                </button>
+                <button class="action-btn remove-btn" @click="removeCamera(camera)">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   </div>
@@ -452,13 +437,14 @@ const toggleViewMode = () => {
 
 <style scoped>
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-/* Container */
-.settings-container {
+.page-container {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, #e8ecf1 0%, #f5f7fa 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -466,25 +452,25 @@ const toggleViewMode = () => {
 .header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1600px;
+  margin: 0 auto;
   padding: 1.25rem 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
+  gap: 1rem;
 }
 
 .logo {
@@ -495,21 +481,16 @@ const toggleViewMode = () => {
 .header-text h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 0.25rem 0;
-  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
 }
 
 .header-text p {
   font-size: 0.875rem;
-  margin: 0;
   opacity: 0.95;
-  font-weight: 400;
 }
 
-/* Profile Section */
 .header-right {
-  display: flex;
-  align-items: center;
+  position: relative;
 }
 
 .profile-section {
@@ -520,7 +501,7 @@ const toggleViewMode = () => {
   padding: 0.5rem 1rem;
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   backdrop-filter: blur(10px);
 }
 
@@ -538,7 +519,6 @@ const toggleViewMode = () => {
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
-  color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -550,48 +530,34 @@ const toggleViewMode = () => {
 .profile-name {
   font-size: 0.875rem;
   font-weight: 600;
-  line-height: 1.2;
 }
 
 .profile-role {
   font-size: 0.75rem;
   opacity: 0.9;
-  line-height: 1.2;
 }
 
-.profile-dropdown-icon {
+.dropdown-arrow {
   width: 18px;
   height: 18px;
-  transition: transform 0.3s ease;
-  opacity: 0.9;
+  transition: transform 0.3s;
 }
 
-.profile-dropdown-icon.open {
+.dropdown-arrow.open {
   transform: rotate(180deg);
 }
 
 /* Dropdown */
 .profile-dropdown {
   position: absolute;
-  top: 100%;
-  right: 2rem;
-  margin-top: 0.75rem;
+  top: calc(100% + 0.75rem);
+  right: 0;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   min-width: 240px;
   overflow: hidden;
-  z-index: 1001;
-  opacity: 0;
-  transform: translateY(-10px);
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.profile-dropdown.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: all;
+  z-index: 101;
 }
 
 .dropdown-header {
@@ -635,14 +601,14 @@ const toggleViewMode = () => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  color: #374151;
+  width: 100%;
   border: none;
   background: none;
-  width: 100%;
-  text-align: left;
+  color: #374151;
   font-size: 0.875rem;
+  text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s;
 }
 
 .dropdown-item:hover {
@@ -672,31 +638,45 @@ const toggleViewMode = () => {
 .dropdown-overlay {
   position: fixed;
   inset: 0;
-  z-index: 999;
-  display: none;
+  z-index: 99;
 }
 
-.dropdown-overlay.show {
-  display: block;
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 /* Main Content */
 .main-content {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 2rem;
 }
 
-/* Navigation Bar */
-.navigation-bar {
-  margin-bottom: 2rem;
+.content-wrapper {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .back-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
@@ -704,13 +684,13 @@ const toggleViewMode = () => {
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
 .back-button:hover {
   border-color: #667eea;
   color: #667eea;
-  transform: translateX(-2px);
+  transform: translateX(-3px);
 }
 
 .back-button svg {
@@ -718,44 +698,39 @@ const toggleViewMode = () => {
   height: 18px;
 }
 
-/* Stats Section */
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+.stats-container {
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  margin-bottom: 2.5rem;
 }
 
 .stat-card {
   background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 2px solid #f3f4f6;
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  transition: all 0.3s ease;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 2px solid transparent;
+  transition: all 0.3s;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 14px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  margin-bottom: 1rem;
 }
 
 .stat-icon svg {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   color: white;
 }
 
@@ -763,72 +738,86 @@ const toggleViewMode = () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+.stat-total:hover {
+  border-color: #667eea;
+}
+
 .stat-online .stat-icon {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stat-online:hover {
+  border-color: #10b981;
 }
 
 .stat-offline .stat-icon {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
+.stat-offline:hover {
+  border-color: #ef4444;
+}
+
 .stat-uptime .stat-icon {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
-.stat-content {
-  flex: 1;
+.stat-uptime:hover {
+  border-color: #f59e0b;
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 0.375rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
   color: #1f2937;
-  line-height: 1;
 }
 
-/* Controls Section */
-.controls-section {
+/* Main Area */
+.main-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inventory-header {
   background: white;
-  border-radius: 16px;
-  padding: 1.75rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 2px solid #f3f4f6;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.section-header {
-  margin-bottom: 1.5rem;
+.inventory-title {
+  margin-bottom: 1.25rem;
 }
 
-.section-header h2 {
+.inventory-title h2 {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 0.375rem 0;
+  margin-bottom: 0.25rem;
 }
 
-.section-header p {
+.inventory-title p {
   font-size: 0.875rem;
   color: #6b7280;
-  margin: 0;
 }
 
-.controls-bar {
+.inventory-controls {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
-.search-container {
+.search-box {
   flex: 1;
   position: relative;
 }
@@ -841,17 +830,16 @@ const toggleViewMode = () => {
   width: 20px;
   height: 20px;
   color: #9ca3af;
-  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.875rem 1rem 0.875rem 3rem;
+  padding: 0.75rem 1rem 0.75rem 3rem;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   font-size: 0.875rem;
-  transition: all 0.2s ease;
   background: #f9fafb;
+  transition: all 0.2s;
 }
 
 .search-input:focus {
@@ -861,39 +849,34 @@ const toggleViewMode = () => {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.action-buttons {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.view-toggle-btn {
-  padding: 0.875rem;
+.view-toggle {
+  padding: 0.75rem;
   background: #f3f4f6;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.view-toggle-btn:hover {
+.view-toggle:hover {
   background: #e5e7eb;
   border-color: #667eea;
 }
 
-.view-toggle-btn svg {
+.view-toggle svg {
   width: 20px;
   height: 20px;
   color: #374151;
 }
 
-.add-camera-btn {
+.add-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -901,55 +884,51 @@ const toggleViewMode = () => {
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
-.add-camera-btn:hover {
+.add-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
 }
 
-.add-camera-btn svg {
+.add-button svg {
   width: 20px;
   height: 20px;
 }
 
-/* Camera Section */
-.camera-section {
-  min-height: 400px;
-}
-
-.no-results {
-  text-align: center;
+/* Empty State */
+.empty-state {
+  background: white;
+  border-radius: 14px;
   padding: 4rem 2rem;
+  text-align: center;
   color: #9ca3af;
 }
 
-.no-results svg {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 1.5rem;
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
   opacity: 0.5;
 }
 
-.no-results h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
+.empty-state h3 {
+  font-size: 1.125rem;
   color: #6b7280;
-  margin: 0 0 0.5rem 0;
+  margin-bottom: 0.5rem;
 }
 
-.no-results p {
+.empty-state p {
   font-size: 0.875rem;
-  margin: 0;
 }
 
 /* Camera Grid */
 .camera-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
 }
 
 .camera-grid.list-view {
@@ -959,29 +938,29 @@ const toggleViewMode = () => {
 /* Camera Card */
 .camera-card {
   background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 2px solid #f3f4f6;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .camera-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   border-color: #667eea;
 }
 
-.camera-header {
+.card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.camera-icon-wrapper {
+.camera-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
@@ -991,13 +970,13 @@ const toggleViewMode = () => {
   justify-content: center;
 }
 
-.camera-icon {
-  width: 28px;
-  height: 28px;
+.camera-icon svg {
+  width: 26px;
+  height: 26px;
   color: white;
 }
 
-.status-indicator {
+.status-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1007,12 +986,12 @@ const toggleViewMode = () => {
   font-weight: 600;
 }
 
-.status-indicator.up {
+.status-badge.up {
   background: #d1fae5;
   color: #065f46;
 }
 
-.status-indicator.down {
+.status-badge.down {
   background: #fee2e2;
   color: #991b1b;
 }
@@ -1024,7 +1003,7 @@ const toggleViewMode = () => {
   background: currentColor;
 }
 
-.camera-body {
+.card-body {
   flex: 1;
 }
 
@@ -1032,43 +1011,38 @@ const toggleViewMode = () => {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 1rem 0;
+  margin-bottom: 0.875rem;
 }
 
-.camera-details {
+.camera-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
-.detail-row {
+.meta-row {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
   font-size: 0.875rem;
   color: #6b7280;
 }
 
-.detail-row svg {
-  width: 18px;
-  height: 18px;
+.meta-row svg {
+  width: 16px;
+  height: 16px;
   color: #9ca3af;
   flex-shrink: 0;
 }
 
-.ip-address {
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.8125rem;
-}
-
-.camera-footer {
+.card-actions {
   display: flex;
   gap: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f3f4f6;
 }
 
-.card-action-btn {
+.action-btn {
   flex: 1;
   display: flex;
   align-items: center;
@@ -1079,52 +1053,52 @@ const toggleViewMode = () => {
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   border: 2px solid;
 }
 
-.card-action-btn svg {
+.action-btn svg {
   width: 16px;
   height: 16px;
 }
 
-.card-action-btn.edit {
+.edit-btn {
   background: white;
   color: #667eea;
   border-color: #667eea;
 }
 
-.card-action-btn.edit:hover {
+.edit-btn:hover {
   background: #667eea;
   color: white;
 }
 
-.card-action-btn.delete {
+.remove-btn {
   background: white;
   color: #ef4444;
   border-color: #ef4444;
 }
 
-.card-action-btn.delete:hover {
+.remove-btn:hover {
   background: #ef4444;
   color: white;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .camera-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+/* Responsive */
+@media (max-width: 1200px) {
+  .content-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .header {
+  .header-content {
     padding: 1rem 1.25rem;
-    flex-wrap: wrap;
-  }
-
-  .header-left {
-    gap: 0.875rem;
   }
 
   .logo {
@@ -1143,56 +1117,19 @@ const toggleViewMode = () => {
     padding: 1.25rem;
   }
 
-  .stats-section {
-    grid-template-columns: 1fr;
-  }
-
-  .controls-bar {
+  .inventory-controls {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .action-buttons {
+  .view-toggle,
+  .add-button {
     width: 100%;
-  }
-
-  .view-toggle-btn,
-  .add-camera-btn {
-    flex: 1;
+    justify-content: center;
   }
 
   .camera-grid {
     grid-template-columns: 1fr;
-  }
-
-  .profile-dropdown {
-    right: 1rem;
-    left: 1rem;
-    margin-top: 0.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stat-card {
-    padding: 1.25rem;
-  }
-
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-  }
-
-  .stat-icon svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
-  }
-
-  .camera-footer {
-    flex-direction: column;
   }
 }
 </style>
