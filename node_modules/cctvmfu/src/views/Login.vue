@@ -22,17 +22,17 @@ const loginWithSSO = () => {
 
 <template>
     <div class="login-container">
-           <!-- Header - Space for Logo and University Name -->
+                 <!-- Header - Space for Logo and University Name -->
         <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div class="header-content">
                 <img :src="logoUrl" alt="MFU Logo" class="logo">
-                <div class="title-placeholder">
-                    <h1>มหาวิทยาลัยแม่ฟ้าหลวง</h1>
-                    <p>MAE FAH LUANG UNIVERSITY</p>
+                <div class="title-placeholder" style="color: white;">
+                    <h1 style="color: white;">มหาวิทยาลัยแม่ฟ้าหลวง</h1>
+                    <p style="color: white;">MAE FAH LUANG UNIVERSITY</p>
                 </div>
             </div>
         </div>
-        
+
         <!-- Main Content -->
         <div class="main-content">
             <div class="login-card">
