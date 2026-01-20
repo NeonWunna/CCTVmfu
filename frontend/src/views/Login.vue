@@ -32,7 +32,7 @@ const loginWithSSO = () => {
                 </div>
             </div>
         </div>
-
+        
         <!-- Main Content -->
         <div class="main-content">
             <div class="login-card">
