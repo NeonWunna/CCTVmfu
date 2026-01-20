@@ -49,6 +49,86 @@ const cctvs = ref([
     status: "up",
     location: "Athletic Center",
     lastUpdate: "3 min ago"
+  },
+  { 
+    name: "Cafeteria CCTV", 
+    lat: 20.0448, 
+    lng: 99.8940, 
+    status: "up",
+    location: "Student Cafeteria",
+    lastUpdate: "1 min ago"
+  },
+  { 
+    name: "Admin Building CCTV", 
+    lat: 20.0446, 
+    lng: 99.8930, 
+    status: "up",
+    location: "Administration Office",
+    lastUpdate: "4 min ago"
+  },
+  { 
+    name: "Science Building CCTV", 
+    lat: 20.0440, 
+    lng: 99.8938, 
+    status: "up",
+    location: "Science Faculty",
+    lastUpdate: "2 min ago"
+  },
+  { 
+    name: "Engineering Hall CCTV", 
+    lat: 20.0452, 
+    lng: 99.8948, 
+    status: "down",
+    location: "Engineering Building",
+    lastUpdate: "20 min ago"
+  },
+  { 
+    name: "East Gate CCTV", 
+    lat: 20.0458, 
+    lng: 99.8955, 
+    status: "up",
+    location: "East Entrance",
+    lastUpdate: "Just now"
+  },
+  { 
+    name: "West Gate CCTV", 
+    lat: 20.0445, 
+    lng: 99.8915, 
+    status: "up",
+    location: "West Entrance",
+    lastUpdate: "3 min ago"
+  },
+  { 
+    name: "Parking Area B CCTV", 
+    lat: 20.0433, 
+    lng: 99.8928, 
+    status: "up",
+    location: "Parking Lot B",
+    lastUpdate: "5 min ago"
+  },
+  { 
+    name: "Student Center CCTV", 
+    lat: 20.0447, 
+    lng: 99.8942, 
+    status: "up",
+    location: "Student Activities Center",
+    lastUpdate: "2 min ago"
+  },
+  { 
+    name: "Basketball Court CCTV", 
+    lat: 20.0436, 
+    lng: 99.8918, 
+    status: "up",
+    location: "Outdoor Courts",
+    lastUpdate: "6 min ago"
+  },
+  { 
+    name: "Medical Center CCTV", 
+    lat: 20.0443, 
+    lng: 99.8933, 
+    status: "up",
+    location: "Health Services",
+    lastUpdate: "1 min ago"
   }
 ]);
 
