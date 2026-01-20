@@ -158,11 +158,8 @@ const closeDropdown = () => {
 };
 
 const goToCameraSettings = () => {
-  path: '/camera-settings',
-  name: 'CameraSettings',
-  component: () => import('@/views/CameraSettings.vue'),
-  meta: { requiresAuth: true }
   closeDropdown();
+  router.push('/camera-settings');
 };
 
 const logout = () => {
