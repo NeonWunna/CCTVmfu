@@ -158,7 +158,10 @@ const closeDropdown = () => {
 };
 
 const goToCameraSettings = () => {
-  alert('Navigate to Camera Settings page');
+  path: '/camera-settings',
+  name: 'CameraSettings',
+  component: () => import('@/views/CameraSettings.vue'),
+  meta: { requiresAuth: true }
   closeDropdown();
 };
 
