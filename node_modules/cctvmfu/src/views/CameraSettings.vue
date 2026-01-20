@@ -18,6 +18,9 @@ const cameras = ref([
     status: "up",
     location: "Main Entrance",
     ipAddress: "192.168.1.10",
+    coordinates: "20.0451° N, 99.8825° E",
+    brand: "Hikvision",
+    version: "V5.7.3",
     lastUpdate: "2 min ago"
   },
   { 
@@ -26,6 +29,9 @@ const cameras = ref([
     status: "up",
     location: "Central Library",
     ipAddress: "192.168.1.11",
+    coordinates: "20.0456° N, 99.8831° E",
+    brand: "Dahua",
+    version: "V2.840.0000000.28.R",
     lastUpdate: "1 min ago"
   },
   { 
@@ -34,6 +40,9 @@ const cameras = ref([
     status: "down",
     location: "Student Housing",
     ipAddress: "192.168.1.12",
+    coordinates: "20.0448° N, 99.8819° E",
+    brand: "Axis",
+    version: "10.12.85",
     lastUpdate: "15 min ago"
   },
   { 
@@ -42,6 +51,9 @@ const cameras = ref([
     status: "up",
     location: "Parking Area A",
     ipAddress: "192.168.1.13",
+    coordinates: "20.0443° N, 99.8833° E",
+    brand: "Hikvision",
+    version: "V5.7.3",
     lastUpdate: "Just now"
   },
   { 
@@ -50,6 +62,9 @@ const cameras = ref([
     status: "up",
     location: "Athletic Center",
     ipAddress: "192.168.1.14",
+    coordinates: "20.0461° N, 99.8838° E",
+    brand: "Uniview",
+    version: "IPC_5E0000",
     lastUpdate: "3 min ago"
   },
   { 
@@ -58,6 +73,9 @@ const cameras = ref([
     status: "up",
     location: "Student Cafeteria",
     ipAddress: "192.168.1.15",
+    coordinates: "20.0454° N, 99.8827° E",
+    brand: "Dahua",
+    version: "V2.840.0000000.28.R",
     lastUpdate: "1 min ago"
   },
   { 
@@ -66,6 +84,9 @@ const cameras = ref([
     status: "up",
     location: "Administration Office",
     ipAddress: "192.168.1.16",
+    coordinates: "20.0458° N, 99.8824° E",
+    brand: "Hikvision",
+    version: "V5.7.3",
     lastUpdate: "4 min ago"
   },
   { 
@@ -74,6 +95,9 @@ const cameras = ref([
     status: "up",
     location: "Science Faculty",
     ipAddress: "192.168.1.17",
+    coordinates: "20.0453° N, 99.8829° E",
+    brand: "Axis",
+    version: "10.12.85",
     lastUpdate: "2 min ago"
   },
   { 
@@ -82,6 +106,9 @@ const cameras = ref([
     status: "down",
     location: "Engineering Building",
     ipAddress: "192.168.1.18",
+    coordinates: "20.0459° N, 99.8836° E",
+    brand: "Hikvision",
+    version: "V5.7.3",
     lastUpdate: "20 min ago"
   },
   { 
@@ -90,6 +117,9 @@ const cameras = ref([
     status: "up",
     location: "East Entrance",
     ipAddress: "192.168.1.19",
+    coordinates: "20.0449° N, 99.8842° E",
+    brand: "Uniview",
+    version: "IPC_5E0000",
     lastUpdate: "Just now"
   },
   { 
@@ -98,6 +128,9 @@ const cameras = ref([
     status: "up",
     location: "West Entrance",
     ipAddress: "192.168.1.20",
+    coordinates: "20.0452° N, 99.8815° E",
+    brand: "Dahua",
+    version: "V2.840.0000000.28.R",
     lastUpdate: "3 min ago"
   },
   { 
@@ -106,6 +139,9 @@ const cameras = ref([
     status: "up",
     location: "Parking Lot B",
     ipAddress: "192.168.1.21",
+    coordinates: "20.0446° N, 99.8821° E",
+    brand: "Hikvision",
+    version: "V5.7.3",
     lastUpdate: "5 min ago"
   },
   { 
@@ -114,6 +150,9 @@ const cameras = ref([
     status: "up",
     location: "Student Activities Center",
     ipAddress: "192.168.1.22",
+    coordinates: "20.0455° N, 99.8830° E",
+    brand: "Axis",
+    version: "10.12.85",
     lastUpdate: "2 min ago"
   },
   { 
@@ -122,6 +161,9 @@ const cameras = ref([
     status: "up",
     location: "Outdoor Courts",
     ipAddress: "192.168.1.23",
+    coordinates: "20.0460° N, 99.8834° E",
+    brand: "Uniview",
+    version: "IPC_5E0000",
     lastUpdate: "6 min ago"
   },
   { 
@@ -130,6 +172,9 @@ const cameras = ref([
     status: "up",
     location: "Health Services",
     ipAddress: "192.168.1.24",
+    coordinates: "20.0457° N, 99.8828° E",
+    brand: "Dahua",
+    version: "V2.840.0000000.28.R",
     lastUpdate: "1 min ago"
   }
 ]);
@@ -146,7 +191,6 @@ const userInitials = computed(() => {
 const onlineCount = computed(() => cameras.value.filter(c => c.status === "up").length);
 const offlineCount = computed(() => cameras.value.filter(c => c.status === "down").length);
 const totalCount = computed(() => cameras.value.length);
-const uptimePercent = computed(() => Math.round((onlineCount.value / totalCount.value) * 100));
 
 const filteredCameras = computed(() => {
   if (!searchQuery.value) return cameras.value;
@@ -307,18 +351,6 @@ const toggleViewMode = () => {
                 <div class="stat-value">{{ offlineCount }}</div>
               </div>
             </div>
-
-            <div class="stat-card stat-uptime">
-              <div class="stat-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-label">SYSTEM UPTIME</div>
-                <div class="stat-value">{{ uptimePercent }}%</div>
-              </div>
-            </div>
           </div>
         </aside>
 
@@ -402,6 +434,20 @@ const toggleViewMode = () => {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
                     </svg>
                     <span>{{ camera.ipAddress }}</span>
+                  </div>
+
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    <span>{{ camera.coordinates }}</span>
+                  </div>
+
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span>{{ camera.brand }}</span>
                   </div>
 
                   <div class="meta-row">
@@ -756,14 +802,6 @@ const toggleViewMode = () => {
 
 .stat-offline:hover {
   border-color: #ef4444;
-}
-
-.stat-uptime .stat-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.stat-uptime:hover {
-  border-color: #f59e0b;
 }
 
 .stat-label {
