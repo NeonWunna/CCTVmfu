@@ -22,8 +22,8 @@ const loginWithSSO = () => {
 
 <template>
     <div class="login-container">
-          <!-- Header - Space for Logo and University Name -->
-        <div class="header" style="background: linear-gradient(135deg, #6B46C1 0%, #9333EA 100%);">
+           <!-- Header - Space for Logo and University Name -->
+        <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div class="header-content">
                 <img :src="logoUrl" alt="MFU Logo" class="logo">
                 <div class="title-placeholder">
