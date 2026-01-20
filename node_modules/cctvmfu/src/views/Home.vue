@@ -175,6 +175,12 @@ const handleLogoError = (event) => {
   event.target.style.display = 'none';
 };
 
+const viewCamera = (cctvName) => {
+  alert(`Opening camera view for: ${cctvName}`);
+  // You can replace this with actual navigation to camera view page
+  // router.push(`/camera/${cctvName}`);
+};
+
 const addMarker = (cctv) => {
   if (!map.value) return;
   
@@ -213,6 +219,19 @@ const addMarker = (cctv) => {
           <span class="popup-info-label" style="font-weight: 500; color: #374151;">Coordinates:</span>
           <span>${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</span>
         </div>
+      </div>
+      <div class="popup-actions" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+        <button 
+          onclick="window.viewCameraFromPopup('${cctv.name}')"
+          style="width: 100%; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;"
+          onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'"
+        >
+          <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          View Camera
+        </button>
       </div>
     </div>
   `;
