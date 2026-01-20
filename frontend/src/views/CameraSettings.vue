@@ -10,6 +10,18 @@ const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
 const searchQuery = ref("");
 const viewMode = ref("grid");
+const showAddModal = ref(false);
+const isEditMode = ref(false);
+const editingCameraId = ref(null);
+
+const newCamera = ref({
+  name: "",
+  location: "",
+  ipAddress: "",
+  coordinates: "",
+  brand: "",
+  status: "up"
+});
 
 const cameras = ref([
   { 
@@ -228,7 +240,17 @@ const handleLogoError = (event) => {
 };
 
 const editCamera = (camera) => {
-  alert(`Edit camera: ${camera.name}\nIP: ${camera.ipAddress}\nLocation: ${camera.location}`);
+  isEditMode.value = true;
+  editingCameraId.value = camera.id;
+  newCamera.value = {
+    name: camera.name,
+    location: camera.location,
+    ipAddress: camera.ipAddress,
+    coordinates: camera.coordinates,
+    brand: camera.brand,
+    status: camera.status
+  };
+  showAddModal.value = true;
 };
 
 const removeCamera = (camera) => {
@@ -238,7 +260,60 @@ const removeCamera = (camera) => {
 };
 
 const addNewCamera = () => {
-  alert('Add new camera functionality will be implemented here');
+  isEditMode.value = false;
+  editingCameraId.value = null;
+  newCamera.value = {
+    name: "",
+    location: "",
+    ipAddress: "",
+    coordinates: "",
+    brand: "",
+    status: "up"
+  };
+  showAddModal.value = true;
+};
+
+const closeModal = () => {
+  showAddModal.value = false;
+  isEditMode.value = false;
+  editingCameraId.value = null;
+  newCamera.value = {
+    name: "",
+    location: "",
+    ipAddress: "",
+    coordinates: "",
+    brand: "",
+    status: "up"
+  };
+};
+
+const saveCamera = () => {
+  if (!newCamera.value.name || !newCamera.value.location || !newCamera.value.ipAddress) {
+    alert('Please fill in all required fields (Name, Location, IP Address)');
+    return;
+  }
+
+  if (isEditMode.value) {
+    // Update existing camera
+    const index = cameras.value.findIndex(c => c.id === editingCameraId.value);
+    if (index !== -1) {
+      cameras.value[index] = {
+        ...cameras.value[index],
+        ...newCamera.value,
+        lastUpdate: "Just now"
+      };
+    }
+  } else {
+    // Add new camera
+    const newId = Math.max(...cameras.value.map(c => c.id)) + 1;
+    cameras.value.push({
+      id: newId,
+      ...newCamera.value,
+      lastUpdate: "Just now"
+    });
+  }
+
+  closeModal();
 };
 
 const toggleViewMode = () => {
@@ -478,6 +553,117 @@ const toggleViewMode = () => {
         </section>
       </div>
     </main>
+
+    <!-- Add/Edit Camera Modal -->
+    <transition name="modal">
+      <div v-if="showAddModal" class="modal-overlay" @click="closeModal">
+        <div class="modal-container" @click.stop>
+          <div class="modal-header">
+            <h2>{{ isEditMode ? 'Edit Camera' : 'Add New Camera' }}</h2>
+            <button class="modal-close" @click="closeModal">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <form @submit.prevent="saveCamera">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cameraName">
+                    Camera Name <span class="required">*</span>
+                  </label>
+                  <input
+                    id="cameraName"
+                    v-model="newCamera.name"
+                    type="text"
+                    placeholder="e.g., Main Gate CCTV"
+                    required
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="cameraLocation">
+                    Location <span class="required">*</span>
+                  </label>
+                  <input
+                    id="cameraLocation"
+                    v-model="newCamera.location"
+                    type="text"
+                    placeholder="e.g., Main Entrance"
+                    required
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="cameraIP">
+                    IP Address <span class="required">*</span>
+                  </label>
+                  <input
+                    id="cameraIP"
+                    v-model="newCamera.ipAddress"
+                    type="text"
+                    placeholder="e.g., 192.168.1.10"
+                    pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+                    required
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="cameraCoordinates">
+                    Coordinates
+                  </label>
+                  <input
+                    id="cameraCoordinates"
+                    v-model="newCamera.coordinates"
+                    type="text"
+                    placeholder="e.g., 20.0451° N, 99.8825° E"
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="cameraBrand">
+                    Brand
+                  </label>
+                  <select id="cameraBrand" v-model="newCamera.brand">
+                    <option value="">Select Brand</option>
+                    <option value="Hikvision">Hikvision</option>
+                    <option value="Dahua">Dahua</option>
+                    <option value="Axis">Axis</option>
+                    <option value="Uniview">Uniview</option>
+                    <option value="Bosch">Bosch</option>
+                    <option value="Samsung">Samsung</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="cameraStatus">
+                    Status
+                  </label>
+                  <select id="cameraStatus" v-model="newCamera.status">
+                    <option value="up">Online</option>
+                    <option value="down">Offline</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn-secondary" @click="closeModal">
+                  Cancel
+                </button>
+                <button type="submit" class="btn-primary">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ isEditMode ? 'Update Camera' : 'Add Camera' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -1168,6 +1354,227 @@ const toggleViewMode = () => {
 
   .camera-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group select {
+  cursor: pointer;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #f3f4f6;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  background: #f9fafb;
+}
+
+.btn-secondary,
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Modal Animations */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-container,
+.modal-leave-active .modal-container {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+  transform: scale(0.9) translateY(-20px);
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .modal-container {
+    max-width: 100%;
+    max-height: 95vh;
+    margin: 0;
+  }
+
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .modal-footer {
+    padding: 1.25rem 1.5rem;
+    flex-direction: column-reverse;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
