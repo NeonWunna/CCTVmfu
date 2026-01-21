@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
+import backgroundImg from '../assets/envi.jpg';
 
 const router = useRouter();
 const isLoading = ref(false);
@@ -122,7 +123,10 @@ const loginWithSSO = async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-image: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%), url('../assets/envi.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 

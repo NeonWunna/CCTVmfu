@@ -3,12 +3,31 @@ import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef } fro
 import { useRouter } from 'vue-router';
 import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
+import Toast from '../components/ui/Toast.vue';
+import ConfirmModal from '../components/ui/ConfirmModal.vue';
 
 const router = useRouter();
 
 const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
+
+// Toast state
+const toast = ref({
+  show: false,
+  message: '',
+  type: 'info'
+});
+
+// Confirm modal state
+const confirmModal = ref({
+  show: false,
+  title: '',
+  message: '',
+  onConfirm: null,
+  loading: false
+});
+
 const cctvs = ref([
   { 
     name: "Main Gate CCTV", 
@@ -149,6 +168,20 @@ const userInitials = computed(() => {
     .slice(0, 2);
 });
 
+// Helper function to show toast
+const showToast = (message, type = 'info') => {
+  toast.value = {
+    show: true,
+    message,
+    type
+  };
+};
+
+// Helper function to close toast
+const closeToast = () => {
+  toast.value.show = false;
+};
+
 const toggleProfileMenu = () => {
   showDropdown.value = !showDropdown.value;
 };
@@ -163,20 +196,26 @@ const goToCameraSettings = () => {
 };
 
 const logout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    localStorage.removeItem('isAuthenticated');
-    closeDropdown();
-    router.push('/login');
-  }
+  confirmModal.value = {
+    show: true,
+    title: 'Confirm Logout',
+    message: 'Are you sure you want to logout?',
+    onConfirm: () => {
+      localStorage.removeItem('isAuthenticated');
+      confirmModal.value.show = false;
+      closeDropdown();
+      router.push('/login');
+      showToast('Logged out successfully', 'info');
+    }
+  };
 };
 
 const handleLogoError = (event) => {
-  // Fallback if logo image doesn't exist
   event.target.style.display = 'none';
 };
 
 const viewCamera = (cctvName) => {
-  alert(`Opening camera view for: ${cctvName}`);
+  showToast(`Opening camera view for: ${cctvName}`, 'info');
   // You can replace this with actual navigation to camera view page
   // router.push(`/camera/${cctvName}`);
 };
@@ -244,7 +283,6 @@ const addMarker = (cctv) => {
   // Add pulsing animation for offline cameras
   if (cctv.status === "down") {
     const intervalId = setInterval(() => {
-      // Check if map and marker still exist to avoid errors on component unmount
       if (map.value && map.value.hasLayer(marker)) {
          marker.setStyle({ fillOpacity: marker.options.fillOpacity === 0.8 ? 0.3 : 0.8 });
       }
@@ -278,9 +316,14 @@ const initMap = () => {
 
 onMounted(() => {
   initMap();
+  // Make viewCamera available globally for popup buttons
+  window.viewCameraFromPopup = viewCamera;
 });
 
 onUnmounted(() => {
+  // Clean up global function
+  delete window.viewCameraFromPopup;
+  
   // Clear all pulsing intervals
   pulseIntervals.forEach(id => clearInterval(id));
   pulseIntervals.length = 0;
@@ -299,500 +342,677 @@ onUnmounted(() => {
 
 <template>
   <div class="dashboard-container">
+    <!-- Toast Notification -->
+    <Toast 
+      :show="toast.show"
+      :message="toast.message"
+      :type="toast.type"
+      @close="closeToast"
+    />
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      :show="confirmModal.show"
+      :title="confirmModal.title"
+      :message="confirmModal.message"
+      :loading="confirmModal.loading"
+      confirm-text="Confirm"
+      cancel-text="Cancel"
+      type="danger"
+      @confirm="confirmModal.onConfirm"
+      @cancel="() => confirmModal.show = false"
+      @close="() => confirmModal.show = false"
+    />
+
     <!-- Header -->
-    <div class="header">
-      <div class="logo-container">
-        <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
-        <div class="header-text">
-          <h1>CCTV Monitoring System</h1>
-          <p>Mae Fah Luang University - Real-time Surveillance</p>
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
+          <div class="header-text">
+            <h1>CCTV Monitoring System</h1>
+            <p>Mae Fah Luang University - Real-time Surveillance</p>
+          </div>
         </div>
-      </div>
 
-      <!-- Profile Section -->
-      <div class="profile-section" @click="toggleProfileMenu">
-        <div class="profile-avatar">{{ userInitials }}</div>
-        <div class="profile-info">
-          <div class="profile-name">{{ userName }}</div>
-          <div class="profile-role">{{ userRole }}</div>
-        </div>
-        <svg class="profile-dropdown-icon" :class="{ open: showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </div>
-
-      <!-- Dropdown Menu -->
-      <div class="profile-dropdown" :class="{ show: showDropdown }">
-        <div class="dropdown-header">
-          <div class="dropdown-avatar">{{ userInitials }}</div>
-          <div class="dropdown-name">{{ userName }}</div>
-          <div class="dropdown-role">{{ userRole }}</div>
-        </div>
-        <div class="dropdown-menu">
-          <button class="dropdown-item" @click="goToCameraSettings">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        <!-- Profile Section -->
+        <div class="header-right">
+          <div class="profile-section" @click="toggleProfileMenu">
+            <div class="profile-avatar">{{ userInitials }}</div>
+            <div class="profile-info">
+              <div class="profile-name">{{ userName }}</div>
+              <div class="profile-role">{{ userRole }}</div>
+            </div>
+            <svg class="dropdown-arrow" :class="{ open: showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
-            Camera Settings
-          </button>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item logout" @click="logout">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-            </svg>
-            Logout
-          </button>
+          </div>
+
+          <!-- Dropdown Menu -->
+          <transition name="dropdown">
+            <div v-show="showDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">{{ userInitials }}</div>
+                <div class="dropdown-name">{{ userName }}</div>
+                <div class="dropdown-role">{{ userRole }}</div>
+              </div>
+              <div class="dropdown-menu">
+                <button class="dropdown-item" @click="goToCameraSettings">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  Camera Settings
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item logout" @click="logout">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  Logout
+                </button>
+              </div>
+            </div>
+          </transition>
+
+          <div v-show="showDropdown" class="dropdown-overlay" @click="closeDropdown"></div>
         </div>
       </div>
-
-      <!-- Dropdown Overlay -->
-      <div class="dropdown-overlay" :class="{ show: showDropdown }" @click="closeDropdown"></div>
-    </div>
+    </header>
 
     <!-- Status Panel -->
     <div class="status-panel">
-      <div class="legend">
-        <div class="legend-item">
-          <span class="legend-dot up"></span>
-          <span>Online</span>
+      <div class="panel-left">
+        <div class="panel-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          <h2>System Status</h2>
         </div>
-        <div class="legend-item">
-          <span class="legend-dot down"></span>
-          <span>Offline</span>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-dot up"></span>
+            <span>Online</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot down"></span>
+            <span>Offline</span>
+          </div>
         </div>
       </div>
 
       <div class="stats">
-        <div class="stat-card">
-          <div>
-            <div class="stat-value up">{{ onlineCount }}</div>
-            <div class="stat-label">Online</div>
+        <div class="stat-card stat-total">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">TOTAL CAMERAS</div>
+            <div class="stat-value">{{ totalCount }}</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-value down">{{ offlineCount }}</div>
-            <div class="stat-label">Offline</div>
+
+        <div class="stat-card stat-online">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">ONLINE</div>
+            <div class="stat-value">{{ onlineCount }}</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-value" style="color: #667eea;">{{ totalCount }}</div>
-            <div class="stat-label">Total</div>
+
+        <div class="stat-card stat-offline">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">OFFLINE</div>
+            <div class="stat-value">{{ offlineCount }}</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Map -->
-    <div class="map-container">
+    <main class="map-container">
       <div ref="mapContainer" id="map"></div>
-    </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 /* Dashboard Container */
 .dashboard-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
-    background-color: #f8f9fa;
-    color: #2c3e50;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f7fafc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header Styles */
+/* Header Styles - Matching CameraSettings */
 .header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1001; /* Ensure header is above map */
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1001;
 }
 
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .logo {
-    height: 60px;
-    width: auto;
-}
-
-.header-text {
-    flex: 1;
+  height: 60px;
+  width: auto;
 }
 
 .header-text h1 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    letter-spacing: -0.5px;
-    color: white;
+  font-size: 24px;
+  color: #2d3748;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
 }
 
 .header-text p {
-    font-size: 14px;
-    opacity: 0.9;
-    font-weight: 400;
-    color: white;
+  font-size: 14px;
+  color: #718096;
+  font-weight: 400;
+}
+
+.header-right {
+  position: relative;
 }
 
 /* Profile Section */
 .profile-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-left: auto;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 8px 16px;
-    border-radius: 50px;
-    backdrop-filter: blur(10px);
-    cursor: pointer;
-    transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .profile-section:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .profile-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
 }
 
 .profile-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-name {
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.2;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .profile-role {
-    font-size: 12px;
-    opacity: 0.85;
-    line-height: 1.2;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.75rem;
 }
 
-.profile-dropdown-icon {
-    width: 20px;
-    height: 20px;
-    opacity: 0.8;
-    transition: transform 0.3s ease;
+.dropdown-arrow {
+  width: 20px;
+  height: 20px;
+  color: white;
+  transition: transform 0.3s ease;
 }
 
-.profile-dropdown-icon.open {
-    transform: rotate(180deg);
+.dropdown-arrow.open {
+  transform: rotate(180deg);
 }
 
-/* Profile Dropdown Menu */
+/* Dropdown Menu */
 .profile-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 30px;
-    margin-top: 10px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    min-width: 220px;
-    overflow: hidden;
-    z-index: 1002;
-    opacity: 0;
-    transform: translateY(-10px);
-    pointer-events: none;
-    transition: all 0.3s ease;
-}
-
-.profile-dropdown.show {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  overflow: hidden;
+  z-index: 1002;
 }
 
 .dropdown-header {
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  text-align: center;
 }
 
 .dropdown-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 24px;
-    margin: 0 auto 10px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin: 0 auto 0.75rem;
 }
 
 .dropdown-name {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 4px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
 }
 
 .dropdown-role {
-    font-size: 13px;
-    opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
 }
 
 .dropdown-menu {
-    padding: 8px 0;
+  padding: 0.5rem;
 }
 
 .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: #374151;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    font-size: 14px;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4a5568;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
-    background: #f3f4f6;
+  background: #f7fafc;
+  color: #667eea;
+}
+
+.dropdown-item.logout:hover {
+  background: #fff5f5;
+  color: #e53e3e;
 }
 
 .dropdown-item svg {
-    width: 20px;
-    height: 20px;
-    color: #6b7280;
+  width: 20px;
+  height: 20px;
 }
 
 .dropdown-divider {
-    height: 1px;
-    background: #e5e7eb;
-    margin: 8px 0;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
 }
 
-.dropdown-item.logout {
-    color: #ef4444;
-}
-
-.dropdown-item.logout svg {
-    color: #ef4444;
-}
-
-/* Overlay */
 .dropdown-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 999;
-    display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
 }
 
-.dropdown-overlay.show {
-    display: block;
+/* Transitions */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
 }
 
-/* Status Panel */
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Status Panel - Enhanced */
 .status-panel {
-    background: white;
-    padding: 15px 30px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-    z-index: 1000;
-    position: relative;
+  background: white;
+  padding: 20px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  z-index: 1000;
+  position: relative;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.panel-left {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-title svg {
+  width: 24px;
+  height: 24px;
+  color: #667eea;
+}
+
+.panel-title h2 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  font-weight: 700;
 }
 
 .legend {
-    display: flex;
-    align-items: center;
-    gap: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
 }
 
 .legend-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .legend-dot.up {
-    background-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  background-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: pulse-green 2s ease-in-out infinite;
 }
 
 .legend-dot.down {
-    background-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  background-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  animation: pulse-red 2s ease-in-out infinite;
 }
 
-/* Stats Cards */
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1);
+  }
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
+  }
+}
+
+/* Stats Cards - Enhanced to match CameraSettings */
 .stats {
-    display: flex;
-    gap: 15px;
+  display: flex;
+  gap: 15px;
 }
 
 .stat-card {
-    background: #f8f9fa;
-    padding: 10px 20px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  min-width: 180px;
 }
 
-.stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.stat-value.up {
-    color: #10b981;
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.stat-value.down {
-    color: #ef4444;
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.stat-total .stat-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-online .stat-icon {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.stat-offline .stat-icon {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+.stat-info {
+  flex: 1;
 }
 
 .stat-label {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #2d3748;
+  line-height: 1;
 }
 
 /* Map Container */
 .map-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
 #map {
-    height: 100%;
+  height: 100%;
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .status-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .panel-left {
     width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .stats {
+    width: 100%;
+    overflow-x: auto;
+  }
 }
 
 @media (max-width: 768px) {
-    .header {
-        padding: 15px 20px;
-        flex-wrap: wrap;
-    }
+  .header-content {
+    padding: 15px 20px;
+  }
 
-    .header-text h1 {
-        font-size: 18px;
-    }
+  .header-text h1 {
+    font-size: 18px;
+  }
 
-    .header-text p {
-        font-size: 12px;
-    }
+  .header-text p {
+    font-size: 12px;
+  }
 
-    .logo {
-        height: 45px;
-    }
+  .logo {
+    height: 45px;
+  }
 
-    .profile-section {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 10px;
-        justify-content: center;
-    }
+  .profile-info {
+    display: none;
+  }
 
-    .profile-dropdown {
-        right: 20px;
-        left: 20px;
-        min-width: auto;
-    }
+  .status-panel {
+    padding: 15px 20px;
+  }
 
-    .status-panel {
-        padding: 12px 20px;
-        flex-direction: column;
-        align-items: flex-start;
-    }
+  .panel-title h2 {
+    font-size: 1rem;
+  }
 
-    .stats {
-        width: 100%;
-        justify-content: space-between;
-    }
+  .stats {
+    gap: 10px;
+  }
 
-    .stat-card {
-        flex: 1;
-        justify-content: center;
-    }
+  .stat-card {
+    min-width: 150px;
+    padding: 12px 16px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-title svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .legend {
+    gap: 15px;
+  }
+
+  .legend-item {
+    font-size: 12px;
+  }
 }
 </style>
 
 <style>
-/* Global styles for Leaflet popup that can't be scoped easily */
+/* Global styles for Leaflet popup */
 .leaflet-popup-content-wrapper {
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    padding: 0;
-    overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  overflow: hidden;
 }
 
 .leaflet-popup-content {
-    margin: 0;
-    min-width: 200px;
+  margin: 0;
+  min-width: 250px;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
 }
 
 .popup-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 15px;
-    font-weight: 600;
-    font-size: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .popup-body {
-    padding: 15px;
+  padding: 16px;
+}
+
+.custom-popup .leaflet-popup-close-button {
+  color: white;
+  font-size: 24px;
+  padding: 8px 12px;
+}
+
+.custom-popup .leaflet-popup-close-button:hover {
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>
