@@ -1757,3 +1757,24 @@ onUnmounted(() => {
   }
 }
 </style>
+
+<style>
+/* Global z-index hierarchy for modals and overlays */
+/* Base modal (Add/Edit Camera): z-index 1000 */
+/* Confirm Modal should be above: z-index 2000 */
+/* Toast should be on top of everything: z-index 9999 */
+
+/* Confirm modal overlay - appears above regular modals */
+.confirm-modal,
+.confirm-modal-overlay,
+[class*="confirm"][class*="modal"] {
+  z-index: 2000 !important;
+}
+
+/* Toast notification - appears above everything */
+.toast,
+.toast-container,
+[class*="toast"] {
+  z-index: 9999 !important;
+}
+</style>
