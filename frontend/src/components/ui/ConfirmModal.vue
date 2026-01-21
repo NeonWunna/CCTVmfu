@@ -172,7 +172,7 @@ const getIcon = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9998;
+  z-index: 10000 !important;
   padding: 1rem;
 }
 
@@ -183,6 +183,8 @@ const getIcon = () => {
   max-width: 450px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  position: relative;
+  z-index: 10001 !important;
 }
 
 .modal-header {
