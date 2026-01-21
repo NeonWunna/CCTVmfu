@@ -845,7 +845,7 @@ onUnmounted(() => {
 .header-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -858,18 +858,18 @@ onUnmounted(() => {
 }
 
 .logo {
-  height: 50px;
+  height: 60px;
   width: auto;
 }
 
 .header-text h1 {
-  font-size: 1.5rem;
+  font-size: 24px;
   color: #2d3748;
   font-weight: 700;
 }
 
 .header-text p {
-  font-size: 0.875rem;
+  font-size: 14px;
   color: #718096;
   margin-top: 0.25rem;
 }
@@ -1639,11 +1639,11 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .header-content {
-    padding: 1rem;
+    padding: 15px 20px;
   }
 
   .header-text h1 {
-    font-size: 1.25rem;
+    font-size: 18px;
   }
 
   .header-text p {
@@ -1686,7 +1686,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .logo {
-    height: 40px;
+    height: 45px;
   }
 
   .inventory-title h2 {
