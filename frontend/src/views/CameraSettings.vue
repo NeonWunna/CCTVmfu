@@ -2,6 +2,9 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
+import Toast from '../components/ui/Toast.vue';
+import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
 const router = useRouter();
 
@@ -13,6 +16,25 @@ const viewMode = ref("grid");
 const showAddModal = ref(false);
 const isEditMode = ref(false);
 const editingCameraId = ref(null);
+
+// Toast state
+const toast = ref({
+  show: false,
+  message: '',
+  type: 'info'
+});
+
+// Confirm modal state
+const confirmModal = ref({
+  show: false,
+  title: '',
+  message: '',
+  onConfirm: null,
+  loading: false
+});
+
+// Form validation errors
+const validationErrors = ref({});
 
 const newCamera = ref({
   name: "",
@@ -215,6 +237,48 @@ const filteredCameras = computed(() => {
   );
 });
 
+// Helper function to show toast
+const showToast = (message, type = 'info') => {
+  toast.value = {
+    show: true,
+    message,
+    type
+  };
+};
+
+// Helper function to close toast
+const closeToast = () => {
+  toast.value.show = false;
+};
+
+// Validate IP address
+const validateIPAddress = (ip) => {
+  const pattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  return pattern.test(ip);
+};
+
+// Validate form
+const validateForm = () => {
+  const errors = {};
+  
+  if (!newCamera.value.name.trim()) {
+    errors.name = 'Camera name is required';
+  }
+  
+  if (!newCamera.value.location.trim()) {
+    errors.location = 'Location is required';
+  }
+  
+  if (!newCamera.value.ipAddress.trim()) {
+    errors.ipAddress = 'IP address is required';
+  } else if (!validateIPAddress(newCamera.value.ipAddress)) {
+    errors.ipAddress = 'Invalid IP address format';
+  }
+  
+  validationErrors.value = errors;
+  return Object.keys(errors).length === 0;
+};
+
 const toggleProfileMenu = () => {
   showDropdown.value = !showDropdown.value;
 };
@@ -228,11 +292,18 @@ const goToDashboard = () => {
 };
 
 const logout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    localStorage.removeItem('isAuthenticated');
-    closeDropdown();
-    router.push('/login');
-  }
+  confirmModal.value = {
+    show: true,
+    title: 'Confirm Logout',
+    message: 'Are you sure you want to logout?',
+    onConfirm: () => {
+      localStorage.removeItem('isAuthenticated');
+      confirmModal.value.show = false;
+      closeDropdown();
+      router.push('/login');
+      showToast('Logged out successfully', 'info');
+    }
+  };
 };
 
 const handleLogoError = (event) => {
@@ -250,13 +321,27 @@ const editCamera = (camera) => {
     brand: camera.brand,
     status: camera.status
   };
+  validationErrors.value = {};
   showAddModal.value = true;
 };
 
 const removeCamera = (camera) => {
-  if (confirm(`Are you sure you want to remove "${camera.name}"?`)) {
-    cameras.value = cameras.value.filter(c => c.id !== camera.id);
-  }
+  confirmModal.value = {
+    show: true,
+    title: 'Delete Camera',
+    message: `Are you sure you want to remove "${camera.name}"? This action cannot be undone.`,
+    onConfirm: async () => {
+      confirmModal.value.loading = true;
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      cameras.value = cameras.value.filter(c => c.id !== camera.id);
+      confirmModal.value.show = false;
+      confirmModal.value.loading = false;
+      showToast(`Camera "${camera.name}" has been removed successfully`, 'success');
+    }
+  };
 };
 
 const addNewCamera = () => {
@@ -270,11 +355,36 @@ const addNewCamera = () => {
     brand: "",
     status: "up"
   };
+  validationErrors.value = {};
   showAddModal.value = true;
 };
 
 const closeModal = () => {
-  showAddModal.value = false;
+  // Check if form has unsaved changes
+  const hasChanges = newCamera.value.name || 
+                     newCamera.value.location || 
+                     newCamera.value.ipAddress || 
+                     newCamera.value.coordinates || 
+                     newCamera.value.brand;
+  
+  if (hasChanges && !isEditMode.value) {
+    confirmModal.value = {
+      show: true,
+      title: 'Discard Changes?',
+      message: 'You have unsaved changes. Are you sure you want to close without saving?',
+      onConfirm: () => {
+        showAddModal.value = false;
+        confirmModal.value.show = false;
+        resetForm();
+      }
+    };
+  } else {
+    showAddModal.value = false;
+    resetForm();
+  }
+};
+
+const resetForm = () => {
   isEditMode.value = false;
   editingCameraId.value = null;
   newCamera.value = {
@@ -285,13 +395,20 @@ const closeModal = () => {
     brand: "",
     status: "up"
   };
+  validationErrors.value = {};
 };
 
-const saveCamera = () => {
-  if (!newCamera.value.name || !newCamera.value.location || !newCamera.value.ipAddress) {
-    alert('Please fill in all required fields (Name, Location, IP Address)');
+const saveCamera = async () => {
+  if (!validateForm()) {
+    showToast('Please fix the errors in the form', 'error');
     return;
   }
+
+  // Show loading state
+  confirmModal.value.loading = true;
+
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
   if (isEditMode.value) {
     // Update existing camera
@@ -302,6 +419,7 @@ const saveCamera = () => {
         ...newCamera.value,
         lastUpdate: "Just now"
       };
+      showToast('Camera updated successfully', 'success');
     }
   } else {
     // Add new camera
@@ -309,20 +427,67 @@ const saveCamera = () => {
     cameras.value.push({
       id: newId,
       ...newCamera.value,
+      version: "N/A",
       lastUpdate: "Just now"
     });
+    showToast('Camera added successfully', 'success');
   }
 
-  closeModal();
+  confirmModal.value.loading = false;
+  showAddModal.value = false;
+  resetForm();
 };
 
 const toggleViewMode = () => {
   viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid';
 };
+
+const handleConfirmCancel = () => {
+  confirmModal.value.show = false;
+  confirmModal.value.loading = false;
+};
+
+// Handle ESC key for modal
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape' && showAddModal.value) {
+    closeModal();
+  }
+};
+
+// Add event listener for ESC key
+import { onMounted, onUnmounted } from 'vue';
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown);
+});
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <template>
   <div class="page-container">
+    <!-- Toast Notification -->
+    <Toast 
+      :show="toast.show"
+      :message="toast.message"
+      :type="toast.type"
+      @close="closeToast"
+    />
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      :show="confirmModal.show"
+      :title="confirmModal.title"
+      :message="confirmModal.message"
+      :loading="confirmModal.loading"
+      confirm-text="Confirm"
+      cancel-text="Cancel"
+      type="danger"
+      @confirm="confirmModal.onConfirm"
+      @cancel="handleConfirmCancel"
+      @close="handleConfirmCancel"
+    />
+
     <!-- Header -->
     <header class="header">
       <div class="header-content">
@@ -448,10 +613,11 @@ const toggleViewMode = () => {
                   type="text" 
                   placeholder="Search by name, location, or IP address..."
                   class="search-input"
+                  aria-label="Search cameras"
                 >
               </div>
 
-              <button class="view-toggle" @click="toggleViewMode">
+              <button class="view-toggle" @click="toggleViewMode" aria-label="Toggle view mode">
                 <svg v-if="viewMode === 'grid'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
@@ -527,6 +693,13 @@ const toggleViewMode = () => {
 
                   <div class="meta-row">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                    </svg>
+                    <span>{{ camera.version }}</span>
+                  </div>
+
+                  <div class="meta-row">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>{{ camera.lastUpdate }}</span>
@@ -535,17 +708,17 @@ const toggleViewMode = () => {
               </div>
 
               <div class="card-actions">
-                <button class="action-btn edit-btn" @click="editCamera(camera)">
+                <button class="action-button edit" @click="editCamera(camera)" aria-label="Edit camera">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                   </svg>
                   Edit
                 </button>
-                <button class="action-btn remove-btn" @click="removeCamera(camera)">
+                <button class="action-button delete" @click="removeCamera(camera)" aria-label="Delete camera">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                   </svg>
-                  Remove
+                  Delete
                 </button>
               </div>
             </div>
@@ -556,111 +729,91 @@ const toggleViewMode = () => {
 
     <!-- Add/Edit Camera Modal -->
     <transition name="modal">
-      <div v-if="showAddModal" class="modal-overlay" @click="closeModal">
-        <div class="modal-container" @click.stop>
+      <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-container">
           <div class="modal-header">
-            <h2>{{ isEditMode ? 'Edit Camera' : 'Add New Camera' }}</h2>
-            <button class="modal-close" @click="closeModal">
+            <h3>{{ isEditMode ? 'Edit Camera' : 'Add New Camera' }}</h3>
+            <button class="close-button" @click="closeModal" aria-label="Close modal">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
 
-          <div class="modal-body">
-            <form @submit.prevent="saveCamera">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="cameraName">
-                    Camera Name <span class="required">*</span>
-                  </label>
-                  <input
-                    id="cameraName"
-                    v-model="newCamera.name"
-                    type="text"
-                    placeholder="e.g., Main Gate CCTV"
-                    required
-                  >
-                </div>
+          <form class="modal-body" @submit.prevent="saveCamera">
+            <div class="form-group">
+              <label for="camera-name">Camera Name <span class="required">*</span></label>
+              <input 
+                id="camera-name"
+                v-model="newCamera.name"
+                type="text" 
+                placeholder="e.g., Main Gate CCTV"
+                :class="{ 'error': validationErrors.name }"
+              >
+              <span v-if="validationErrors.name" class="error-message">{{ validationErrors.name }}</span>
+            </div>
 
-                <div class="form-group">
-                  <label for="cameraLocation">
-                    Location <span class="required">*</span>
-                  </label>
-                  <input
-                    id="cameraLocation"
-                    v-model="newCamera.location"
-                    type="text"
-                    placeholder="e.g., Main Entrance"
-                    required
-                  >
-                </div>
+            <div class="form-group">
+              <label for="camera-location">Location <span class="required">*</span></label>
+              <input 
+                id="camera-location"
+                v-model="newCamera.location"
+                type="text" 
+                placeholder="e.g., Main Entrance"
+                :class="{ 'error': validationErrors.location }"
+              >
+              <span v-if="validationErrors.location" class="error-message">{{ validationErrors.location }}</span>
+            </div>
 
-                <div class="form-group">
-                  <label for="cameraIP">
-                    IP Address <span class="required">*</span>
-                  </label>
-                  <input
-                    id="cameraIP"
-                    v-model="newCamera.ipAddress"
-                    type="text"
-                    placeholder="e.g., 192.168.1.10"
-                    pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
-                    required
-                  >
-                </div>
+            <div class="form-group">
+              <label for="camera-ip">IP Address <span class="required">*</span></label>
+              <input 
+                id="camera-ip"
+                v-model="newCamera.ipAddress"
+                type="text" 
+                placeholder="e.g., 192.168.1.10"
+                :class="{ 'error': validationErrors.ipAddress }"
+              >
+              <span v-if="validationErrors.ipAddress" class="error-message">{{ validationErrors.ipAddress }}</span>
+            </div>
 
-                <div class="form-group">
-                  <label for="cameraCoordinates">
-                    Coordinates
-                  </label>
-                  <input
-                    id="cameraCoordinates"
-                    v-model="newCamera.coordinates"
-                    type="text"
-                    placeholder="e.g., 20.0451° N, 99.8825° E"
-                  >
-                </div>
+            <div class="form-group">
+              <label for="camera-coordinates">Coordinates</label>
+              <input 
+                id="camera-coordinates"
+                v-model="newCamera.coordinates"
+                type="text" 
+                placeholder="e.g., 20.0451° N, 99.8825° E"
+              >
+            </div>
 
-                <div class="form-group">
-                  <label for="cameraBrand">
-                    Brand
-                  </label>
-                  <select id="cameraBrand" v-model="newCamera.brand">
-                    <option value="">Select Brand</option>
-                    <option value="Hikvision">Hikvision</option>
-                    <option value="Dahua">Dahua</option>
-                    <option value="Axis">Axis</option>
-                    <option value="Uniview">Uniview</option>
-                    <option value="Bosch">Bosch</option>
-                    <option value="Samsung">Samsung</option>
-                  </select>
-                </div>
+            <div class="form-group">
+              <label for="camera-brand">Brand</label>
+              <select id="camera-brand" v-model="newCamera.brand">
+                <option value="">Select Brand</option>
+                <option value="Hikvision">Hikvision</option>
+                <option value="Dahua">Dahua</option>
+                <option value="Axis">Axis</option>
+                <option value="Uniview">Uniview</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
-                <div class="form-group">
-                  <label for="cameraStatus">
-                    Status
-                  </label>
-                  <select id="cameraStatus" v-model="newCamera.status">
-                    <option value="up">Online</option>
-                    <option value="down">Offline</option>
-                  </select>
-                </div>
-              </div>
+            <div class="form-group">
+              <label for="camera-status">Status</label>
+              <select id="camera-status" v-model="newCamera.status">
+                <option value="up">Online</option>
+                <option value="down">Offline</option>
+              </select>
+            </div>
 
-              <div class="modal-footer">
-                <button type="button" class="btn-secondary" @click="closeModal">
-                  Cancel
-                </button>
-                <button type="submit" class="btn-primary">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  {{ isEditMode ? 'Update Camera' : 'Add Camera' }}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div class="modal-footer">
+              <button type="button" class="button-secondary" @click="closeModal">Cancel</button>
+              <button type="submit" class="button-primary">
+                {{ isEditMode ? 'Update Camera' : 'Add Camera' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </transition>
@@ -676,27 +829,26 @@ const toggleViewMode = () => {
 
 .page-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #e8ecf1 0%, #f5f7fa 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header */
+/* Header Styles */
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .header-content {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 1.25rem 2rem;
+  padding: 1rem 2rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 .header-left {
@@ -712,13 +864,14 @@ const toggleViewMode = () => {
 
 .header-text h1 {
   font-size: 1.5rem;
+  color: #2d3748;
   font-weight: 700;
-  margin-bottom: 0.25rem;
 }
 
 .header-text p {
   font-size: 0.875rem;
-  opacity: 0.95;
+  color: #718096;
+  margin-top: 0.25rem;
 }
 
 .header-right {
@@ -729,29 +882,29 @@ const toggleViewMode = () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.15);
   padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .profile-section:hover {
-  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .profile-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: white;
+  color: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .profile-info {
@@ -760,42 +913,43 @@ const toggleViewMode = () => {
 }
 
 .profile-name {
-  font-size: 0.875rem;
+  color: white;
   font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .profile-role {
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.75rem;
-  opacity: 0.9;
 }
 
 .dropdown-arrow {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.3s;
+  width: 20px;
+  height: 20px;
+  color: white;
+  transition: transform 0.3s ease;
 }
 
 .dropdown-arrow.open {
   transform: rotate(180deg);
 }
 
-/* Dropdown */
+/* Dropdown Menu */
 .profile-dropdown {
   position: absolute;
-  top: calc(100% + 0.75rem);
+  top: calc(100% + 0.5rem);
   right: 0;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  min-width: 240px;
+  min-width: 280px;
   overflow: hidden;
-  z-index: 101;
+  z-index: 1000;
 }
 
 .dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   text-align: center;
 }
 
@@ -803,97 +957,87 @@ const toggleViewMode = () => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: white;
+  color: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   margin: 0 auto 0.75rem;
-  border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .dropdown-name {
-  font-size: 1rem;
+  color: white;
   font-weight: 600;
+  font-size: 1rem;
   margin-bottom: 0.25rem;
 }
 
 .dropdown-role {
-  font-size: 0.8125rem;
-  opacity: 0.95;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
 }
 
 .dropdown-menu {
-  padding: 0.5rem 0;
+  padding: 0.5rem;
 }
 
 .dropdown-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  width: 100%;
-  border: none;
   background: none;
-  color: #374151;
-  font-size: 0.875rem;
-  text-align: left;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  color: #4a5568;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
-  background: #f3f4f6;
+  background: #f7fafc;
+  color: #667eea;
+}
+
+.dropdown-item.logout:hover {
+  background: #fff5f5;
+  color: #e53e3e;
 }
 
 .dropdown-item svg {
   width: 20px;
   height: 20px;
-  color: #6b7280;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: #e5e7eb;
+  background: #e2e8f0;
   margin: 0.5rem 0;
-}
-
-.dropdown-item.logout {
-  color: #ef4444;
-}
-
-.dropdown-item.logout svg {
-  color: #ef4444;
 }
 
 .dropdown-overlay {
   position: fixed;
-  inset: 0;
-  z-index: 99;
-}
-
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.3s ease;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
 }
 
 /* Main Content */
 .main-content {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
 }
 
 .content-wrapper {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 2rem;
 }
 
@@ -908,61 +1052,61 @@ const toggleViewMode = () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  color: #374151;
-  font-size: 0.875rem;
+  border: none;
+  border-radius: 12px;
+  color: #667eea;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .back-button:hover {
-  border-color: #667eea;
-  color: #667eea;
-  transform: translateX(-3px);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .back-button svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .stats-container {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .stat-card {
   background: white;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 2px solid transparent;
-  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
 }
 
 .stat-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: white;
 }
 
@@ -970,79 +1114,66 @@ const toggleViewMode = () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.stat-total:hover {
-  border-color: #667eea;
-}
-
 .stat-online .stat-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.stat-online:hover {
-  border-color: #10b981;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
 }
 
 .stat-offline .stat-icon {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
 }
 
-.stat-offline:hover {
-  border-color: #ef4444;
+.stat-info {
+  flex: 1;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #718096;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #2d3748;
+  margin-top: 0.25rem;
 }
 
 /* Main Area */
 .main-area {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .inventory-header {
-  background: white;
-  border-radius: 14px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.inventory-title {
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .inventory-title h2 {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  color: #2d3748;
   font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .inventory-title p {
+  color: #718096;
   font-size: 0.875rem;
-  color: #6b7280;
 }
 
 .inventory-controls {
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .search-box {
   flex: 1;
+  min-width: 300px;
   position: relative;
 }
 
@@ -1053,47 +1184,42 @@ const toggleViewMode = () => {
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  color: #9ca3af;
+  color: #a0aec0;
 }
 
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.875rem;
-  background: #f9fafb;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .view-toggle {
-  padding: 0.75rem;
-  background: #f3f4f6;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .view-toggle:hover {
-  background: #e5e7eb;
-  border-color: #667eea;
+  background: #edf2f7;
+  border-color: #cbd5e0;
 }
 
 .view-toggle svg {
   width: 20px;
   height: 20px;
-  color: #374151;
+  color: #4a5568;
 }
 
 .add-button {
@@ -1104,17 +1230,15 @@ const toggleViewMode = () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
 .add-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .add-button svg {
@@ -1122,66 +1246,36 @@ const toggleViewMode = () => {
   height: 20px;
 }
 
-/* Empty State */
-.empty-state {
-  background: white;
-  border-radius: 14px;
-  padding: 4rem 2rem;
-  text-align: center;
-  color: #9ca3af;
-}
-
-.empty-state svg {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  font-size: 1.125rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-  font-size: 0.875rem;
-}
-
 /* Camera Grid */
 .camera-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
 }
 
 .camera-grid.list-view {
   grid-template-columns: 1fr;
 }
 
-/* Camera Card */
 .camera-card {
-  background: white;
-  border-radius: 14px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 2px solid #f3f4f6;
-  transition: all 0.3s;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
 }
 
 .camera-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   border-color: #667eea;
 }
 
 .card-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .camera-icon {
@@ -1195,174 +1289,167 @@ const toggleViewMode = () => {
 }
 
 .camera-icon svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   color: white;
 }
 
 .status-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.375rem 0.875rem;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .status-badge.up {
-  background: #d1fae5;
-  color: #065f46;
+  background: #c6f6d5;
+  color: #22543d;
 }
 
 .status-badge.down {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #fed7d7;
+  color: #742a2a;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: currentColor;
+}
+
+.status-badge.up .status-dot {
+  background: #38a169;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-badge.down .status-dot {
+  background: #e53e3e;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .card-body {
-  flex: 1;
+  margin-bottom: 1.5rem;
 }
 
 .camera-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.875rem;
+  font-size: 1.25rem;
+  color: #2d3748;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .camera-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  color: #4a5568;
   font-size: 0.875rem;
-  color: #6b7280;
 }
 
 .meta-row svg {
-  width: 16px;
-  height: 16px;
-  color: #9ca3af;
+  width: 18px;
+  height: 18px;
+  color: #a0aec0;
   flex-shrink: 0;
 }
 
 .card-actions {
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+  border-top: 2px solid #e2e8f0;
 }
 
-.action-btn {
+.action-button {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 0.75rem;
   border: 2px solid;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.action-btn svg {
-  width: 16px;
-  height: 16px;
+.action-button svg {
+  width: 18px;
+  height: 18px;
 }
 
-.edit-btn {
+.action-button.edit {
   background: white;
-  color: #667eea;
   border-color: #667eea;
+  color: #667eea;
 }
 
-.edit-btn:hover {
+.action-button.edit:hover {
   background: #667eea;
   color: white;
 }
 
-.remove-btn {
+.action-button.delete {
   background: white;
-  color: #ef4444;
-  border-color: #ef4444;
+  border-color: #e53e3e;
+  color: #e53e3e;
 }
 
-.remove-btn:hover {
-  background: #ef4444;
+.action-button.delete:hover {
+  background: #e53e3e;
   color: white;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .content-wrapper {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #a0aec0;
 }
 
-@media (max-width: 768px) {
-  .header-content {
-    padding: 1rem 1.25rem;
-  }
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+}
 
-  .logo {
-    height: 40px;
-  }
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
 
-  .header-text h1 {
-    font-size: 1.25rem;
-  }
-
-  .header-text p {
-    font-size: 0.75rem;
-  }
-
-  .main-content {
-    padding: 1.25rem;
-  }
-
-  .inventory-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .view-toggle,
-  .add-button {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .camera-grid {
-    grid-template-columns: 1fr;
-  }
+.empty-state p {
+  color: #718096;
 }
 
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1373,162 +1460,150 @@ const toggleViewMode = () => {
 .modal-container {
   background: white;
   border-radius: 16px;
+  max-width: 600px;
   width: 100%;
-  max-width: 700px;
   max-height: 90vh;
-  overflow: hidden;
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
 }
 
 .modal-header {
-  padding: 1.5rem 2rem;
-  border-bottom: 2px solid #f3f4f6;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.modal-header h2 {
+.modal-header h3 {
   font-size: 1.5rem;
+  color: #2d3748;
   font-weight: 700;
-  margin: 0;
 }
 
-.modal-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+.close-button {
+  width: 40px;
+  height: 40px;
   border: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: #f7fafc;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+.close-button:hover {
+  background: #e2e8f0;
 }
 
-.modal-close svg {
+.close-button svg {
   width: 20px;
   height: 20px;
+  color: #4a5568;
 }
 
 .modal-body {
   padding: 2rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
-  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2d3748;
   font-weight: 600;
-  color: #374151;
+  font-size: 0.875rem;
 }
 
 .required {
-  color: #ef4444;
+  color: #e53e3e;
 }
 
 .form-group input,
 .form-group select {
+  width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 0.875rem;
-  transition: all 0.2s;
-  background: #f9fafb;
+  transition: all 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.form-group select {
-  cursor: pointer;
+.form-group input.error {
+  border-color: #e53e3e;
+}
+
+.error-message {
+  display: block;
+  margin-top: 0.5rem;
+  color: #e53e3e;
+  font-size: 0.75rem;
 }
 
 .modal-footer {
-  padding: 1.5rem 2rem;
-  border-top: 2px solid #f3f4f6;
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
-  background: #f9fafb;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
 }
 
-.btn-secondary,
-.btn-primary {
+.button-secondary,
+.button-primary {
+  flex: 1;
   padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  border: none;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  transition: all 0.3s ease;
 }
 
-.btn-secondary {
-  background: white;
-  color: #374151;
-  border: 2px solid #e5e7eb;
+.button-secondary {
+  background: #f7fafc;
+  color: #4a5568;
 }
 
-.btn-secondary:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+.button-secondary:hover {
+  background: #e2e8f0;
 }
 
-.btn-primary {
+.button-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.btn-primary:hover {
+.button-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.btn-primary svg {
-  width: 18px;
-  height: 18px;
+/* Transitions */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
 }
 
-/* Modal Animations */
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .modal-enter-from,
@@ -1538,43 +1613,92 @@ const toggleViewMode = () => {
 
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
-  transform: scale(0.9) translateY(-20px);
+  transform: scale(0.9);
 }
 
-/* Responsive Modal */
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .content-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .stats-container {
+    flex-direction: row;
+    min-width: min-content;
+  }
+
+  .stat-card {
+    min-width: 200px;
+  }
+}
+
 @media (max-width: 768px) {
-  .modal-container {
-    max-width: 100%;
-    max-height: 95vh;
-    margin: 0;
+  .header-content {
+    padding: 1rem;
   }
 
-  .modal-header {
-    padding: 1.25rem 1.5rem;
-  }
-
-  .modal-header h2 {
+  .header-text h1 {
     font-size: 1.25rem;
   }
 
-  .modal-body {
+  .header-text p {
+    display: none;
+  }
+
+  .profile-info {
+    display: none;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .main-area {
     padding: 1.5rem;
   }
 
-  .form-grid {
+  .inventory-controls {
+    flex-direction: column;
+  }
+
+  .search-box {
+    min-width: 100%;
+  }
+
+  .camera-grid {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
   }
 
-  .modal-footer {
-    padding: 1.25rem 1.5rem;
-    flex-direction: column-reverse;
+  .modal-container {
+    margin: 1rem;
   }
 
-  .btn-secondary,
-  .btn-primary {
+  .modal-header,
+  .modal-body {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    height: 40px;
+  }
+
+  .inventory-title h2 {
+    font-size: 1.5rem;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
     width: 100%;
-    justify-content: center;
   }
 }
 </style>
