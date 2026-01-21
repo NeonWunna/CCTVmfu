@@ -42,6 +42,7 @@ const newCamera = ref({
   ipAddress: "",
   coordinates: "",
   brand: "",
+  version: "",
   status: "up"
 });
 
@@ -279,6 +280,36 @@ const validateForm = () => {
   return Object.keys(errors).length === 0;
 };
 
+// Format coordinates with degree symbols
+const formatCoordinates = (value) => {
+  if (!value) return '';
+  
+  // Remove any existing degree symbols, N, E, commas, spaces
+  const cleaned = value.replace(/[°NE,\s]/g, '');
+  
+  // Try to extract two numbers (latitude and longitude)
+  const numbers = cleaned.match(/[\d.]+/g);
+  
+  if (numbers && numbers.length >= 2) {
+    const lat = parseFloat(numbers[0]);
+    const lng = parseFloat(numbers[1]);
+    
+    // Validate ranges
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      return `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
+    }
+  }
+  
+  return value;
+};
+
+// Handle coordinates input blur
+const handleCoordinatesBlur = () => {
+  if (newCamera.value.coordinates) {
+    newCamera.value.coordinates = formatCoordinates(newCamera.value.coordinates);
+  }
+};
+
 const toggleProfileMenu = () => {
   showDropdown.value = !showDropdown.value;
 };
@@ -319,6 +350,7 @@ const editCamera = (camera) => {
     ipAddress: camera.ipAddress,
     coordinates: camera.coordinates,
     brand: camera.brand,
+    version: camera.version,
     status: camera.status
   };
   validationErrors.value = {};
@@ -353,6 +385,7 @@ const addNewCamera = () => {
     ipAddress: "",
     coordinates: "",
     brand: "",
+    version: "",
     status: "up"
   };
   validationErrors.value = {};
@@ -365,7 +398,8 @@ const closeModal = () => {
                      newCamera.value.location || 
                      newCamera.value.ipAddress || 
                      newCamera.value.coordinates || 
-                     newCamera.value.brand;
+                     newCamera.value.brand ||
+                     newCamera.value.version;
   
   if (hasChanges && !isEditMode.value) {
     confirmModal.value = {
@@ -393,6 +427,7 @@ const resetForm = () => {
     ipAddress: "",
     coordinates: "",
     brand: "",
+    version: "",
     status: "up"
   };
   validationErrors.value = {};
@@ -427,7 +462,7 @@ const saveCamera = async () => {
     cameras.value.push({
       id: newId,
       ...newCamera.value,
-      version: "N/A",
+      version: newCamera.value.version || "N/A",
       lastUpdate: "Just now"
     });
     showToast('Camera added successfully', 'success');
@@ -783,8 +818,10 @@ onUnmounted(() => {
                 id="camera-coordinates"
                 v-model="newCamera.coordinates"
                 type="text" 
-                placeholder="e.g., 20.0451° N, 99.8825° E"
+                placeholder="e.g., 20.0451, 99.8825 (auto-formats to °N, °E)"
+                @blur="handleCoordinatesBlur"
               >
+              <span class="input-hint">Enter latitude and longitude separated by comma (e.g., 20.0451, 99.8825)</span>
             </div>
 
             <div class="form-group">
@@ -797,6 +834,16 @@ onUnmounted(() => {
                 <option value="Uniview">Uniview</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label for="camera-version">Firmware Version</label>
+              <input 
+                id="camera-version"
+                v-model="newCamera.version"
+                type="text" 
+                placeholder="e.g., V5.7.3"
+              >
             </div>
 
             <div class="form-group">
@@ -1550,6 +1597,14 @@ onUnmounted(() => {
   margin-top: 0.5rem;
   color: #e53e3e;
   font-size: 0.75rem;
+}
+
+.input-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: #718096;
+  font-size: 0.75rem;
+  font-style: italic;
 }
 
 .modal-footer {
