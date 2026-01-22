@@ -5,12 +5,14 @@ import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import { mockCameraAPI as cameraAPI } from '@/services/mockApi';
 
 const router = useRouter();
 
 const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
+const loading = ref(false);
 
 // Toast state
 const toast = ref({
@@ -168,6 +170,31 @@ const userInitials = computed(() => {
     .slice(0, 2);
 });
 
+// Fetch camera locations from API
+const fetchCameraLocations = async () => {
+  loading.value = true;
+  try {
+    const response = await cameraAPI.getAll();
+    const camerasData = response.data.cameras || response.data;
+    
+    // Map to format needed for map
+    cctvs.value = camerasData.map(camera => ({
+      name: camera.name,
+      lat: camera.lat || parseFloat(camera.coordinates?.split(',')[0]) || 20.0443,
+      lng: camera.lng || parseFloat(camera.coordinates?.split(',')[1]) || 99.8937,
+      status: camera.status,
+      location: camera.location,
+      lastUpdate: camera.lastUpdate || 'Unknown'
+    }));
+  } catch (error) {
+    console.error('Failed to load cameras:', error);
+    showToast('Failed to load cameras from server, using cached data', 'warning');
+    // Keep using hardcoded data if API fails
+  } finally {
+    loading.value = false;
+  }
+};
+
 // Helper function to show toast
 const showToast = (message, type = 'info') => {
   toast.value = {
@@ -202,6 +229,7 @@ const logout = () => {
     message: 'Are you sure you want to logout?',
     onConfirm: () => {
       localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('authToken');
       confirmModal.value.show = false;
       closeDropdown();
       router.push('/login');
@@ -314,7 +342,8 @@ const initMap = () => {
   });
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchCameraLocations();
   initMap();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
@@ -481,6 +510,10 @@ onUnmounted(() => {
 
     <!-- Map -->
     <main class="map-container">
+      <div v-if="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading cameras...</p>
+      </div>
       <div ref="mapContainer" id="map"></div>
     </main>
   </div>
@@ -887,6 +920,40 @@ onUnmounted(() => {
 #map {
   height: 100%;
   width: 100%;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-overlay .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-overlay p {
+  color: #4a5568;
+  font-weight: 600;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Responsive Design */

@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import backgroundImg from '../assets/envi.jpg';
+import { mockAuthAPI as authAPI } from '@/services/mockApi';
 
 const router = useRouter();
 const isLoading = ref(false);
@@ -15,24 +16,31 @@ const handleLogoError = (event) => {
 const loginWithGoogle = async () => {
   googleLoading.value = true;
   
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // For testing, allow Google login
-  localStorage.setItem('isAuthenticated', 'true');
-  router.push('/');
+  try {
+    const response = await authAPI.loginWithGoogle('mock-google-token');
+    localStorage.setItem('authToken', response.data.token);
+    localStorage.setItem('isAuthenticated', 'true');
+    router.push('/');
+  } catch (error) {
+    console.error('Login failed:', error);
+  } finally {
+    googleLoading.value = false;
+  }
 };
 
 const loginWithSSO = async () => {
   isLoading.value = true;
   
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Set authentication token
-  localStorage.setItem('isAuthenticated', 'true');
-  // Navigate to the Dashboard
-  router.push('/');
+  try {
+    const response = await authAPI.loginWithSSO('mock-sso-token');
+    localStorage.setItem('authToken', response.data.token);
+    localStorage.setItem('isAuthenticated', 'true');
+    router.push('/');
+  } catch (error) {
+    console.error('Login failed:', error);
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
@@ -113,6 +121,7 @@ const loginWithSSO = async () => {
 </template>
 
 <style scoped>
+/* Keep all your existing styles - they don't change */
 * {
   margin: 0;
   padding: 0;
@@ -130,7 +139,6 @@ const loginWithSSO = async () => {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header Styles - Matching Home.vue */
 .header {
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
@@ -173,7 +181,6 @@ const loginWithSSO = async () => {
   font-weight: 400;
 }
 
-/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -204,7 +211,6 @@ const loginWithSSO = async () => {
   }
 }
 
-/* MFU Logo Circle */
 .mfu-logo-circle {
   width: 100px;
   height: 100px;
@@ -234,7 +240,6 @@ const loginWithSSO = async () => {
   letter-spacing: 2px;
 }
 
-/* Login Text */
 .login-title {
   font-size: 1.875rem;
   color: #2d3748;
@@ -256,7 +261,6 @@ const loginWithSSO = async () => {
   margin-bottom: 2rem;
 }
 
-/* Login Buttons */
 .login-buttons {
   display: flex;
   flex-direction: column;
@@ -328,7 +332,6 @@ const loginWithSSO = async () => {
   flex-shrink: 0;
 }
 
-/* Divider */
 .divider {
   position: relative;
   text-align: center;
@@ -355,7 +358,6 @@ const loginWithSSO = async () => {
   font-weight: 600;
 }
 
-/* Loading Spinner */
 .spinner {
   width: 20px;
   height: 20px;
@@ -374,7 +376,6 @@ const loginWithSSO = async () => {
   to { transform: rotate(360deg); }
 }
 
-/* Login Info */
 .login-info {
   padding-top: 1.5rem;
   border-top: 1px solid #e2e8f0;
@@ -386,7 +387,6 @@ const loginWithSSO = async () => {
   color: #718096;
 }
 
-/* Footer */
 .footer {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -400,7 +400,6 @@ const loginWithSSO = async () => {
   opacity: 0.9;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .header-content {
     padding: 15px 20px;
@@ -467,7 +466,6 @@ const loginWithSSO = async () => {
   }
 }
 
-/* Focus States for Accessibility */
 .login-btn:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
