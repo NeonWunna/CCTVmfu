@@ -3,9 +3,14 @@ Camera Service
 Business logic for camera operations.
 """
 from typing import List, Optional
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+
+# Thailand timezone
+THAILAND_TZ = ZoneInfo("Asia/Bangkok")
 
 
 class CameraService:
@@ -57,10 +62,9 @@ class CameraService:
         # Create coordinates string
         camera_data['coordinates'] = f"{camera.latitude}, {camera.longitude}"
         
-        # Set initial last_update to now
-        from datetime import datetime
+        # Set initial last_update to now (Thailand timezone)
         if not camera_data.get('last_update'):
-            camera_data['last_update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            camera_data['last_update'] = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
         db_camera = models.Camera(**camera_data)
         self.db.add(db_camera)
@@ -91,9 +95,8 @@ class CameraService:
                 
                 update_data['coordinates'] = f"{new_lat}, {new_long}"
 
-            # Always update last_update timestamp
-            from datetime import datetime
-            update_data['last_update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Always update last_update timestamp (Thailand timezone)
+            update_data['last_update'] = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
             for key, value in update_data.items():
                 setattr(db_camera, key, value)
