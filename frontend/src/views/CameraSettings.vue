@@ -53,12 +53,18 @@ const cameras = ref([]);
 const fetchCameras = async () => {
   try {
     const response = await api.getCameras();
-    // Map backend snake_case to frontend camelCase
-    cameras.value = response.data.map(camera => ({
-      ...camera,
-      ipAddress: camera.ip_address,
-      lastUpdate: camera.last_update
-    }));
+    // Validate if response.data is an array
+    if (Array.isArray(response.data)) {
+        // Map backend snake_case to frontend camelCase
+        cameras.value = response.data.map(camera => ({
+          ...camera,
+          ipAddress: camera.ip_address,
+          lastUpdate: camera.last_update
+        }));
+    } else {
+        console.warn('API returned non-array data:', response.data);
+        cameras.value = [];
+    }
   } catch (error) {
     console.error('Error fetching cameras:', error);
     showToast('Failed to load cameras', 'error');
