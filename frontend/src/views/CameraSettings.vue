@@ -280,19 +280,19 @@ const validateForm = () => {
   return Object.keys(errors).length === 0;
 };
 
-// Format coordinates with degree symbols
+// Format coordinates with degree symbols - FIXED VERSION
 const formatCoordinates = (value) => {
-  if (!value) return '';
+  if (!value || !value.trim()) return '';
   
-  // Remove any existing degree symbols, N, E, commas, spaces
-  const cleaned = value.replace(/[°NE,\s]/g, '');
+  // Remove all non-numeric characters except dots, minus signs, and spaces/commas
+  const cleaned = value.replace(/[^\d.\-,\s]/g, '');
   
-  // Try to extract two numbers (latitude and longitude)
-  const numbers = cleaned.match(/[\d.]+/g);
+  // Split by comma or multiple spaces to get latitude and longitude
+  const parts = cleaned.split(/[,\s]+/).filter(p => p.length > 0);
   
-  if (numbers && numbers.length >= 2) {
-    const lat = parseFloat(numbers[0]);
-    const lng = parseFloat(numbers[1]);
+  if (parts.length >= 2) {
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
     
     // Validate ranges
     if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
@@ -300,13 +300,15 @@ const formatCoordinates = (value) => {
     }
   }
   
+  // If formatting fails, return original value
   return value;
 };
 
 // Handle coordinates input blur
 const handleCoordinatesBlur = () => {
-  if (newCamera.value.coordinates) {
-    newCamera.value.coordinates = formatCoordinates(newCamera.value.coordinates);
+  if (newCamera.value.coordinates && newCamera.value.coordinates.trim()) {
+    const formatted = formatCoordinates(newCamera.value.coordinates);
+    newCamera.value.coordinates = formatted;
   }
 };
 
@@ -437,6 +439,11 @@ const saveCamera = async () => {
   if (!validateForm()) {
     showToast('Please fix the errors in the form', 'error');
     return;
+  }
+
+  // Format coordinates one final time before saving
+  if (newCamera.value.coordinates && newCamera.value.coordinates.trim()) {
+    newCamera.value.coordinates = formatCoordinates(newCamera.value.coordinates);
   }
 
   // Show loading state
@@ -712,7 +719,7 @@ onUnmounted(() => {
                     <span>{{ camera.ipAddress }}</span>
                   </div>
 
-                  <div class="meta-row">
+                  <div class="meta-row" v-if="camera.coordinates">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                     </svg>
