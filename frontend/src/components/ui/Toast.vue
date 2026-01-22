@@ -86,12 +86,31 @@ const getIcon = () => {
   top: 20px;
   right: 20px;
   z-index: 9999;
-  min-width: 300px;
+  min-width: 320px;
   max-width: 500px;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
   animation: slideIn 0.3s ease-out;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.toast-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: scan-top 3s linear infinite;
+}
+
+@keyframes scan-top {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .toast-content {
@@ -106,6 +125,7 @@ const getIcon = () => {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .toast-icon svg {
@@ -119,6 +139,7 @@ const getIcon = () => {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .toast-close {
@@ -139,6 +160,7 @@ const getIcon = () => {
 
 .toast-close:hover {
   opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
 }
 
 .toast-close svg {
@@ -146,21 +168,29 @@ const getIcon = () => {
   height: 100%;
 }
 
-/* Toast Types */
+/* Toast Types - Dark Glass Theme */
 .toast-container.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
 }
 
 .toast-container.error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3);
 }
 
 .toast-container.warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
 }
 
 .toast-container.info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
 }
 
 /* Animations */

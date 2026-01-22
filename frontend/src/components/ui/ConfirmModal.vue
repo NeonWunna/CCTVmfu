@@ -88,7 +88,7 @@ const getIconColor = () => {
     case 'warning':
       return '#f59e0b';
     case 'info':
-      return '#3b82f6';
+      return '#667eea';
     default:
       return '#ef4444';
   }
@@ -114,7 +114,7 @@ const getIcon = () => {
       <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
         <div class="modal-container" @click.stop role="dialog" aria-modal="true" :aria-labelledby="title">
         <div class="modal-header">
-          <div class="icon-wrapper" :style="{ backgroundColor: getIconColor() + '20' }">
+          <div class="icon-wrapper" :style="{ backgroundColor: getIconColor() + '20', borderColor: getIconColor() + '40' }">
             <svg 
               class="icon" 
               :style="{ color: getIconColor() }"
@@ -169,8 +169,8 @@ const getIcon = () => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,16 +179,36 @@ const getIcon = () => {
 }
 
 .modal-container {
-  background: white;
+  background: rgba(26, 32, 44, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
   border-radius: 16px;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  position: relative;
+}
+
+.modal-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .modal-header {
-  padding: 1.5rem 1.5rem 1rem;
+  padding: 2rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -196,38 +216,71 @@ const getIcon = () => {
 }
 
 .icon-wrapper {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
+  border: 2px solid;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: scan 3s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0%, 100% {
+    top: -100%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 200%;
+    opacity: 0;
+  }
 }
 
 .icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 2px 8px currentColor);
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   font-weight: 700;
-  color: #1f2937;
+  color: white;
   margin: 0;
   text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .modal-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   border: none;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -236,8 +289,8 @@ const getIcon = () => {
 }
 
 .modal-close:hover:not(:disabled) {
-  background: #e5e7eb;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .modal-close:disabled {
@@ -246,17 +299,17 @@ const getIcon = () => {
 }
 
 .modal-close svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .modal-body {
-  padding: 0 2rem 1.5rem;
+  padding: 0 2rem 2rem;
 }
 
 .modal-message {
-  font-size: 0.9375rem;
-  color: #6b7280;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
   text-align: center;
   margin: 0;
@@ -264,7 +317,8 @@ const getIcon = () => {
 
 .modal-footer {
   padding: 1.5rem;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
@@ -272,9 +326,9 @@ const getIcon = () => {
 
 .btn-cancel,
 .btn-confirm {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   border-radius: 10px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -282,18 +336,18 @@ const getIcon = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 100px;
+  min-width: 110px;
 }
 
 .btn-cancel {
-  background: white;
-  color: #374151;
-  border: 2px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-cancel:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-cancel:disabled {
@@ -303,23 +357,38 @@ const getIcon = () => {
 
 .btn-confirm {
   color: white;
+  border: 2px solid transparent;
 }
 
 .btn-confirm.danger {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
 .btn-confirm.warning {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
 }
 
 .btn-confirm.info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .btn-confirm:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-confirm.danger:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.btn-confirm.warning:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
+.btn-confirm.info:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 .btn-confirm:disabled {
@@ -330,9 +399,9 @@ const getIcon = () => {
 
 /* Loading Spinner */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -371,29 +440,29 @@ const getIcon = () => {
   }
 
   .modal-header {
-    padding: 1.25rem 1.25rem 0.75rem;
+    padding: 1.75rem 1.25rem 0.75rem;
   }
 
   .icon-wrapper {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
   }
 
   .icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
 
   .modal-title {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
 
   .modal-body {
-    padding: 0 1.5rem 1.25rem;
+    padding: 0 1.5rem 1.5rem;
   }
 
   .modal-message {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
   }
 
   .modal-footer {
