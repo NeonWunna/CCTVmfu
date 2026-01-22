@@ -330,7 +330,7 @@ const saveCamera = async () => {
         resetForm();
       } catch (error) {
         console.error('Error updating camera:', error);
-        showToast('Failed to update camera', 'error');
+        showToast('Ipaddress already exist!', 'error');
       }
     } else {
       // Create new
