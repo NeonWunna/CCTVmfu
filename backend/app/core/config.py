@@ -1,9 +1,13 @@
 from pydantic_settings import BaseSettings
+import os
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://postgres:postgres@db:5432/cctv_db"
+    # Use SQLite as default for development/Codespaces (no Docker needed)
+    # For production with PostgreSQL, set DATABASE_URL in .env
+    DATABASE_URL: str = "sqlite:///./cctv.db"
     
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

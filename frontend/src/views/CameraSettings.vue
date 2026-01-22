@@ -17,6 +17,7 @@ const viewMode = ref("grid");
 const showAddModal = ref(false);
 const isEditMode = ref(false);
 const editingCameraId = ref(null);
+const isSubmitting = ref(false);
 
 // Toast state
 const toast = ref({
