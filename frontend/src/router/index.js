@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import CameraSettings from '../views/CameraSettings.vue'
+import CameraView from '../views/CameraView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,6 +24,12 @@ const router = createRouter({
             component: CameraSettings,
             meta: { requiresAuth: true }
         },
+        {
+            path: '/camera-view',
+            name: 'CameraView',
+            component: CameraView,
+            meta: { requiresAuth: true }
+        }
     ]
 })
 
