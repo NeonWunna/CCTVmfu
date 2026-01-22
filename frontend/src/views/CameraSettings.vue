@@ -112,7 +112,7 @@ const showToast = (message, type = 'info') => {
 
 // Helper function to close toast
 const closeToast = () => {
-  toast.value.show = false;
+  toast.value = false;
 };
 
 // Validate IP address
@@ -264,6 +264,7 @@ const closeModal = () => {
                      newCamera.value.version;
   
   if (hasChanges && !isEditMode.value) {
+    // Keep the add modal open, just show confirm dialog on top
     confirmModal.value = {
       show: true,
       title: 'Discard Changes?',

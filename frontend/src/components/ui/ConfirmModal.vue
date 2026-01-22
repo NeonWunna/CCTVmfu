@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, Teleport } from 'vue';
 
 const props = defineProps({
   show: {
@@ -109,9 +109,10 @@ const getIcon = () => {
 </script>
 
 <template>
-  <transition name="modal">
-    <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
-      <div class="modal-container" @click.stop role="dialog" aria-modal="true" :aria-labelledby="title">
+  <Teleport to="body">
+    <transition name="modal">
+      <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+        <div class="modal-container" @click.stop role="dialog" aria-modal="true" :aria-labelledby="title">
         <div class="modal-header">
           <div class="icon-wrapper" :style="{ backgroundColor: getIconColor() + '20' }">
             <svg 
@@ -161,6 +162,7 @@ const getIcon = () => {
       </div>
     </div>
   </transition>
+  </Teleport>
 </template>
 
 <style scoped>
