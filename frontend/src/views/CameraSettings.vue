@@ -413,11 +413,7 @@ onUnmounted(() => {
     <header class="header">
       <div class="header-content">
         <div class="header-left">
-          <div class="logo-wrapper">
-            <svg class="camera-logo" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-            </svg>
-          </div>
+          <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
           <div class="header-text">
             <h1>Camera Management</h1>
             <p>Mae Fah Luang University Security System</p>
@@ -826,21 +822,10 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-.logo-wrapper {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.camera-logo {
-  width: 28px;
-  height: 28px;
-  color: white;
+.logo {
+  height: 60px;
+  width: auto;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
 .header-text h1 {
@@ -1788,14 +1773,8 @@ onUnmounted(() => {
     display: none;
   }
 
-  .logo-wrapper {
-    width: 45px;
+  .logo {
     height: 45px;
-  }
-
-  .camera-logo {
-    width: 24px;
-    height: 24px;
   }
 
   .main-content {
