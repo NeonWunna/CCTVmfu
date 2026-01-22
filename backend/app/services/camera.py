@@ -57,6 +57,11 @@ class CameraService:
         # Create coordinates string
         camera_data['coordinates'] = f"{camera.latitude}, {camera.longitude}"
         
+        # Set initial last_update to now
+        from datetime import datetime
+        if not camera_data.get('last_update'):
+            camera_data['last_update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         db_camera = models.Camera(**camera_data)
         self.db.add(db_camera)
         self.db.commit()
@@ -85,6 +90,10 @@ class CameraService:
                 new_long = camera.longitude if camera.longitude is not None else current_long
                 
                 update_data['coordinates'] = f"{new_lat}, {new_long}"
+
+            # Always update last_update timestamp
+            from datetime import datetime
+            update_data['last_update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             for key, value in update_data.items():
                 setattr(db_camera, key, value)

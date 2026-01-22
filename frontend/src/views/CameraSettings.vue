@@ -53,7 +53,12 @@ const cameras = ref([]);
 const fetchCameras = async () => {
   try {
     const response = await api.getCameras();
-    cameras.value = response.data;
+    // Map backend snake_case to frontend camelCase
+    cameras.value = response.data.map(camera => ({
+      ...camera,
+      ipAddress: camera.ip_address,
+      lastUpdate: camera.last_update
+    }));
   } catch (error) {
     console.error('Error fetching cameras:', error);
     showToast('Failed to load cameras', 'error');
@@ -319,7 +324,9 @@ const saveCamera = async () => {
         await api.createCamera(payload);
         await fetchCameras();
         showToast('Camera added successfully', 'success');
-        closeModal();
+        // Manually close modal to avoid "discard changes" check
+        showAddModal.value = false;
+        resetForm();
       } catch (error) {
         console.error('Error adding camera:', error);
         showToast('Failed to add camera', 'error');
