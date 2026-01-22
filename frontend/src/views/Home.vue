@@ -5,6 +5,7 @@ import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import api from '../services/api';
 
 const router = useRouter();
 
@@ -28,133 +29,59 @@ const confirmModal = ref({
   loading: false
 });
 
-const cctvs = ref([
-  { 
-    name: "Main Gate CCTV", 
-    lat: 20.0450, 
-    lng: 99.8925, 
-    status: "up",
-    location: "Main Entrance",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    name: "Library CCTV", 
-    lat: 20.0442, 
-    lng: 99.8945, 
-    status: "up",
-    location: "Central Library",
-    lastUpdate: "1 min ago"
-  },
-  { 
-    name: "Dormitory CCTV", 
-    lat: 20.0435, 
-    lng: 99.8952, 
-    status: "down",
-    location: "Student Housing",
-    lastUpdate: "15 min ago"
-  },
-  { 
-    name: "Parking Lot CCTV", 
-    lat: 20.0455, 
-    lng: 99.8935, 
-    status: "up",
-    location: "Parking Area A",
-    lastUpdate: "Just now"
-  },
-  { 
-    name: "Sports Complex CCTV", 
-    lat: 20.0438, 
-    lng: 99.8920, 
-    status: "up",
-    location: "Athletic Center",
-    lastUpdate: "3 min ago"
-  },
-  { 
-    name: "Cafeteria CCTV", 
-    lat: 20.0448, 
-    lng: 99.8940, 
-    status: "up",
-    location: "Student Cafeteria",
-    lastUpdate: "1 min ago"
-  },
-  { 
-    name: "Admin Building CCTV", 
-    lat: 20.0446, 
-    lng: 99.8930, 
-    status: "up",
-    location: "Administration Office",
-    lastUpdate: "4 min ago"
-  },
-  { 
-    name: "Science Building CCTV", 
-    lat: 20.0440, 
-    lng: 99.8938, 
-    status: "up",
-    location: "Science Faculty",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    name: "Engineering Hall CCTV", 
-    lat: 20.0452, 
-    lng: 99.8948, 
-    status: "down",
-    location: "Engineering Building",
-    lastUpdate: "20 min ago"
-  },
-  { 
-    name: "East Gate CCTV", 
-    lat: 20.0458, 
-    lng: 99.8955, 
-    status: "up",
-    location: "East Entrance",
-    lastUpdate: "Just now"
-  },
-  { 
-    name: "West Gate CCTV", 
-    lat: 20.0445, 
-    lng: 99.8915, 
-    status: "up",
-    location: "West Entrance",
-    lastUpdate: "3 min ago"
-  },
-  { 
-    name: "Parking Area B CCTV", 
-    lat: 20.0433, 
-    lng: 99.8928, 
-    status: "up",
-    location: "Parking Lot B",
-    lastUpdate: "5 min ago"
-  },
-  { 
-    name: "Student Center CCTV", 
-    lat: 20.0447, 
-    lng: 99.8942, 
-    status: "up",
-    location: "Student Activities Center",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    name: "Basketball Court CCTV", 
-    lat: 20.0436, 
-    lng: 99.8918, 
-    status: "up",
-    location: "Outdoor Courts",
-    lastUpdate: "6 min ago"
-  },
-  { 
-    name: "Medical Center CCTV", 
-    lat: 20.0443, 
-    lng: 99.8933, 
-    status: "up",
-    location: "Health Services",
-    lastUpdate: "1 min ago"
+const cctvs = ref([]);
+
+const parseCoordinates = (coordString) => {
+  if (!coordString) return { lat: 0, lng: 0 };
+  try {
+    // Expected format: "20.0451° N, 99.8825° E" or similar
+    const parts = coordString.split(',');
+    if (parts.length !== 2) return { lat: 0, lng: 0 };
+    
+    const latStr = parts[0].replace(/[^\d.]/g, '');
+    const lngStr = parts[1].replace(/[^\d.]/g, '');
+    
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+    
+    return {
+      lat: isNaN(lat) ? 0 : lat,
+      lng: isNaN(lng) ? 0 : lng
+    };
+  } catch (e) {
+    console.warn("Failed to parse coordinates:", coordString);
+    return { lat: 0, lng: 0 };
   }
-]);
+};
+
+const fetchCameras = async () => {
+  try {
+    const response = await api.getCameras();
+    cctvs.value = response.data.map(camera => {
+      const coords = parseCoordinates(camera.coordinates);
+      return {
+        ...camera,
+        lat: coords.lat,
+        lng: coords.lng,
+        // Ensure status matches visual logic if needed
+      };
+    });
+    
+    // Update map markers after data is loaded
+    if (map.value) {
+      renderMapMarkers();
+    }
+  } catch (error) {
+    console.error('Error fetching cameras:', error);
+    showToast('Failed to load camera data', 'error');
+  }
+};
 
 // Use shallowRef for Leaflet map instance to avoid deep reactivity performance cost
 const map = shallowRef(null);
 const mapContainer = useTemplateRef('mapContainer');
 const pulseIntervals = [];
+const markersLayer = shallowRef(null); // Layer group for markers
 
 const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up").length);
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down").length);
@@ -233,7 +160,13 @@ const addMarker = (cctv) => {
     fillColor: color,
     fillOpacity: 0.8,
     weight: 3
-  }).addTo(map.value);
+  });
+  
+  if (markersLayer.value) {
+    markersLayer.value.addLayer(marker);
+  } else if (map.value) {
+    marker.addTo(map.value);
+  }
 
   // Create custom popup content
   const popupContent = `
@@ -308,9 +241,26 @@ const initMap = () => {
     maxZoom: 19
   }).addTo(mapInstance);
 
+  // Create markers layer group
+  markersLayer.value = L.layerGroup().addTo(mapInstance);
+};
+
+const renderMapMarkers = () => {
+  if (!markersLayer.value) return;
+  
+  // Clear existing markers
+  markersLayer.value.clearLayers();
+  
+  // Clear existing intervals
+  pulseIntervals.forEach(id => clearInterval(id));
+  pulseIntervals.length = 0;
+
   // Add CCTV markers
   cctvs.value.forEach(cctv => {
-    addMarker(cctv);
+    // Only add if has valid coordinates
+    if (cctv.lat && cctv.lng) {
+      addMarker(cctv);
+    }
   });
 };
 
@@ -318,6 +268,16 @@ onMounted(() => {
   initMap();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
+  
+  // Fetch initial data
+  fetchCameras();
+  
+  // Set up auto-refresh every 30 seconds
+  const refreshInterval = setInterval(fetchCameras, 30000);
+  
+  onUnmounted(() => {
+    clearInterval(refreshInterval);
+  });
 });
 
 onUnmounted(() => {

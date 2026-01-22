@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import api from '../services/api';
 import LoadingSpinner from '../components/ui/LoadingSpinner.vue';
 
 const router = useRouter();
@@ -45,173 +46,22 @@ const newCamera = ref({
   status: "up"
 });
 
-const cameras = ref([
-  { 
-    id: 1,
-    name: "Main Gate CCTV", 
-    status: "up",
-    location: "Main Entrance",
-    ipAddress: "192.168.1.10",
-    coordinates: "20.0451° N, 99.8825° E",
-    brand: "Hikvision",
-    version: "V5.7.3",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    id: 2,
-    name: "Library CCTV", 
-    status: "up",
-    location: "Central Library",
-    ipAddress: "192.168.1.11",
-    coordinates: "20.0456° N, 99.8831° E",
-    brand: "Dahua",
-    version: "V2.840.0000000.28.R",
-    lastUpdate: "1 min ago"
-  },
-  { 
-    id: 3,
-    name: "Dormitory CCTV", 
-    status: "down",
-    location: "Student Housing",
-    ipAddress: "192.168.1.12",
-    coordinates: "20.0448° N, 99.8819° E",
-    brand: "Axis",
-    version: "10.12.85",
-    lastUpdate: "15 min ago"
-  },
-  { 
-    id: 4,
-    name: "Parking Lot CCTV", 
-    status: "up",
-    location: "Parking Area A",
-    ipAddress: "192.168.1.13",
-    coordinates: "20.0443° N, 99.8833° E",
-    brand: "Hikvision",
-    version: "V5.7.3",
-    lastUpdate: "Just now"
-  },
-  { 
-    id: 5,
-    name: "Sports Complex CCTV", 
-    status: "up",
-    location: "Athletic Center",
-    ipAddress: "192.168.1.14",
-    coordinates: "20.0461° N, 99.8838° E",
-    brand: "Uniview",
-    version: "IPC_5E0000",
-    lastUpdate: "3 min ago"
-  },
-  { 
-    id: 6,
-    name: "Cafeteria CCTV", 
-    status: "up",
-    location: "Student Cafeteria",
-    ipAddress: "192.168.1.15",
-    coordinates: "20.0454° N, 99.8827° E",
-    brand: "Dahua",
-    version: "V2.840.0000000.28.R",
-    lastUpdate: "1 min ago"
-  },
-  { 
-    id: 7,
-    name: "Admin Building CCTV", 
-    status: "up",
-    location: "Administration Office",
-    ipAddress: "192.168.1.16",
-    coordinates: "20.0458° N, 99.8824° E",
-    brand: "Hikvision",
-    version: "V5.7.3",
-    lastUpdate: "4 min ago"
-  },
-  { 
-    id: 8,
-    name: "Science Building CCTV", 
-    status: "up",
-    location: "Science Faculty",
-    ipAddress: "192.168.1.17",
-    coordinates: "20.0453° N, 99.8829° E",
-    brand: "Axis",
-    version: "10.12.85",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    id: 9,
-    name: "Engineering Hall CCTV", 
-    status: "down",
-    location: "Engineering Building",
-    ipAddress: "192.168.1.18",
-    coordinates: "20.0459° N, 99.8836° E",
-    brand: "Hikvision",
-    version: "V5.7.3",
-    lastUpdate: "20 min ago"
-  },
-  { 
-    id: 10,
-    name: "East Gate CCTV", 
-    status: "up",
-    location: "East Entrance",
-    ipAddress: "192.168.1.19",
-    coordinates: "20.0449° N, 99.8842° E",
-    brand: "Uniview",
-    version: "IPC_5E0000",
-    lastUpdate: "Just now"
-  },
-  { 
-    id: 11,
-    name: "West Gate CCTV", 
-    status: "up",
-    location: "West Entrance",
-    ipAddress: "192.168.1.20",
-    coordinates: "20.0452° N, 99.8815° E",
-    brand: "Dahua",
-    version: "V2.840.0000000.28.R",
-    lastUpdate: "3 min ago"
-  },
-  { 
-    id: 12,
-    name: "Parking Area B CCTV", 
-    status: "up",
-    location: "Parking Lot B",
-    ipAddress: "192.168.1.21",
-    coordinates: "20.0446° N, 99.8821° E",
-    brand: "Hikvision",
-    version: "V5.7.3",
-    lastUpdate: "5 min ago"
-  },
-  { 
-    id: 13,
-    name: "Student Center CCTV", 
-    status: "up",
-    location: "Student Activities Center",
-    ipAddress: "192.168.1.22",
-    coordinates: "20.0455° N, 99.8830° E",
-    brand: "Axis",
-    version: "10.12.85",
-    lastUpdate: "2 min ago"
-  },
-  { 
-    id: 14,
-    name: "Basketball Court CCTV", 
-    status: "up",
-    location: "Outdoor Courts",
-    ipAddress: "192.168.1.23",
-    coordinates: "20.0460° N, 99.8834° E",
-    brand: "Uniview",
-    version: "IPC_5E0000",
-    lastUpdate: "6 min ago"
-  },
-  { 
-    id: 15,
-    name: "Medical Center CCTV", 
-    status: "up",
-    location: "Health Services",
-    ipAddress: "192.168.1.24",
-    coordinates: "20.0457° N, 99.8828° E",
-    brand: "Dahua",
-    version: "V2.840.0000000.28.R",
-    lastUpdate: "1 min ago"
+const cameras = ref([]);
+
+const fetchCameras = async () => {
+  try {
+    const response = await api.getCameras();
+    cameras.value = response.data;
+  } catch (error) {
+    console.error('Error fetching cameras:', error);
+    showToast('Failed to load cameras', 'error');
   }
-]);
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown);
+  fetchCameras();
+});
 
 const userInitials = computed(() => {
   return userName.value
@@ -329,17 +179,22 @@ const removeCamera = (camera) => {
   confirmModal.value = {
     show: true,
     title: 'Delete Camera',
-    message: `Are you sure you want to remove "${camera.name}"? This action cannot be undone.`,
+    message: `Are you sure you want to delete ${camera.name}? This action cannot be undone.`,
+    type: 'danger',
+    loading: false,
     onConfirm: async () => {
       confirmModal.value.loading = true;
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      cameras.value = cameras.value.filter(c => c.id !== camera.id);
-      confirmModal.value.show = false;
-      confirmModal.value.loading = false;
-      showToast(`Camera "${camera.name}" has been removed successfully`, 'success');
+      try {
+        await api.deleteCamera(camera.id);
+        await fetchCameras();
+        showToast('Camera deleted successfully', 'success');
+        confirmModal.value.show = false;
+      } catch (error) {
+        console.error('Error deleting camera:', error);
+        showToast('Failed to delete camera', 'error');
+      } finally {
+        confirmModal.value.loading = false;
+      }
     }
   };
 };
@@ -406,36 +261,39 @@ const saveCamera = async () => {
 
   // Show loading state
   confirmModal.value.loading = true;
+  isSubmitting.value = true;
 
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  if (isEditMode.value) {
-    // Update existing camera
-    const index = cameras.value.findIndex(c => c.id === editingCameraId.value);
-    if (index !== -1) {
-      cameras.value[index] = {
-        ...cameras.value[index],
-        ...newCamera.value,
-        lastUpdate: "Just now"
-      };
-      showToast('Camera updated successfully', 'success');
+  try {
+    if (isEditMode.value) {
+      // Update existing
+      try {
+        await api.updateCamera(editingCameraId.value, newCamera.value);
+        await fetchCameras();
+        showToast('Camera updated successfully', 'success');
+        closeModal();
+      } catch (error) {
+        console.error('Error updating camera:', error);
+        showToast('Failed to update camera', 'error');
+      }
+    } else {
+      // Create new
+      try {
+        await api.createCamera(newCamera.value);
+        await fetchCameras();
+        showToast('Camera added successfully', 'success');
+        closeModal();
+      } catch (error) {
+        console.error('Error adding camera:', error);
+        showToast('Failed to add camera', 'error');
+      }
     }
-  } else {
-    // Add new camera
-    const newId = Math.max(...cameras.value.map(c => c.id)) + 1;
-    cameras.value.push({
-      id: newId,
-      ...newCamera.value,
-      version: "N/A",
-      lastUpdate: "Just now"
-    });
-    showToast('Camera added successfully', 'success');
+  } catch (error) {
+    console.error('Error saving camera:', error);
+    showToast('An error occurred', 'error');
+  } finally {
+    confirmModal.value.loading = false;
+    isSubmitting.value = false;
   }
-
-  confirmModal.value.loading = false;
-  showAddModal.value = false;
-  resetForm();
 };
 
 const toggleViewMode = () => {
@@ -455,10 +313,9 @@ const handleKeyDown = (e) => {
 };
 
 // Add event listener for ESC key
-import { onMounted, onUnmounted } from 'vue';
-onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown);
-});
+// import { onMounted, onUnmounted } from 'vue'; // ref and computed are already imported (and onMounted used above)
+// onMounted is already called above to fetchCameras
+import { onUnmounted } from 'vue';
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
 });
