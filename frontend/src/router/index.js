@@ -23,12 +23,6 @@ const router = createRouter({
             component: CameraSettings,
             meta: { requiresAuth: true }
         },
-        {
-            path: '/camera-view',
-            name: 'CameraView',
-            component: CameraView,
-            meta: { requiresAuth: true }
-        }
     ]
 })
 
