@@ -159,9 +159,24 @@ const handleLogoError = (event) => {
 };
 
 const viewCamera = (cctvName) => {
-  showToast(`Opening camera view for: ${cctvName}`, 'info');
-  // You can replace this with actual navigation to camera view page
-  // router.push(`/camera/${cctvName}`);
+  // Find the camera data
+  const camera = cctvs.value.find(c => c.name === cctvName);
+  if (camera) {
+    // Navigate to camera view with data
+    router.push({
+      name: 'CameraView',
+      params: { id: camera.id },
+      query: {
+        name: camera.name,
+        location: camera.location,
+        ip: camera.ipAddress,
+        status: camera.status,
+        coordinates: `${camera.lat}, ${camera.lng}`,
+        brand: camera.brand || 'N/A',
+        lastUpdate: camera.lastUpdate || new Date().toLocaleString()
+      }
+    });
+  }
 };
 
 const focusOnCamera = (camera) => {
