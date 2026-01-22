@@ -45,6 +45,7 @@ const newCamera = ref({
   latitude: "",
   longitude: "",
   brand: "",
+  version: "",
   status: "up"
 });
 
@@ -204,6 +205,7 @@ const editCamera = (camera) => {
     latitude: lat,
     longitude: long,
     brand: camera.brand,
+    version: camera.version || "",
     status: camera.status
   };
   validationErrors.value = {};
@@ -244,6 +246,7 @@ const addNewCamera = () => {
     latitude: "",
     longitude: "",
     brand: "",
+    version: "",
     status: "up"
   };
   validationErrors.value = {};
@@ -257,7 +260,8 @@ const closeModal = () => {
                      newCamera.value.ipAddress || 
                      newCamera.value.latitude || 
                      newCamera.value.longitude || 
-                     newCamera.value.brand;
+                     newCamera.value.brand ||
+                     newCamera.value.version;
   
   if (hasChanges && !isEditMode.value) {
     confirmModal.value = {
@@ -286,6 +290,7 @@ const resetForm = () => {
     latitude: "",
     longitude: "",
     brand: "",
+    version: "",
     status: "up"
   };
   validationErrors.value = {};
@@ -309,6 +314,7 @@ const saveCamera = async () => {
     latitude: newCamera.value.latitude ? parseFloat(newCamera.value.latitude) : 0,
     longitude: newCamera.value.longitude ? parseFloat(newCamera.value.longitude) : 0,
     brand: newCamera.value.brand,
+    version: newCamera.value.version || "",
     status: newCamera.value.status
   };
 
@@ -319,7 +325,8 @@ const saveCamera = async () => {
         await api.updateCamera(editingCameraId.value, payload);
         await fetchCameras();
         showToast('Camera updated successfully', 'success');
-        closeModal();
+        showAddModal.value = false;
+        resetForm();
       } catch (error) {
         console.error('Error updating camera:', error);
         showToast('Failed to update camera', 'error');
@@ -327,8 +334,9 @@ const saveCamera = async () => {
     } else {
       // Create new
       try {
-        await api.createCamera(payload);
-        await fetchCameras();
+        const response = await api.createCamera(payload);
+        // Add new camera to TOP of list
+        cameras.value.unshift(response.data);
         showToast('Camera added successfully', 'success');
         // Manually close modal to avoid "discard changes" check
         showAddModal.value = false;
@@ -364,8 +372,6 @@ const handleKeyDown = (e) => {
 };
 
 // Add event listener for ESC key
-// import { onMounted, onUnmounted } from 'vue'; // ref and computed are already imported (and onMounted used above)
-// onMounted is already called above to fetchCameras
 import { onUnmounted } from 'vue';
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
@@ -585,28 +591,28 @@ onUnmounted(() => {
                     <span>{{ camera.ipAddress }}</span>
                   </div>
 
-                  <div class="meta-row">
+                  <div class="meta-row" v-if="camera.coordinates">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                     </svg>
                     <span>{{ camera.coordinates }}</span>
                   </div>
 
-                  <div class="meta-row">
+                  <div class="meta-row" v-if="camera.brand">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                     </svg>
                     <span>{{ camera.brand }}</span>
                   </div>
 
-                  <div class="meta-row">
+                  <div class="meta-row" v-if="camera.version">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
                     </svg>
                     <span>{{ camera.version }}</span>
                   </div>
 
-                  <div class="meta-row">
+                  <div class="meta-row" v-if="camera.lastUpdate">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -722,6 +728,16 @@ onUnmounted(() => {
                 <option value="Uniview">Uniview</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label for="camera-version">Firmware Version</label>
+              <input 
+                id="camera-version"
+                v-model="newCamera.version"
+                type="text" 
+                placeholder="e.g., V5.7.3"
+              >
             </div>
 
             <div class="form-group">
@@ -870,19 +886,7 @@ onUnmounted(() => {
   min-width: 280px;
   overflow: hidden;
   z-index: 1000;
-  width: 100%;
 }
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.form-group.half {
-  flex: 1;
-}
-
-
 
 .dropdown-header {
   padding: 1.5rem;
@@ -976,6 +980,8 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 2rem;
+  height: calc(100vh - 200px);
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -983,6 +989,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: fit-content;
 }
 
 .back-button {
@@ -1083,6 +1092,8 @@ onUnmounted(() => {
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  height: 100%;
 }
 
 .inventory-header {
@@ -1449,6 +1460,15 @@ onUnmounted(() => {
   margin-bottom: 1.5rem;
 }
 
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group.half {
+  flex: 1;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
@@ -1557,11 +1577,13 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .content-wrapper {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .sidebar {
     flex-direction: row;
     overflow-x: auto;
+    position: static;
   }
 
   .stats-container {
@@ -1571,6 +1593,10 @@ onUnmounted(() => {
 
   .stat-card {
     min-width: 200px;
+  }
+
+  .main-area {
+    height: auto;
   }
 }
 
