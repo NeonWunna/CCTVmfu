@@ -292,9 +292,13 @@ const saveCamera = async () => {
   
   // Prepare payload
   const payload = {
-    ...newCamera.value,
+    name: newCamera.value.name,
+    location: newCamera.value.location,
+    ip_address: newCamera.value.ipAddress,
     latitude: newCamera.value.latitude ? parseFloat(newCamera.value.latitude) : 0,
-    longitude: newCamera.value.longitude ? parseFloat(newCamera.value.longitude) : 0
+    longitude: newCamera.value.longitude ? parseFloat(newCamera.value.longitude) : 0,
+    brand: newCamera.value.brand,
+    status: newCamera.value.status
   };
 
   try {
@@ -865,11 +869,7 @@ onUnmounted(() => {
   flex: 1;
 }
 
-.modal-footer {
-  margin-top: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  text-align: center;
-}
+
 
 .dropdown-header {
   padding: 1.5rem;
