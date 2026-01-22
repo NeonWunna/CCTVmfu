@@ -173,7 +173,7 @@ onMounted(() => {
           <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
           <div class="header-text">
             <h1>Live Camera View</h1>
-            <p>Real-time Surveillance Feed</p>
+            <p>Mae Fah Luang University - Real-time Surveillance Feed</p>
           </div>
         </div>
 

@@ -416,7 +416,7 @@ onUnmounted(() => {
           <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
           <div class="header-text">
             <h1>Camera Management</h1>
-            <p>Mae Fah Luang University Security System</p>
+            <p>Mae Fah Luang University - Security System</p>
           </div>
         </div>
 
