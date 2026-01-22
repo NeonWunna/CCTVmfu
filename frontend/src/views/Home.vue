@@ -214,40 +214,40 @@ const addMarker = (cctv) => {
     marker.addTo(map.value);
   }
 
-  // Create custom popup content with IP and Last Update
+  // Create custom popup content with IP and Last Update - Dark Theme
   const popupContent = `
     <div class="popup-header">${cctv.name}</div>
     <div class="popup-body">
       <div class="popup-status">
-        <span class="status-badge ${cctv.status}" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background-color: ${cctv.status === 'up' ? '#d1fae5' : '#fee2e2'}; color: ${cctv.status === 'up' ? '#065f46' : '#991b1b'};">
-          <span class="legend-dot ${cctv.status}" style="width: 12px; height: 12px; border-radius: 50%; display: inline-block; background-color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; box-shadow: 0 0 0 3px ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};"></span>
+        <span class="status-badge ${cctv.status}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background-color: ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; border: 1px solid ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
+          <span class="legend-dot ${cctv.status}" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background-color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; box-shadow: 0 0 0 3px ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};"></span>
           ${statusText}
         </span>
       </div>
-      <div class="popup-info" style="font-size: 13px; color: #6b7280; line-height: 1.6;">
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: #374151;">IP Address:</span>
-          <span>${cctv.ipAddress || 'N/A'}</span>
+      <div class="popup-info" style="font-size: 13px; color: rgba(255, 255, 255, 0.7); line-height: 1.8;">
+        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">IP Address:</span>
+          <span style="font-family: 'Courier New', monospace; color: rgba(102, 126, 234, 0.9);">${cctv.ipAddress || 'N/A'}</span>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: #374151;">Location:</span>
+        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Location:</span>
           <span>${cctv.location}</span>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: #374151;">Last Update:</span>
+        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Last Update:</span>
           <span>${cctv.lastUpdate || 'N/A'}</span>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: #374151;">Coordinates:</span>
+        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Coordinates:</span>
           <span>${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</span>
         </div>
       </div>
-      <div class="popup-actions" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+      <div class="popup-actions" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
         <button 
           onclick="window.viewCameraFromPopup('${cctv.name}')"
-          style="width: 100%; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;"
-          onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'"
-          onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'"
+          style="width: 100%; padding: 10px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
+          onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)'"
+          onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)'"
         >
           <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -605,23 +605,41 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* Dashboard Container */
+/* Dashboard Container - Dark Theme */
 .dashboard-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: #f7fafc;
+  background: linear-gradient(135deg, rgba(26, 32, 44, 0.95) 0%, rgba(45, 55, 72, 0.98) 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
 }
 
-/* Header Styles - Matching CameraSettings */
+.dashboard-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header Styles - Dark Theme */
 .header {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  background: rgba(26, 32, 44, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(102, 126, 234, 0.2);
   position: sticky;
   top: 0;
   z-index: 1001;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  position: relative;
 }
 
 .header-content {
@@ -642,19 +660,21 @@ onUnmounted(() => {
 .logo {
   height: 60px;
   width: auto;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
 .header-text h1 {
   font-size: 24px;
-  color: #2d3748;
+  color: white;
   font-weight: 700;
   margin-bottom: 4px;
   letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .header-text p {
   font-size: 14px;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
 }
 
@@ -672,11 +692,12 @@ onUnmounted(() => {
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .profile-section:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 .profile-avatar {
@@ -719,14 +740,16 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
+/* Dropdown Menu - Dark Theme */
 .profile-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: white;
+  background: rgba(26, 32, 44, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   min-width: 280px;
   overflow: hidden;
   z-index: 1002;
@@ -777,20 +800,20 @@ onUnmounted(() => {
   background: none;
   border: none;
   cursor: pointer;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 0.875rem;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
-  background: #f7fafc;
-  color: #667eea;
+  background: rgba(102, 126, 234, 0.2);
+  color: white;
 }
 
 .dropdown-item.logout:hover {
-  background: #fff5f5;
-  color: #e53e3e;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 .dropdown-item svg {
@@ -800,7 +823,7 @@ onUnmounted(() => {
 
 .dropdown-divider {
   height: 1px;
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.1);
   margin: 0.5rem 0;
 }
 
@@ -825,11 +848,12 @@ onUnmounted(() => {
   transform: translateY(-10px);
 }
 
-/* Status Panel - Enhanced */
+/* Status Panel - Dark Theme */
 .status-panel {
-  background: white;
+  background: rgba(26, 32, 44, 0.9);
+  backdrop-filter: blur(20px);
   padding: 20px 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -838,7 +862,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   z-index: 1000;
   position: relative;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .panel-left {
@@ -863,13 +887,14 @@ onUnmounted(() => {
 .panel-title svg {
   width: 24px;
   height: 24px;
-  color: #667eea;
+  color: rgba(102, 126, 234, 0.8);
 }
 
 .panel-title h2 {
   font-size: 1.25rem;
-  color: #2d3748;
+  color: white;
   font-weight: 700;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .legend {
@@ -884,7 +909,7 @@ onUnmounted(() => {
   gap: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .legend-dot {
@@ -924,7 +949,7 @@ onUnmounted(() => {
   }
 }
 
-/* Stats Cards - Enhanced to match CameraSettings */
+/* Stats Cards - Dark Theme */
 .stats {
   display: flex;
   gap: 15px;
@@ -932,21 +957,24 @@ onUnmounted(() => {
 }
 
 .stat-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   min-width: 180px;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
@@ -967,14 +995,17 @@ onUnmounted(() => {
 
 .stat-total .stat-icon {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .stat-online .stat-icon {
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
 }
 
 .stat-offline .stat-icon {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
 }
 
 .stat-info {
@@ -983,7 +1014,7 @@ onUnmounted(() => {
 
 .stat-label {
   font-size: 0.75rem;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 600;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -992,11 +1023,12 @@ onUnmounted(() => {
 .stat-value {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #2d3748;
+  color: white;
   line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Search in Status Panel */
+/* Search in Status Panel - Dark Theme */
 .search-wrapper {
   position: relative;
   width: 100%;
@@ -1009,25 +1041,31 @@ onUnmounted(() => {
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  color: #a0aec0;
+  color: rgba(255, 255, 255, 0.4);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
   padding: 0.75rem 3rem 0.75rem 3rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   font-size: 0.875rem;
+  color: white;
   transition: all 0.3s ease;
-  background: #f7fafc;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .search-input:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  background: white;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 .clear-button {
@@ -1038,7 +1076,7 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border: none;
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -1048,13 +1086,13 @@ onUnmounted(() => {
 }
 
 .clear-button:hover {
-  background: #cbd5e0;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .clear-button svg {
   width: 16px;
   height: 16px;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .search-results-info {
@@ -1070,13 +1108,15 @@ onUnmounted(() => {
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* Search Results Panel */
+/* Search Results Panel - Dark Theme */
 .search-results-panel {
-  background: white;
-  border-bottom: 2px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: rgba(26, 32, 44, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   max-height: 400px;
   overflow-y: auto;
   z-index: 998;
@@ -1088,23 +1128,24 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 30px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f7fafc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
   sticky: top 0;
   z-index: 1;
 }
 
 .results-header h3 {
   font-size: 1rem;
-  color: #2d3748;
+  color: white;
   font-weight: 600;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .close-results {
   width: 32px;
   height: 32px;
   border: none;
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -1114,13 +1155,13 @@ onUnmounted(() => {
 }
 
 .close-results:hover {
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .close-results svg {
   width: 18px;
   height: 18px;
-  color: #4a5568;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .results-list {
@@ -1137,7 +1178,7 @@ onUnmounted(() => {
 }
 
 .result-item:hover {
-  background: #f7fafc;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .result-icon {
@@ -1149,6 +1190,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .result-icon svg {
@@ -1163,9 +1205,10 @@ onUnmounted(() => {
 
 .result-name {
   font-weight: 600;
-  color: #2d3748;
+  color: white;
   font-size: 0.9375rem;
   margin-bottom: 4px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .result-details {
@@ -1173,16 +1216,17 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 0.8125rem;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .result-ip {
   font-family: 'Courier New', monospace;
   font-weight: 500;
+  color: rgba(102, 126, 234, 0.9);
 }
 
 .result-separator {
-  color: #cbd5e0;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .status-indicator {
@@ -1203,29 +1247,31 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
-/* No Results */
+/* No Results - Dark Theme */
 .no-results {
-  background: white;
+  background: rgba(26, 32, 44, 0.95);
+  backdrop-filter: blur(20px);
   padding: 3rem 2rem;
   text-align: center;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .no-results svg {
   width: 64px;
   height: 64px;
-  color: #cbd5e0;
+  color: rgba(102, 126, 234, 0.4);
   margin: 0 auto 1rem;
 }
 
 .no-results h3 {
   font-size: 1.25rem;
-  color: #2d3748;
+  color: white;
   margin-bottom: 0.5rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .no-results p {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 1.5rem;
 }
 
@@ -1238,11 +1284,12 @@ onUnmounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .clear-search-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
 /* Transitions */
@@ -1277,6 +1324,7 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   z-index: 1;
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 #map {
@@ -1462,10 +1510,13 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* Global styles for Leaflet popup */
+/* Global styles for Leaflet popup - Dark Theme */
 .leaflet-popup-content-wrapper {
+  background: rgba(26, 32, 44, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   padding: 0;
   overflow: hidden;
 }
@@ -1476,7 +1527,9 @@ onUnmounted(() => {
 }
 
 .leaflet-popup-tip {
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+  background: rgba(26, 32, 44, 0.98);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
 .popup-header {
@@ -1485,10 +1538,12 @@ onUnmounted(() => {
   padding: 14px 16px;
   font-weight: 600;
   font-size: 15px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .popup-body {
   padding: 16px;
+  background: rgba(26, 32, 44, 0.98);
 }
 
 .custom-popup .leaflet-popup-close-button {
