@@ -1639,6 +1639,12 @@ onUnmounted(() => {
   transition: all 0.3s ease;
 }
 
+.form-group select option {
+  background: rgba(26, 32, 44, 0.98);
+  color: white;
+  padding: 0.5rem;
+}
+
 .form-group input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
