@@ -302,17 +302,23 @@ const saveCamera = async () => {
   }
 
   try {
-    if (isEditMode.value) {
-      await cameraAPI.update(editingCameraId.value, newCamera.value);
-      showToast('Camera updated successfully', 'success');
-    } else {
-      await cameraAPI.create(newCamera.value);
-      showToast('Camera added successfully', 'success');
-    }
-    
+  if (isEditMode.value) {
+    await cameraAPI.update(editingCameraId.value, newCamera.value);
+    showToast('Camera updated successfully', 'success');
     await fetchCameras();
-    showAddModal.value = false;
-    resetForm();
+  } else {
+    const response = await cameraAPI.create(newCamera.value);
+    const newCameraData = response.data;
+    
+    // Add new camera at the TOP of the list
+    cameras.value.unshift(newCameraData);
+    
+    showToast('Camera added successfully', 'success');
+  }
+  
+  showAddModal.value = false;
+  resetForm();
+  
   } catch (error) {
     console.error('Save failed:', error);
     showToast('Failed to save camera', 'error');
