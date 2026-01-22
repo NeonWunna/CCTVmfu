@@ -11,10 +11,7 @@ from app.models import Camera
 router = APIRouter()
 
 
-@router.get("/")
-def root():
-    """Root endpoint - API welcome message."""
-    return {"message": "Hello from CCTV MFU Backend (FastAPI)"}
+
 
 
 @router.get("/health")
