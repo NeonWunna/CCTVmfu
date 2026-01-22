@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef } from 'vue';
+import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
@@ -12,6 +12,7 @@ const router = useRouter();
 const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
+const searchQuery = ref("");
 
 // Toast state
 const toast = ref({
@@ -89,6 +90,19 @@ const markersLayer = shallowRef(null); // Layer group for markers
 const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up").length);
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down").length);
 const totalCount = computed(() => cctvs.value.length);
+
+const filteredCameras = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return cctvs.value;
+  }
+  
+  const query = searchQuery.value.toLowerCase().trim();
+  return cctvs.value.filter(camera => 
+    camera.name.toLowerCase().includes(query) ||
+    (camera.ipAddress && camera.ipAddress.toLowerCase().includes(query))
+  );
+});
+
 const userInitials = computed(() => {
   return userName.value
     .split(' ')
@@ -148,6 +162,35 @@ const viewCamera = (cctvName) => {
   showToast(`Opening camera view for: ${cctvName}`, 'info');
   // You can replace this with actual navigation to camera view page
   // router.push(`/camera/${cctvName}`);
+};
+
+const focusOnCamera = (camera) => {
+  if (!map.value || !camera.lat || !camera.lng) return;
+  
+  // Zoom and pan to camera location
+  map.value.setView([camera.lat, camera.lng], 18, {
+    animate: true,
+    duration: 1
+  });
+  
+  // Find and open the popup for this camera
+  setTimeout(() => {
+    markersLayer.value.eachLayer((layer) => {
+      if (layer.getLatLng().lat === camera.lat && layer.getLatLng().lng === camera.lng) {
+        layer.openPopup();
+      }
+    });
+  }, 500);
+  
+  showToast(`Focused on: ${camera.name}`, 'info');
+};
+
+const clearSearch = () => {
+  searchQuery.value = "";
+  if (map.value && cctvs.value.length > 0) {
+    // Reset to default view showing all cameras
+    map.value.setView([20.0443, 99.8937], 16);
+  }
 };
 
 const addMarker = (cctv) => {
@@ -262,13 +305,29 @@ const renderMapMarkers = () => {
   pulseIntervals.forEach(id => clearInterval(id));
   pulseIntervals.length = 0;
 
+  // Determine which cameras to display based on search
+  const camerasToDisplay = searchQuery.value.trim() ? filteredCameras.value : cctvs.value;
+
   // Add CCTV markers
-  cctvs.value.forEach(cctv => {
+  camerasToDisplay.forEach(cctv => {
     // Only add if has valid coordinates
     if (cctv.lat && cctv.lng) {
       addMarker(cctv);
     }
   });
+
+  // If searching and have results, adjust map view to show all filtered cameras
+  if (searchQuery.value.trim() && camerasToDisplay.length > 0) {
+    const bounds = L.latLngBounds(
+      camerasToDisplay
+        .filter(c => c.lat && c.lng)
+        .map(c => [c.lat, c.lng])
+    );
+    
+    if (bounds.isValid()) {
+      map.value.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
+    }
+  }
 };
 
 onMounted(() => {
@@ -281,6 +340,13 @@ onMounted(() => {
   
   // Set up auto-refresh every 30 seconds
   const refreshInterval = setInterval(fetchCameras, 30000);
+  
+  // Watch search query changes and update markers
+  watch(searchQuery, () => {
+    if (map.value) {
+      renderMapMarkers();
+    }
+  });
   
   onUnmounted(() => {
     clearInterval(refreshInterval);
@@ -445,6 +511,88 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Search cameras by name or IP address..."
+          class="search-input"
+          aria-label="Search cameras"
+        >
+        <button 
+          v-if="searchQuery" 
+          @click="clearSearch" 
+          class="clear-button"
+          aria-label="Clear search"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Search Results Info -->
+      <div v-if="searchQuery" class="search-results-info">
+        <span class="results-count">
+          {{ filteredCameras.length }} camera{{ filteredCameras.length !== 1 ? 's' : '' }} found
+        </span>
+      </div>
+    </div>
+
+    <!-- Search Results Panel (only show when searching) -->
+    <transition name="slide-down">
+      <div v-if="searchQuery && filteredCameras.length > 0" class="search-results-panel">
+        <div class="results-header">
+          <h3>Search Results</h3>
+          <button @click="clearSearch" class="close-results">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="results-list">
+          <div 
+            v-for="camera in filteredCameras" 
+            :key="camera.id" 
+            class="result-item"
+            @click="focusOnCamera(camera)"
+          >
+            <div class="result-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div class="result-info">
+              <div class="result-name">{{ camera.name }}</div>
+              <div class="result-details">
+                <span class="result-ip">{{ camera.ipAddress }}</span>
+                <span class="result-separator">•</span>
+                <span class="result-location">{{ camera.location }}</span>
+              </div>
+            </div>
+            <span class="status-indicator" :class="camera.status"></span>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- No Results Message -->
+    <transition name="fade">
+      <div v-if="searchQuery && filteredCameras.length === 0" class="no-results">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3>No cameras found</h3>
+        <p>Try searching with a different name or IP address</p>
+        <button @click="clearSearch" class="clear-search-button">Clear Search</button>
+      </div>
+    </transition>
 
     <!-- Map -->
     <main class="map-container">
@@ -843,6 +991,291 @@ onUnmounted(() => {
   line-height: 1;
 }
 
+/* Search Container */
+.search-container {
+  background: white;
+  padding: 20px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 999;
+  position: relative;
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #a0aec0;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.875rem 3rem 0.875rem 3rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  transition: all 0.3s ease;
+  background: #f7fafc;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: white;
+}
+
+.clear-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.clear-button:hover {
+  background: #cbd5e0;
+}
+
+.clear-button svg {
+  width: 16px;
+  height: 16px;
+  color: #4a5568;
+}
+
+.search-results-info {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.results-count {
+  display: inline-block;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Search Results Panel */
+.search-results-panel {
+  background: white;
+  border-bottom: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 998;
+  position: relative;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 30px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f7fafc;
+  sticky: top 0;
+  z-index: 1;
+}
+
+.results-header h3 {
+  font-size: 1rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.close-results {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-results:hover {
+  background: #e2e8f0;
+}
+
+.close-results svg {
+  width: 18px;
+  height: 18px;
+  color: #4a5568;
+}
+
+.results-list {
+  padding: 8px 0;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.result-item:hover {
+  background: #f7fafc;
+}
+
+.result-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.result-icon svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.result-info {
+  flex: 1;
+}
+
+.result-name {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.9375rem;
+  margin-bottom: 4px;
+}
+
+.result-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: #718096;
+}
+
+.result-ip {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.result-separator {
+  color: #cbd5e0;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.up {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.status-indicator.down {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* No Results */
+.no-results {
+  background: white;
+  padding: 3rem 2rem;
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.no-results svg {
+  width: 64px;
+  height: 64px;
+  color: #cbd5e0;
+  margin: 0 auto 1rem;
+}
+
+.no-results h3 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.no-results p {
+  color: #718096;
+  margin-bottom: 1.5rem;
+}
+
+.clear-search-button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-search-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Transitions */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 /* Map Container */
 .map-container {
   flex: 1;
@@ -871,6 +1304,20 @@ onUnmounted(() => {
   .stats {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .search-container {
+    padding: 15px 20px;
+  }
+
+  .search-results-panel {
+    max-height: 300px;
+  }
+
+  .results-header,
+  .result-item {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
@@ -925,6 +1372,19 @@ onUnmounted(() => {
   .stat-value {
     font-size: 1.5rem;
   }
+
+  .search-input {
+    font-size: 0.875rem;
+    padding: 0.75rem 2.75rem 0.75rem 2.75rem;
+  }
+
+  .result-name {
+    font-size: 0.875rem;
+  }
+
+  .result-details {
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -939,6 +1399,33 @@ onUnmounted(() => {
 
   .legend-item {
     font-size: 12px;
+  }
+
+  .search-wrapper {
+    max-width: 100%;
+  }
+
+  .search-results-panel {
+    max-height: 250px;
+  }
+
+  .result-item {
+    padding: 10px 15px;
+  }
+
+  .result-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .result-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .result-separator {
+    display: none;
   }
 }
 </style>
