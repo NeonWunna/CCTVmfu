@@ -335,8 +335,14 @@ const saveCamera = async () => {
       // Create new
       try {
         const response = await api.createCamera(payload);
+        // Map the response data from snake_case to camelCase before adding to cameras array
+        const newCameraData = {
+          ...response.data,
+          ipAddress: response.data.ip_address,
+          lastUpdate: response.data.last_update
+        };
         // Add new camera to TOP of list
-        cameras.value.unshift(response.data);
+        cameras.value.unshift(newCameraData);
         showToast('Camera added successfully', 'success');
         // Manually close modal to avoid "discard changes" check
         showAddModal.value = false;
@@ -1401,7 +1407,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1050;
   padding: 1rem;
 }
 
@@ -1413,6 +1419,8 @@ onUnmounted(() => {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1051;
 }
 
 .modal-header {
