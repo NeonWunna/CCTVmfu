@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, Teleport } from 'vue';
 
 const props = defineProps({
   message: {
@@ -63,29 +63,38 @@ const getIcon = () => {
 </script>
 
 <template>
-  <transition name="toast">
-    <div v-if="visible" class="toast-container" :class="type">
-      <div class="toast-content">
-        <div class="toast-icon">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" v-html="getIcon()"></svg>
+  <Teleport to="body">
+    <transition name="toast">
+      <div v-if="visible" class="toast-overlay">
+        <div class="toast-container" :class="type">
+          <div class="toast-content">
+            <div class="toast-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" v-html="getIcon()"></svg>
+            </div>
+            <p class="toast-message">{{ message }}</p>
+            <button class="toast-close" @click="close" aria-label="Close notification">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
-        <p class="toast-message">{{ message }}</p>
-        <button class="toast-close" @click="close" aria-label="Close notification">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
       </div>
-    </div>
-  </transition>
+    </transition>
+  </Teleport>
 </template>
 
 <style scoped>
-.toast-container {
+.toast-overlay {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 0;
+  right: 0;
   z-index: 9999;
+  pointer-events: none;
+  padding: 20px;
+}
+
+.toast-container {
   min-width: 320px;
   max-width: 500px;
   border-radius: 12px;
@@ -95,6 +104,7 @@ const getIcon = () => {
   border: 1px solid;
   position: relative;
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .toast-container::before {
@@ -222,12 +232,16 @@ const getIcon = () => {
 
 /* Mobile responsive */
 @media (max-width: 640px) {
+  .toast-overlay {
+    padding: 10px;
+    left: 0;
+    right: 0;
+  }
+  
   .toast-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
     min-width: auto;
     max-width: none;
+    width: 100%;
   }
   
   .toast-content {
