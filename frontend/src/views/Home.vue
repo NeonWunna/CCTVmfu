@@ -34,12 +34,13 @@ const cctvs = ref([]);
 const parseCoordinates = (coordString) => {
   if (!coordString) return { lat: 0, lng: 0 };
   try {
-    // Expected format: "20.0451° N, 99.8825° E" or similar
+    // Expected format: "20.0451, 99.8825" or "-99.0, 79.2313"
     const parts = coordString.split(',');
     if (parts.length !== 2) return { lat: 0, lng: 0 };
     
-    const latStr = parts[0].replace(/[^\d.]/g, '');
-    const lngStr = parts[1].replace(/[^\d.]/g, '');
+    // Keep minus sign, digits, and dots only
+    const latStr = parts[0].replace(/[^\d.-]/g, '');
+    const lngStr = parts[1].replace(/[^\d.-]/g, '');
     
     const lat = parseFloat(latStr);
     const lng = parseFloat(lngStr);
