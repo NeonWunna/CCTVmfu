@@ -292,7 +292,7 @@ const resetForm = () => {
 
 const saveCamera = async () => {
   if (!validateForm()) {
-    showToast('Please fill in the required information!', 'error');
+    showToast('Please fix the errors in the form', 'error');
     return;
   }
 
