@@ -56,11 +56,11 @@ const loginWithSSO = async () => {
       <div class="login-card">
         <!-- MFU Logo Circle -->
         <div class="mfu-logo-circle">
-          <span>MFU</span>
+          <span>MFU CCTV</span>
         </div>
 
         <!-- Login Title -->
-        <h2 class="login-title">Welcome Back</h2>
+        <h2 class="login-title">CCTV Monitoring System</h2>
         <p class="login-subtitle">Sign in to access the CCTV Monitoring System</p>
         <p class="login-time">Available 24/7</p>
 
