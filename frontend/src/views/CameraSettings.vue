@@ -318,7 +318,7 @@ const saveCamera = async () => {
   
   showAddModal.value = false;
   resetForm();
-  
+
   } catch (error) {
     console.error('Save failed:', error);
     showToast('Failed to save camera', 'error');
@@ -942,6 +942,8 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 2rem;
+  height: calc(100vh - 200px); /* Adjust based on header height */
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -949,6 +951,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: fit-content;
 }
 
 .back-button {
@@ -1049,6 +1054,8 @@ onUnmounted(() => {
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  height: 100%;
 }
 
 .inventory-header {
