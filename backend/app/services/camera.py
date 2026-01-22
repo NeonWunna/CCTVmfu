@@ -50,14 +50,14 @@ class CameraService:
     def create_camera(self, camera: schemas.CameraCreate) -> models.Camera:
         """
         Create a new camera.
-        
-        Args:
-            camera: Camera creation schema
-        
-        Returns:
-            Created camera model
         """
-        db_camera = models.Camera(**camera.model_dump())
+        # Convert Pydantic model to dict, excluding lat/long which aren't in DB model
+        camera_data = camera.model_dump(exclude={'latitude', 'longitude'})
+        
+        # Create coordinates string
+        camera_data['coordinates'] = f"{camera.latitude}, {camera.longitude}"
+        
+        db_camera = models.Camera(**camera_data)
         self.db.add(db_camera)
         self.db.commit()
         self.db.refresh(db_camera)
@@ -70,17 +70,22 @@ class CameraService:
     ) -> Optional[models.Camera]:
         """
         Update an existing camera.
-        
-        Args:
-            camera_id: ID of the camera to update
-            camera: Camera update schema with new data
-        
-        Returns:
-            Updated camera model if found, None otherwise
         """
         db_camera = self.get_camera(camera_id)
         if db_camera:
-            update_data = camera.model_dump(exclude_unset=True)
+            update_data = camera.model_dump(exclude_unset=True, exclude={'latitude', 'longitude'})
+            
+            # Handle coordinates update if lat or long provided
+            if camera.latitude is not None or camera.longitude is not None:
+                current_coords = db_camera.coordinates.split(',') if db_camera.coordinates else ["0", "0"]
+                current_lat = float(current_coords[0].strip()) if len(current_coords) > 0 else 0.0
+                current_long = float(current_coords[1].strip()) if len(current_coords) > 1 else 0.0
+                
+                new_lat = camera.latitude if camera.latitude is not None else current_lat
+                new_long = camera.longitude if camera.longitude is not None else current_long
+                
+                update_data['coordinates'] = f"{new_lat}, {new_long}"
+
             for key, value in update_data.items():
                 setattr(db_camera, key, value)
             self.db.commit()

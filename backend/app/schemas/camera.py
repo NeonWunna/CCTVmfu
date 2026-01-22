@@ -29,18 +29,34 @@ class CameraBase(BaseModel):
         return v.lower() if v else "up"
 
 
-class CameraCreate(CameraBase):
+class CameraCreate(BaseModel):
     """Schema for creating a new camera."""
-    pass
+    name: str = Field(..., min_length=1, max_length=255, description="Camera name")
+    location: str = Field(..., min_length=1, max_length=255, description="Camera location")
+    ip_address: str = Field(..., max_length=45, description="Camera IP address")
+    latitude: float = Field(..., description="GPS Latitude")
+    longitude: float = Field(..., description="GPS Longitude")
+    brand: Optional[str] = Field(None, max_length=100)
+    status: Optional[str] = Field("up", max_length=20)
+    version: Optional[str] = Field(None, max_length=50)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        """Validate status is one of allowed values."""
+        allowed = ["up", "down", "maintenance", "unknown"]
+        if v and v.lower() not in allowed:
+            raise ValueError(f"Status must be one of: {', '.join(allowed)}")
+        return v.lower() if v else "up"
 
 
 class CameraUpdate(BaseModel):
-    """Schema for updating a camera (all fields optional)."""
-    
+    """Schema for updating a camera."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     location: Optional[str] = Field(None, min_length=1, max_length=255)
     ip_address: Optional[str] = Field(None, max_length=45)
-    coordinates: Optional[str] = Field(None, max_length=100)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     brand: Optional[str] = Field(None, max_length=100)
     status: Optional[str] = Field(None, max_length=20)
     version: Optional[str] = Field(None, max_length=50)
@@ -49,7 +65,6 @@ class CameraUpdate(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, v: Optional[str]) -> Optional[str]:
-        """Validate status is one of allowed values."""
         if v is None:
             return v
         allowed = ["up", "down", "maintenance", "unknown"]

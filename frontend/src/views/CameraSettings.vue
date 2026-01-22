@@ -42,7 +42,8 @@ const newCamera = ref({
   name: "",
   location: "",
   ipAddress: "",
-  coordinates: "",
+  latitude: "",
+  longitude: "",
   brand: "",
   status: "up"
 });
@@ -126,6 +127,14 @@ const validateForm = () => {
     errors.ipAddress = 'Invalid IP address format';
   }
   
+  if (newCamera.value.latitude && isNaN(parseFloat(newCamera.value.latitude))) {
+    errors.latitude = 'Latitude must be a number';
+  }
+  
+  if (newCamera.value.longitude && isNaN(parseFloat(newCamera.value.longitude))) {
+    errors.longitude = 'Longitude must be a number';
+  }
+
   validationErrors.value = errors;
   return Object.keys(errors).length === 0;
 };
@@ -164,11 +173,25 @@ const handleLogoError = (event) => {
 const editCamera = (camera) => {
   isEditMode.value = true;
   editingCameraId.value = camera.id;
+  
+  // Parse coordinates
+  let lat = "";
+  let long = "";
+  
+  if (camera.coordinates) {
+    const parts = camera.coordinates.split(',').map(s => s.trim());
+    if (parts.length >= 2) {
+      lat = parts[0];
+      long = parts[1];
+    }
+  }
+
   newCamera.value = {
     name: camera.name,
     location: camera.location,
     ipAddress: camera.ipAddress,
-    coordinates: camera.coordinates,
+    latitude: lat,
+    longitude: long,
     brand: camera.brand,
     status: camera.status
   };
@@ -207,7 +230,8 @@ const addNewCamera = () => {
     name: "",
     location: "",
     ipAddress: "",
-    coordinates: "",
+    latitude: "",
+    longitude: "",
     brand: "",
     status: "up"
   };
@@ -220,7 +244,8 @@ const closeModal = () => {
   const hasChanges = newCamera.value.name || 
                      newCamera.value.location || 
                      newCamera.value.ipAddress || 
-                     newCamera.value.coordinates || 
+                     newCamera.value.latitude || 
+                     newCamera.value.longitude || 
                      newCamera.value.brand;
   
   if (hasChanges && !isEditMode.value) {
@@ -247,7 +272,8 @@ const resetForm = () => {
     name: "",
     location: "",
     ipAddress: "",
-    coordinates: "",
+    latitude: "",
+    longitude: "",
     brand: "",
     status: "up"
   };
@@ -263,12 +289,19 @@ const saveCamera = async () => {
   // Show loading state
   confirmModal.value.loading = true;
   isSubmitting.value = true;
+  
+  // Prepare payload
+  const payload = {
+    ...newCamera.value,
+    latitude: newCamera.value.latitude ? parseFloat(newCamera.value.latitude) : 0,
+    longitude: newCamera.value.longitude ? parseFloat(newCamera.value.longitude) : 0
+  };
 
   try {
     if (isEditMode.value) {
       // Update existing
       try {
-        await api.updateCamera(editingCameraId.value, newCamera.value);
+        await api.updateCamera(editingCameraId.value, payload);
         await fetchCameras();
         showToast('Camera updated successfully', 'success');
         closeModal();
@@ -279,7 +312,7 @@ const saveCamera = async () => {
     } else {
       // Create new
       try {
-        await api.createCamera(newCamera.value);
+        await api.createCamera(payload);
         await fetchCameras();
         showToast('Camera added successfully', 'success');
         closeModal();
@@ -635,14 +668,31 @@ onUnmounted(() => {
               <span v-if="validationErrors.ipAddress" class="error-message">{{ validationErrors.ipAddress }}</span>
             </div>
 
-            <div class="form-group">
-              <label for="camera-coordinates">Coordinates</label>
-              <input 
-                id="camera-coordinates"
-                v-model="newCamera.coordinates"
-                type="text" 
-                placeholder="e.g., 20.0451° N, 99.8825° E"
-              >
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="camera-latitude">Latitude</label>
+                <input 
+                  id="camera-latitude"
+                  v-model="newCamera.latitude"
+                  type="number" 
+                  step="any"
+                  placeholder="e.g., 20.0451"
+                  :class="{ 'error': validationErrors.latitude }"
+                >
+                <span v-if="validationErrors.latitude" class="error-message">{{ validationErrors.latitude }}</span>
+              </div>
+              <div class="form-group half">
+                <label for="camera-longitude">Longitude</label>
+                <input 
+                  id="camera-longitude"
+                  v-model="newCamera.longitude"
+                  type="number" 
+                  step="any"
+                  placeholder="e.g., 99.8825"
+                  :class="{ 'error': validationErrors.longitude }"
+                >
+                <span v-if="validationErrors.longitude" class="error-message">{{ validationErrors.longitude }}</span>
+              </div>
             </div>
 
             <div class="form-group">
@@ -803,6 +853,22 @@ onUnmounted(() => {
   min-width: 280px;
   overflow: hidden;
   z-index: 1000;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group.half {
+  flex: 1;
+}
+
+.modal-footer {
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  text-align: center;
 }
 
 .dropdown-header {
