@@ -64,7 +64,9 @@ const fetchCameras = async () => {
         ...camera,
         lat: coords.lat,
         lng: coords.lng,
-        // Ensure status matches visual logic if needed
+        // Map backend snake_case to frontend camelCase
+        ipAddress: camera.ip_address,
+        lastUpdate: camera.last_update
       };
     });
     
@@ -169,7 +171,7 @@ const addMarker = (cctv) => {
     marker.addTo(map.value);
   }
 
-  // Create custom popup content
+  // Create custom popup content with IP and Last Update
   const popupContent = `
     <div class="popup-header">${cctv.name}</div>
     <div class="popup-body">
@@ -181,12 +183,16 @@ const addMarker = (cctv) => {
       </div>
       <div class="popup-info" style="font-size: 13px; color: #6b7280; line-height: 1.6;">
         <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
+          <span class="popup-info-label" style="font-weight: 500; color: #374151;">IP Address:</span>
+          <span>${cctv.ipAddress || 'N/A'}</span>
+        </div>
+        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
           <span class="popup-info-label" style="font-weight: 500; color: #374151;">Location:</span>
           <span>${cctv.location}</span>
         </div>
         <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
           <span class="popup-info-label" style="font-weight: 500; color: #374151;">Last Update:</span>
-          <span>${cctv.lastUpdate}</span>
+          <span>${cctv.lastUpdate || 'N/A'}</span>
         </div>
         <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 4px 0;">
           <span class="popup-info-label" style="font-weight: 500; color: #374151;">Coordinates:</span>
