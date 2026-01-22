@@ -473,6 +473,36 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <div class="panel-center">
+        <div class="search-wrapper">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Search cameras by name or IP..."
+            class="search-input"
+            aria-label="Search cameras"
+          >
+          <button 
+            v-if="searchQuery" 
+            @click="clearSearch" 
+            class="clear-button"
+            aria-label="Clear search"
+          >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div v-if="searchQuery" class="search-results-info">
+          <span class="results-count">
+            {{ filteredCameras.length }} camera{{ filteredCameras.length !== 1 ? 's' : '' }} found
+          </span>
+        </div>
+      </div>
+
       <div class="stats">
         <div class="stat-card stat-total">
           <div class="stat-icon">
@@ -509,39 +539,6 @@ onUnmounted(() => {
             <div class="stat-value">{{ offlineCount }}</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Search Bar -->
-    <div class="search-container">
-      <div class="search-wrapper">
-        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-        <input 
-          v-model="searchQuery"
-          type="text" 
-          placeholder="Search cameras by name or IP address..."
-          class="search-input"
-          aria-label="Search cameras"
-        >
-        <button 
-          v-if="searchQuery" 
-          @click="clearSearch" 
-          class="clear-button"
-          aria-label="Clear search"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Search Results Info -->
-      <div v-if="searchQuery" class="search-results-info">
-        <span class="results-count">
-          {{ filteredCameras.length }} camera{{ filteredCameras.length !== 1 ? 's' : '' }} found
-        </span>
       </div>
     </div>
 
@@ -848,6 +845,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 30px;
+  min-width: 250px;
+}
+
+.panel-center {
+  flex: 1;
+  max-width: 500px;
+  min-width: 280px;
 }
 
 .panel-title {
@@ -924,6 +928,7 @@ onUnmounted(() => {
 .stats {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .stat-card {
@@ -991,20 +996,10 @@ onUnmounted(() => {
   line-height: 1;
 }
 
-/* Search Container */
-.search-container {
-  background: white;
-  padding: 20px 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid #e2e8f0;
-  z-index: 999;
-  position: relative;
-}
-
+/* Search in Status Panel */
 .search-wrapper {
   position: relative;
-  max-width: 600px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .search-icon {
@@ -1020,10 +1015,10 @@ onUnmounted(() => {
 
 .search-input {
   width: 100%;
-  padding: 0.875rem 3rem 0.875rem 3rem;
+  padding: 0.75rem 3rem 0.75rem 3rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   transition: all 0.3s ease;
   background: #f7fafc;
 }
@@ -1037,7 +1032,7 @@ onUnmounted(() => {
 
 .clear-button {
   position: absolute;
-  right: 0.75rem;
+  right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
   width: 32px;
@@ -1064,16 +1059,16 @@ onUnmounted(() => {
 
 .search-results-info {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .results-count {
   display: inline-block;
-  padding: 6px 16px;
+  padding: 4px 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -1290,6 +1285,28 @@ onUnmounted(() => {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .status-panel {
+    flex-wrap: wrap;
+  }
+
+  .panel-left {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .panel-center {
+    flex: 1 1 100%;
+    max-width: 100%;
+    order: 3;
+  }
+
+  .stats {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 1024px) {
   .status-panel {
     flex-direction: column;
@@ -1301,13 +1318,14 @@ onUnmounted(() => {
     flex-wrap: wrap;
   }
 
+  .panel-center {
+    width: 100%;
+  }
+
   .stats {
     width: 100%;
     overflow-x: auto;
-  }
-
-  .search-container {
-    padding: 15px 20px;
+    justify-content: flex-start;
   }
 
   .search-results-panel {
@@ -1348,6 +1366,14 @@ onUnmounted(() => {
 
   .panel-title h2 {
     font-size: 1rem;
+  }
+
+  .panel-left {
+    gap: 15px;
+  }
+
+  .legend {
+    flex-wrap: wrap;
   }
 
   .stats {
@@ -1393,16 +1419,16 @@ onUnmounted(() => {
     height: 20px;
   }
 
+  .panel-title h2 {
+    font-size: 0.9rem;
+  }
+
   .legend {
-    gap: 15px;
+    gap: 10px;
   }
 
   .legend-item {
     font-size: 12px;
-  }
-
-  .search-wrapper {
-    max-width: 100%;
   }
 
   .search-results-panel {
@@ -1426,6 +1452,11 @@ onUnmounted(() => {
 
   .result-separator {
     display: none;
+  }
+
+  .results-count {
+    font-size: 0.7rem;
+    padding: 3px 10px;
   }
 }
 </style>
