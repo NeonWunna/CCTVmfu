@@ -14,7 +14,7 @@ from app.exceptions import CameraNotFoundException
 router = APIRouter(prefix="/cameras")
 
 
-@router.get("/", response_model=List[schemas.Camera])
+@router.get("", response_model=List[schemas.Camera])
 def list_cameras(
     skip: int = 0, 
     limit: int = 100, 
@@ -35,7 +35,7 @@ def list_cameras(
     return service.get_cameras(skip=skip, limit=limit)
 
 
-@router.post("/", response_model=schemas.Camera)
+@router.post("", response_model=schemas.Camera)
 def create_camera(
     camera: schemas.CameraCreate, 
     db: Session = Depends(get_db)
