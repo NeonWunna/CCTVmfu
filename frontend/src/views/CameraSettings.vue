@@ -1003,7 +1003,7 @@ const handleKeyDown = (e) => {
 
 /* Main Content */
 .main-content {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
   position: relative;
@@ -1295,7 +1295,7 @@ const handleKeyDown = (e) => {
 }
 
 .camera-table thead th {
-  padding: 1rem 1.25rem;
+  padding: 1rem 0.75rem;
   text-align: left;
   font-weight: 700;
   font-size: 0.875rem;
@@ -1319,7 +1319,7 @@ const handleKeyDown = (e) => {
 }
 
 .camera-table tbody td {
-  padding: 1rem 1.25rem;
+  padding: 1rem 0.75rem;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.875rem;
   vertical-align: middle;
