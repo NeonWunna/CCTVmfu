@@ -784,6 +784,8 @@ const handleKeyDown = (e) => {
   background: linear-gradient(135deg, rgba(26, 32, 44, 0.95) 0%, rgba(45, 55, 72, 0.98) 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .page-container::before {
@@ -1855,12 +1857,15 @@ const handleKeyDown = (e) => {
   }
 
   .stat-card {
+    display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
     padding: 12px 4px;
     gap: 6px;
     min-height: 90px;
+    flex: 1 1 0px; /* Force equal width regardless of content */
+    width: 0; /* Necessary for flex item to shrink below content size if needed */
   }
 
   .stat-icon {
@@ -1942,6 +1947,9 @@ const handleKeyDown = (e) => {
   
   .table-container {
     border-radius: 8px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
   }
   
   .camera-table thead th,
