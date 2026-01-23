@@ -1138,6 +1138,34 @@ onUnmounted(() => {
   position: relative;
 }
 
+/* Custom Scrollbar for Search Results Panel */
+.search-results-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-results-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.search-results-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.5);
+}
+
+.search-results-panel::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.8);
+}
+
+/* Firefox scrollbar */
+.search-results-panel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.8) rgba(0, 0, 0, 0.2);
+}
+
 .results-header {
   display: flex;
   justify-content: space-between;
