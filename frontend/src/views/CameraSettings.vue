@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
@@ -18,7 +18,6 @@ const showAddModal = ref(false);
 const isEditMode = ref(false);
 const editingCameraId = ref(null);
 const isSubmitting = ref(false);
-const isRefreshing = ref(false);
 
 // Toast state
 const toast = ref({
@@ -62,7 +61,14 @@ const fetchCameras = async () => {
           ...camera,
           ipAddress: camera.ip_address,
           lastUpdate: camera.last_update
-        }));
+        }))
+        // Sort by ID descending (newest first) - higher ID means newer camera
+        .sort((a, b) => {
+          // Primary sort by ID (newer cameras have higher IDs)
+          return b.id - a.id;
+        });
+        
+        console.log('Cameras sorted by ID:', cameras.value.map(c => ({ id: c.id, name: c.name })));
     } else {
         console.warn('API returned non-array data:', response.data);
         cameras.value = [];
@@ -73,34 +79,9 @@ const fetchCameras = async () => {
   }
 };
 
-const refreshStatus = async () => {
-  isRefreshing.value = true;
-  try {
-    await api.checkAllCamerasStatus();
-    await fetchCameras();
-    showToast('Camera statuses updated', 'success');
-  } catch (error) {
-    console.error('Error refreshing status:', error);
-    showToast('Failed to refresh status', 'error');
-  } finally {
-    isRefreshing.value = false;
-  }
-};
-
-
-let pollInterval = null;
-
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   fetchCameras();
-  
-  // Auto-refresh camera data every 10 seconds to reflect background checks
-  pollInterval = setInterval(fetchCameras, 10000);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown);
-  if (pollInterval) clearInterval(pollInterval);
 });
 
 const userInitials = computed(() => {
@@ -325,7 +306,7 @@ const resetForm = () => {
 
 const saveCamera = async () => {
   if (!validateForm()) {
-    showToast('Please fill in the required information!', 'error');
+    showToast('Please fix the errors in the form', 'error');
     return;
   }
 
@@ -356,27 +337,19 @@ const saveCamera = async () => {
         resetForm();
       } catch (error) {
         console.error('Error updating camera:', error);
-        showToast('Ipaddress already exist!', 'error');
+        showToast('Failed to update camera', 'error');
       }
     } else {
       // Create new
       try {
-        const response = await api.createCamera(payload);
-        // Map the response data from snake_case to camelCase before adding to cameras array
-        const newCameraData = {
-          ...response.data,
-          ipAddress: response.data.ip_address,
-          lastUpdate: response.data.last_update
-        };
-        // Add new camera to TOP of list
-        cameras.value.unshift(newCameraData);
+        await api.createCamera(payload);
+        await fetchCameras(); // Refetch to get sorted list with new camera at top
         showToast('Camera added successfully', 'success');
-        // Manually close modal to avoid "discard changes" check
         showAddModal.value = false;
         resetForm();
       } catch (error) {
         console.error('Error adding camera:', error);
-        showToast('Ipaddress already exist!', 'error');
+        showToast('Failed to add camera', 'error');
       }
     }
   } catch (error) {
@@ -404,8 +377,11 @@ const handleKeyDown = (e) => {
   }
 };
 
-// Add event listener for ESC key - Logic moved to combined onUnmounted above
-
+// Add event listener for ESC key
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <template>
@@ -439,7 +415,7 @@ const handleKeyDown = (e) => {
           <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
           <div class="header-text">
             <h1>Camera Management</h1>
-            <p>Mae Fah Luang University - Security System</p>
+            <p>Mae Fah Luang University Security System</p>
           </div>
         </div>
 
@@ -568,14 +544,6 @@ const handleKeyDown = (e) => {
                 <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                 </svg>
-              </button>
-
-              <button class="add-button refresh-btn" @click="refreshStatus" :disabled="isRefreshing" style="margin-right: 10px; background-color: #4a5568;">
-                <svg v-if="!isRefreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                <LoadingSpinner v-else size="sm" />
-                <span style="margin-left: 0.5rem">Check Status</span>
               </button>
 
               <button class="add-button" @click="addNewCamera">
@@ -779,7 +747,13 @@ const handleKeyDown = (e) => {
               >
             </div>
 
-
+            <div class="form-group">
+              <label for="camera-status">Status</label>
+              <select id="camera-status" v-model="newCamera.status">
+                <option value="up">Online</option>
+                <option value="down">Offline</option>
+              </select>
+            </div>
 
             <div class="modal-footer">
               <button type="button" class="button-secondary" @click="closeModal">Cancel</button>
@@ -1163,6 +1137,34 @@ const handleKeyDown = (e) => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   height: 100%;
+}
+
+/* Custom Scrollbar for Main Area */
+.main-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.main-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.5);
+}
+
+.main-area::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.8);
+}
+
+/* Firefox scrollbar */
+.main-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.8) rgba(0, 0, 0, 0.2);
 }
 
 .inventory-header {
@@ -1565,6 +1567,34 @@ const handleKeyDown = (e) => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   position: relative;
   z-index: 1051;
+}
+
+/* Custom Scrollbar for Modal */
+.modal-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.5);
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.8);
+}
+
+/* Firefox scrollbar */
+.modal-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.8) rgba(0, 0, 0, 0.2);
 }
 
 .modal-container::before {
