@@ -1173,7 +1173,8 @@ onUnmounted(() => {
   padding: 16px 30px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
-  sticky: top 0;
+  position: sticky;
+  top: 0;
   z-index: 1;
 }
 
@@ -1401,22 +1402,34 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .status-panel {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
   }
 
   .panel-left {
     width: 100%;
     flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .panel-center {
     width: 100%;
+    order: 0; /* Ensure search bar appears before/between items correctly */
   }
 
   .stats {
     width: 100%;
+    flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
+    gap: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .stat-card {
+    min-width: 160px;
+    flex: 0 0 auto;
   }
 
   .search-results-panel {
@@ -1479,6 +1492,7 @@ onUnmounted(() => {
   .stat-icon {
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
   }
 
   .stat-icon svg {
