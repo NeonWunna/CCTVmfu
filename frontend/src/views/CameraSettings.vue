@@ -1853,19 +1853,23 @@ const handleKeyDown = (e) => {
 
   /* Compact Stats Cards for Mobile */
   .stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+    width: 100%;
   }
 
   .stat-card {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     text-align: center;
     padding: 12px 4px;
-    gap: 6px;
+    gap: 4px;
     min-height: 90px;
-    flex: 1 1 0px; /* Force equal width regardless of content */
-    width: 0; /* Necessary for flex item to shrink below content size if needed */
+    width: 100%; /* Fill the grid cell */
+    min-width: 0; /* Prevent overflow */
   }
 
   .stat-icon {
@@ -1890,12 +1894,12 @@ const handleKeyDown = (e) => {
 
   .stat-label {
     font-size: 0.6rem;
-    line-height: 1.2;
+    line-height: 1.1;
     margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Allow wrapping */
+    text-align: center;
     width: 100%;
+    word-wrap: break-word;
   }
 
   .stat-value {
