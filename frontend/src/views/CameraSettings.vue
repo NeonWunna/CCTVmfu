@@ -1733,6 +1733,119 @@ const handleKeyDown = (e) => {
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
+/* ===== PROFESSIONAL CUSTOM SCROLLBAR STYLES ===== */
+
+/* Global Scrollbar (Webkit: Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(26, 32, 44, 0.4);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+  border-color: rgba(26, 32, 44, 0.2);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.7);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.7) rgba(0, 0, 0, 0.2);
+}
+
+/* Main Area Scrollbar (Enhanced) */
+.main-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.7) rgba(0, 0, 0, 0.2);
+}
+
+.main-area::-webkit-scrollbar {
+  width: 12px;
+}
+
+.main-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  margin: 10px 0;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.main-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(26, 32, 44, 0.5);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.main-area::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-color: rgba(26, 32, 44, 0.3);
+  box-shadow: 0 0 12px rgba(102, 126, 234, 0.6);
+}
+
+/* Modal Container Scrollbar */
+.modal-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.6) rgba(0, 0, 0, 0.3);
+}
+
+.modal-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(26, 32, 44, 0.6);
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
+}
+
+/* Sidebar Stats Scrollbar (for mobile horizontal scroll) */
+.stats-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.stats-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stats-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+  border-radius: 6px;
+}
+
+.stats-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+}
+
+/* ===== END SCROLLBAR STYLES ===== */
+
 /* Transitions */
 .dropdown-enter-active,
 .dropdown-leave-active {
