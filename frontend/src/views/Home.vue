@@ -1425,16 +1425,14 @@ onUnmounted(() => {
   .stats {
     width: 100%;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: flex-start;
+    overflow-x: visible;
+    justify-content: space-between;
     gap: 12px;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
   }
   
   .stat-card {
-    min-width: 160px;
-    flex: 0 0 auto;
+    min-width: 0;
+    flex: 1;
   }
 
   .search-results-panel {
@@ -1486,27 +1484,32 @@ onUnmounted(() => {
   }
 
   .stats {
-    gap: 10px;
+    gap: 6px;
   }
 
   .stat-card {
-    min-width: 150px;
-    padding: 12px 16px;
+    min-width: 0;
+    padding: 10px 8px;
+    gap: 8px;
   }
 
   .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
   }
 
   .stat-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
   }
 
   .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
   }
 
   .search-input {
