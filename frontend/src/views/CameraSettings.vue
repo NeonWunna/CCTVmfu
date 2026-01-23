@@ -1849,19 +1849,33 @@ const handleKeyDown = (e) => {
     gap: 1rem;
   }
 
+  /* Compact Stats Cards for Mobile */
   .stats-container {
     gap: 8px;
   }
 
   .stat-card {
-    padding: 10px 8px;
-    gap: 8px;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 4px;
+    gap: 6px;
+    min-height: 90px;
   }
 
   .stat-icon {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 10px;
+    margin: 0 auto;
+  }
+  
+  .stat-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .stat-icon svg {
@@ -1870,11 +1884,17 @@ const handleKeyDown = (e) => {
   }
 
   .stat-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
+    line-height: 1.2;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
   }
 
   .stat-value {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     margin-top: 0;
   }
 
@@ -1883,17 +1903,31 @@ const handleKeyDown = (e) => {
     border-radius: 12px;
   }
 
+  /* Improved Inventory Controls Layout */
   .inventory-controls {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .search-box {
-    min-width: 100%;
+    flex: 1 1 100%;
+    width: 100%;
   }
   
   .add-button {
-    width: 100%;
+    flex: 1;
+    width: auto;
+    min-width: 0; /* Allow shrinking */
     justify-content: center;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  
+  .add-button svg {
+    width: 16px;
+    height: 16px;
   }
 
   .modal-container {
