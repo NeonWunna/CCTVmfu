@@ -571,15 +571,6 @@ const handleKeyDown = (e) => {
                 >
               </div>
 
-              <button class="view-toggle" @click="toggleViewMode" aria-label="Toggle view mode">
-                <svg v-if="viewMode === 'grid'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-                <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                </svg>
-              </button>
-
               <button class="add-button refresh-btn" @click="refreshStatus" :disabled="isRefreshing" style="margin-right: 10px; background-color: #4a5568;">
                 <svg v-if="!isRefreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -597,95 +588,72 @@ const handleKeyDown = (e) => {
             </div>
           </div>
 
-          <!-- Camera Grid -->
-          <div v-if="filteredCameras.length === 0" class="empty-state">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <h3>No cameras found</h3>
-            <p>Try adjusting your search criteria</p>
-          </div>
+<!-- Camera Table -->
+<div v-if="filteredCameras.length === 0" class="empty-state">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+  </svg>
+  <h3>No cameras found</h3>
+  <p>Try adjusting your search criteria</p>
+</div>
 
-          <div v-else class="camera-grid" :class="{ 'list-view': viewMode === 'list' }">
-            <div v-for="camera in filteredCameras" :key="camera.id" class="camera-card">
-              <div class="card-header">
-                <div class="camera-icon">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                  </svg>
-                  <div class="scan-line"></div>
-                </div>
-                <span class="status-badge" :class="camera.status">
-                  <span class="status-dot"></span>
-                  {{ camera.status === 'up' ? 'Online' : 'Offline' }}
-                </span>
-              </div>
-
-              <div class="card-body">
-                <h3 class="camera-name">{{ camera.name }}</h3>
-                
-                <div class="camera-meta">
-                  <div class="meta-row">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    <span>{{ camera.location }}</span>
-                  </div>
-
-                  <div class="meta-row">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                    </svg>
-                    <span class="ip-address">{{ camera.ipAddress }}</span>
-                  </div>
-
-                  <div class="meta-row" v-if="camera.coordinates">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                    </svg>
-                    <span>{{ camera.coordinates }}</span>
-                  </div>
-
-                  <div class="meta-row" v-if="camera.brand">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                    </svg>
-                    <span>{{ camera.brand }}</span>
-                  </div>
-
-                  <div class="meta-row" v-if="camera.version">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
-                    </svg>
-                    <span>{{ camera.version }}</span>
-                  </div>
-
-                  <div class="meta-row" v-if="camera.lastUpdate">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>{{ camera.lastUpdate }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card-actions">
-                <button class="action-button edit" @click="editCamera(camera)" aria-label="Edit camera">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                  Edit
-                </button>
-                <button class="action-button delete" @click="removeCamera(camera)" aria-label="Delete camera">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                  Delete
-                </button>
-              </div>
+<div v-else class="table-container">
+  <table class="camera-table">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Camera Name</th>
+        <th>Location</th>
+        <th>IP Address</th>
+        <th>Coordinates</th>
+        <th>Brand</th>
+        <th>Version</th>
+        <th>Last Update</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="camera in filteredCameras" :key="camera.id" class="camera-row">
+        <td>
+          <span class="status-badge" :class="camera.status">
+            <span class="status-dot"></span>
+            {{ camera.status === 'up' ? 'Online' : 'Offline' }}
+          </span>
+        </td>
+        <td>
+          <div class="camera-name-cell">
+            <div class="camera-icon-small">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
             </div>
+            <span class="camera-name-text">{{ camera.name }}</span>
           </div>
+        </td>
+        <td>{{ camera.location }}</td>
+        <td><span class="ip-address">{{ camera.ipAddress }}</span></td>
+        <td>{{ camera.coordinates || '-' }}</td>
+        <td>{{ camera.brand || '-' }}</td>
+        <td>{{ camera.version || '-' }}</td>
+        <td>{{ camera.lastUpdate || '-' }}</td>
+        <td>
+          <div class="table-actions">
+            <button class="action-button-small edit" @click="editCamera(camera)" aria-label="Edit camera">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button class="action-button-small delete" @click="removeCamera(camera)" aria-label="Delete camera">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
         </section>
       </div>
     </main>
@@ -1283,109 +1251,158 @@ const handleKeyDown = (e) => {
   height: 20px;
 }
 
-/* Camera Grid - Dark Theme */
-.camera-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
-.camera-grid.list-view {
-  grid-template-columns: 1fr;
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
 }
 
-.camera-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Camera Table Styles */
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
-.camera-card::before {
-  content: '';
-  position: absolute;
+.camera-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.camera-table thead {
+  background: rgba(102, 126, 234, 0.15);
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  z-index: 10;
 }
 
-.camera-card:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(102, 126, 234, 0.5);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+.camera-table thead th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  white-space: nowrap;
 }
 
-.camera-card:hover::before {
-  opacity: 1;
+.camera-table tbody tr {
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.card-header {
+.camera-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.camera-table tbody td {
+  padding: 1rem 1.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.camera-name-cell {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
 }
 
-.camera-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+.camera-icon-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.camera-icon-small svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.camera-name-text {
+  font-weight: 600;
+  color: white;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-button-small {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.action-button-small svg {
+  width: 18px;
+  height: 18px;
+}
+
+.action-button-small.edit {
+  border-color: rgba(102, 126, 234, 0.5);
+  color: #667eea;
+}
+
+.action-button-small.edit:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.camera-icon svg {
-  width: 24px;
-  height: 24px;
+.action-button-small.delete {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.action-button-small.delete:hover {
+  background: #ef4444;
+  border-color: transparent;
   color: white;
-  position: relative;
-  z-index: 2;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
-/* Scanning Line Effect */
-.scan-line {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-  animation: scan 3s ease-in-out infinite;
-}
-
-@keyframes scan {
-  0%, 100% {
-    top: -100%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    top: 200%;
-    opacity: 0;
-  }
-}
-
+/* Keep status badge and IP address styles */
 .status-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
@@ -1393,6 +1410,7 @@ const handleKeyDown = (e) => {
   font-size: 0.75rem;
   font-weight: 600;
   border: 1px solid;
+  white-space: nowrap;
 }
 
 .status-badge.up {
@@ -1424,127 +1442,10 @@ const handleKeyDown = (e) => {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
-@keyframes pulse-dot {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1);
-  }
-}
-
-.card-body {
-  margin-bottom: 1.5rem;
-}
-
-.camera-name {
-  font-size: 1.25rem;
-  color: white;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.camera-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-}
-
-.meta-row svg {
-  width: 18px;
-  height: 18px;
-  color: rgba(102, 126, 234, 0.6);
-  flex-shrink: 0;
-}
-
 .ip-address {
   font-family: 'Courier New', monospace;
   color: rgba(102, 126, 234, 0.9);
   font-weight: 500;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.action-button {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 2px solid;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.action-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.action-button.edit {
-  border-color: rgba(102, 126, 234, 0.5);
-  color: #667eea;
-}
-
-.action-button.edit:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.action-button.delete {
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #ef4444;
-}
-
-.action-button.delete:hover {
-  background: #ef4444;
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.empty-state svg {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1rem;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Modal Styles - Dark Theme */
@@ -1947,10 +1848,6 @@ const handleKeyDown = (e) => {
     min-width: 100%;
   }
 
-  .camera-grid {
-    grid-template-columns: 1fr;
-  }
-
   .modal-container {
     margin: 1rem;
   }
@@ -1965,13 +1862,43 @@ const handleKeyDown = (e) => {
   .inventory-title h2 {
     font-size: 1.5rem;
   }
+}
 
-  .card-actions {
-    flex-direction: column;
+@media (max-width: 1200px) {
+  .camera-table {
+    font-size: 0.8rem;
   }
+  
+  .camera-table thead th,
+  .camera-table tbody td {
+    padding: 0.75rem 0.875rem;
+  }
+}
 
-  .action-button {
-    width: 100%;
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: 8px;
+  }
+  
+  .camera-table thead th,
+  .camera-table tbody td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .camera-icon-small {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .camera-icon-small svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .action-button-small {
+    width: 32px;
+    height: 32px;
   }
 }
 </style>
