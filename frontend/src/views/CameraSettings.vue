@@ -117,14 +117,24 @@ const offlineCount = computed(() => cameras.value.filter(c => c.status === "down
 const totalCount = computed(() => cameras.value.length);
 
 const filteredCameras = computed(() => {
-  if (!searchQuery.value) return cameras.value;
+  let filtered = cameras.value;
   
-  const query = searchQuery.value.toLowerCase();
-  return cameras.value.filter(camera => 
-    camera.name.toLowerCase().includes(query) ||
-    camera.location.toLowerCase().includes(query) ||
-    camera.ipAddress.toLowerCase().includes(query)
-  );
+  // Apply search filter if there's a query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = cameras.value.filter(camera => 
+      camera.name.toLowerCase().includes(query) ||
+      camera.location.toLowerCase().includes(query) ||
+      camera.ipAddress.toLowerCase().includes(query)
+    );
+  }
+  
+  // Sort by status: online (up) first, then offline (down)
+  return filtered.sort((a, b) => {
+    if (a.status === 'up' && b.status === 'down') return -1;
+    if (a.status === 'down' && b.status === 'up') return 1;
+    return 0; // Keep original order if both have same status
+  });
 });
 
 // Helper function to show toast
