@@ -1295,7 +1295,7 @@ const handleKeyDown = (e) => {
 
 /* Camera Table Styles */
 .table-container {
-  overflow-x: auto;
+  overflow-x: hidden;
   border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.1);
 }
@@ -1304,6 +1304,7 @@ const handleKeyDown = (e) => {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed; /* Add this line */
 }
 
 .camera-table thead {
