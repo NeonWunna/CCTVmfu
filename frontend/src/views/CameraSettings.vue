@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
@@ -87,9 +87,20 @@ const refreshStatus = async () => {
   }
 };
 
+
+let pollInterval = null;
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   fetchCameras();
+  
+  // Auto-refresh camera data every 10 seconds to reflect background checks
+  pollInterval = setInterval(fetchCameras, 10000);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown);
+  if (pollInterval) clearInterval(pollInterval);
 });
 
 const userInitials = computed(() => {
@@ -393,11 +404,8 @@ const handleKeyDown = (e) => {
   }
 };
 
-// Add event listener for ESC key
-import { onUnmounted } from 'vue';
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown);
-});
+// Add event listener for ESC key - Logic moved to combined onUnmounted above
+
 </script>
 
 <template>
