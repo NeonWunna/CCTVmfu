@@ -1402,19 +1402,24 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .status-panel {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
     gap: 16px;
+    height: auto;
   }
 
   .panel-left {
     width: 100%;
+    flex: 0 0 auto;
     flex-wrap: wrap;
     justify-content: space-between;
   }
 
   .panel-center {
     width: 100%;
-    order: 0; /* Ensure search bar appears before/between items correctly */
+    flex: 0 0 auto;
+    max-width: none;
+    order: 0 !important;
   }
 
   .stats {
