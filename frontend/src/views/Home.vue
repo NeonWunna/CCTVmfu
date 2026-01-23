@@ -1173,7 +1173,8 @@ onUnmounted(() => {
   padding: 16px 30px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
-  sticky: top 0;
+  position: sticky;
+  top: 0;
   z-index: 1;
 }
 
@@ -1401,22 +1402,39 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .status-panel {
     flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 16px;
+    height: auto;
   }
 
   .panel-left {
     width: 100%;
+    flex: 0 0 auto;
     flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .panel-center {
     width: 100%;
+    flex: 0 0 auto;
+    max-width: none;
+    order: 0 !important;
   }
 
   .stats {
     width: 100%;
+    flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
+    gap: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .stat-card {
+    min-width: 160px;
+    flex: 0 0 auto;
   }
 
   .search-results-panel {
@@ -1479,6 +1497,7 @@ onUnmounted(() => {
   .stat-icon {
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
   }
 
   .stat-icon svg {
