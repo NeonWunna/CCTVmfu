@@ -1132,7 +1132,7 @@ onUnmounted(() => {
   backdrop-filter: blur(20px);
   border-bottom: 2px solid rgba(102, 126, 234, 0.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  max-height: 240px;
+  max-height: 145px;
   overflow-y: auto;
   z-index: 998;
   position: relative;
@@ -1392,7 +1392,7 @@ onUnmounted(() => {
   }
 
   .search-results-panel {
-    max-height: 200px;
+    max-height: 130px;
   }
 
   .results-header,
@@ -1495,7 +1495,7 @@ onUnmounted(() => {
   }
 
   .search-results-panel {
-    max-height: 180px;
+    max-height: 120px;
   }
 
   .result-item {
