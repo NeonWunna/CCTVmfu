@@ -1789,25 +1789,34 @@ const handleKeyDown = (e) => {
   .content-wrapper {
     grid-template-columns: 1fr;
     height: auto;
+    overflow: visible;
   }
 
   .sidebar {
-    flex-direction: row;
-    overflow-x: auto;
+    flex-direction: column;
     position: static;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .back-button {
+    width: fit-content;
   }
 
   .stats-container {
     flex-direction: row;
-    min-width: min-content;
+    width: 100%;
+    gap: 1rem;
   }
 
   .stat-card {
-    min-width: 200px;
+    flex: 1;
+    min-width: 0;
   }
 
   .main-area {
     height: auto;
+    overflow: visible;
   }
 }
 
@@ -1835,9 +1844,43 @@ const handleKeyDown = (e) => {
   .main-content {
     padding: 1rem;
   }
+  
+  .content-wrapper {
+    gap: 1rem;
+  }
+
+  .stats-container {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .stat-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+    margin-top: 0;
+  }
 
   .main-area {
-    padding: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
   }
 
   .inventory-controls {
@@ -1847,35 +1890,22 @@ const handleKeyDown = (e) => {
   .search-box {
     min-width: 100%;
   }
+  
+  .add-button {
+    width: 100%;
+    justify-content: center;
+  }
 
   .modal-container {
     margin: 1rem;
+    max-height: 85vh;
   }
 
   .modal-header,
   .modal-body {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .inventory-title h2 {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 1200px) {
-  .camera-table {
-    font-size: 0.8rem;
+    padding: 1.25rem;
   }
   
-  .camera-table thead th,
-  .camera-table tbody td {
-    padding: 0.75rem 0.875rem;
-  }
-}
-
-@media (max-width: 768px) {
   .table-container {
     border-radius: 8px;
   }
