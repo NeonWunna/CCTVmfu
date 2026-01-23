@@ -106,6 +106,33 @@ def update_camera(
     return db_camera
 
 
+@router.post("/check-status", response_model=schemas.MessageResponse)
+def check_all_cameras_status(
+    db: Session = Depends(get_db)
+):
+    """
+    Check status of all cameras by pinging their IPs.
+    """
+    service = CameraService(db)
+    service.check_all_cameras_status()
+    return schemas.MessageResponse(message="All cameras status check initiated")
+
+
+@router.post("/{camera_id}/check", response_model=schemas.Camera)
+def check_camera_status(
+    camera_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    Check status of a specific camera by pinging its IP.
+    """
+    service = CameraService(db)
+    db_camera = service.check_camera_status(camera_id)
+    if db_camera is None:
+        raise CameraNotFoundException(camera_id)
+    return db_camera
+
+
 @router.delete("/{camera_id}", response_model=schemas.MessageResponse)
 def delete_camera(
     camera_id: int, 

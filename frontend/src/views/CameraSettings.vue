@@ -18,6 +18,7 @@ const showAddModal = ref(false);
 const isEditMode = ref(false);
 const editingCameraId = ref(null);
 const isSubmitting = ref(false);
+const isRefreshing = ref(false);
 
 // Toast state
 const toast = ref({
@@ -69,6 +70,20 @@ const fetchCameras = async () => {
   } catch (error) {
     console.error('Error fetching cameras:', error);
     showToast('Failed to load cameras', 'error');
+  }
+};
+
+const refreshStatus = async () => {
+  isRefreshing.value = true;
+  try {
+    await api.checkAllCamerasStatus();
+    await fetchCameras();
+    showToast('Camera statuses updated', 'success');
+  } catch (error) {
+    console.error('Error refreshing status:', error);
+    showToast('Failed to refresh status', 'error');
+  } finally {
+    isRefreshing.value = false;
   }
 };
 
@@ -547,6 +562,14 @@ onUnmounted(() => {
                 </svg>
               </button>
 
+              <button class="add-button refresh-btn" @click="refreshStatus" :disabled="isRefreshing" style="margin-right: 10px; background-color: #4a5568;">
+                <svg v-if="!isRefreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <LoadingSpinner v-else size="sm" />
+                <span style="margin-left: 0.5rem">Check Status</span>
+              </button>
+
               <button class="add-button" @click="addNewCamera">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -748,13 +771,7 @@ onUnmounted(() => {
               >
             </div>
 
-            <div class="form-group">
-              <label for="camera-status">Status</label>
-              <select id="camera-status" v-model="newCamera.status">
-                <option value="up">Online</option>
-                <option value="down">Offline</option>
-              </select>
-            </div>
+
 
             <div class="modal-footer">
               <button type="button" class="button-secondary" @click="closeModal">Cancel</button>

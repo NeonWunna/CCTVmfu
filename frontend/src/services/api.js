@@ -25,5 +25,11 @@ export default {
     },
     getStatus() {
         return api.get('/status');
+    },
+    checkAllCamerasStatus() {
+        return api.post('/cameras/check-status');
+    },
+    checkCameraStatus(id) {
+        return api.post(`/cameras/${id}/check`);
     }
 };

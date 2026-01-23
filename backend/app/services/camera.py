@@ -8,6 +8,10 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.utils.network import ping_ip
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Thailand timezone
 THAILAND_TZ = ZoneInfo("Asia/Bangkok")
@@ -98,6 +102,10 @@ class CameraService:
             # Always update last_update timestamp (Thailand timezone)
             update_data['last_update'] = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
+            # Prevent manual status update (system controlled via ping)
+            if 'status' in update_data:
+                del update_data['status']
+
             for key, value in update_data.items():
                 setattr(db_camera, key, value)
             self.db.commit()
@@ -142,3 +150,39 @@ class CameraService:
             Total camera count
         """
         return self.db.query(models.Camera).count()
+
+    def check_camera_status(self, camera_id: int) -> Optional[models.Camera]:
+        """
+        Check camera status by pinging its IP and update DB.
+        
+        Args:
+            camera_id: ID of the camera to check
+            
+        Returns:
+            Updated camera model
+        """
+        db_camera = self.get_camera(camera_id)
+        if db_camera and db_camera.ip_address:
+            # Ping the camera
+            is_reachable = ping_ip(db_camera.ip_address)
+            new_status = "up" if is_reachable else "down"
+            
+            # Update if status changed
+            # We also update active timestamp if it's reachable or status changes
+            if db_camera.status != new_status:
+                logger.info(f"Camera {camera_id} ({db_camera.name}) status changed: {db_camera.status} -> {new_status}")
+                db_camera.status = new_status
+                db_camera.last_update = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
+                self.db.commit()
+                self.db.refresh(db_camera)
+            
+        return db_camera
+
+    def check_all_cameras_status(self) -> None:
+        """
+        Check status of all cameras.
+        This could be slow if there are many cameras.
+        """
+        cameras = self.get_cameras(limit=10000) # Get all
+        for camera in cameras:
+            self.check_camera_status(camera.id)
