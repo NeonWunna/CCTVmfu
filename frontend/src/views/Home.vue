@@ -180,12 +180,14 @@ const viewCamera = (cctvName) => {
   }
 };
 
-const focusOnCamera = (camera) => {
+const focusOnCamera = (camera, shouldPan = false) => {
   if (!map.value || !camera.lat || !camera.lng) return;
   
-  // Center and zoom to camera
-  map.value.setCenter({ lat: camera.lat, lng: camera.lng });
-  map.value.setZoom(18);
+  // Pan and zoom ONLY if requested (e.g., from search results)
+  if (shouldPan) {
+    map.value.setCenter({ lat: camera.lat, lng: camera.lng });
+    map.value.setZoom(18);
+  }
   
   // Find marker and open InfoWindow
   const marker = markers.value.find(m => {
@@ -216,25 +218,52 @@ const addMarker = (cctv) => {
   const color = cctv.status === "up" ? "#10b981" : "#ef4444";
   const statusText = cctv.status === "up" ? "Online" : "Offline";
 
-  // Create marker with custom circle symbol
+  // Create professional custom SVG marker with camera icon
+  const svgMarker = {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.3"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <!-- Outer glow circle -->
+        <circle cx="24" cy="24" r="20" fill="${color}" opacity="0.2"/>
+        <!-- Main circle -->
+        <circle cx="24" cy="24" r="16" fill="${color}" filter="url(#shadow)"/>
+        <!-- White border -->
+        <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
+        <!-- Camera icon -->
+        <g transform="translate(24, 24)">
+          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" 
+                fill="white" stroke="none"/>
+          <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
+        </g>
+      </svg>
+    `),
+    scaledSize: new google.maps.Size(48, 48),
+    anchor: new google.maps.Point(24, 24),
+  };
+
   const marker = new google.maps.Marker({
     position: { lat: cctv.lat, lng: cctv.lng },
     map: map.value,
     title: cctv.name,
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 10,
-      fillColor: color,
-      fillOpacity: 0.8,
-      strokeColor: color,
-      strokeWeight: 3,
-    }
+    icon: svgMarker,
+    animation: google.maps.Animation.DROP,
+    optimized: false, // Required for SVG to render properly
   });
 
-  // store original options for animations
-  marker.originalOptions = {
-    fillOpacity: 0.8
-  };
+  // store original icon for animations
+  marker.originalIcon = svgMarker;
 
   // Create InfoWindow content - PROFESSIONAL VERSION
   const contentString = `
@@ -311,15 +340,19 @@ const addMarker = (cctv) => {
       infoWindow.value.close();
     }
     
-    // Create new InfoWindow with pixelOffset to position it over the marker
+    // Create new InfoWindow
     if (!infoWindow.value) {
       infoWindow.value = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0, 30) // Positive value moves it down
+        pixelOffset: new google.maps.Size(0, 10), // Small offset
+        disableAutoPan: true, 
+        maxWidth: 360
       });
     } else {
-      // Update pixelOffset for existing InfoWindow
+      // Update options for existing InfoWindow
       infoWindow.value.setOptions({
-        pixelOffset: new google.maps.Size(0, 30)
+        pixelOffset: new google.maps.Size(0, 10),
+        disableAutoPan: true,
+        maxWidth: 360
       });
     }
     infoWindow.value.setContent(contentString);
@@ -330,14 +363,44 @@ const addMarker = (cctv) => {
 
   // Add pulsing animation for offline cameras
   if (cctv.status === "down") {
+    let isPulsing = true;
     const intervalId = setInterval(() => {
       if (marker.getMap()) { // Check if marker is still on map
-         const icon = marker.getIcon();
-         const newOpacity = icon.fillOpacity === 0.8 ? 0.3 : 0.8;
-         marker.setIcon({
-           ...icon,
-           fillOpacity: newOpacity
-         });
+        const svgMarkerPulse = {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+              <defs>
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                  <feOffset dx="0" dy="2" result="offsetblur"/>
+                  <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.3"/>
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Outer glow circle -->
+              <circle cx="24" cy="24" r="20" fill="${color}" opacity="0.2"/>
+              <!-- Main circle with pulsing opacity -->
+              <circle cx="24" cy="24" r="16" fill="${color}" opacity="${isPulsing ? '0.4' : '1'}" filter="url(#shadow)"/>
+              <!-- White border -->
+              <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2" opacity="${isPulsing ? '0.5' : '1'}"/>
+              <!-- Camera icon -->
+              <g transform="translate(24, 24)" opacity="${isPulsing ? '0.5' : '1'}">
+                <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" 
+                      fill="white" stroke="none"/>
+                <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
+              </g>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(48, 48),
+          anchor: new google.maps.Point(24, 24),
+        };
+        marker.setIcon(svgMarkerPulse);
+        isPulsing = !isPulsing;
       }
     }, 1000);
     pulseIntervals.push(intervalId);
@@ -636,7 +699,7 @@ onUnmounted(() => {
             v-for="camera in filteredCameras" 
             :key="camera.id" 
             class="result-item"
-            @click="focusOnCamera(camera)"
+            @click="focusOnCamera(camera, true)"
           >
             <div class="result-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
