@@ -236,41 +236,66 @@ const addMarker = (cctv) => {
     fillOpacity: 0.8
   };
 
-  // Create InfoWindow content
+  // Create InfoWindow content - PROFESSIONAL VERSION
   const contentString = `
     <div class="custom-popup">
-      <div class="popup-header">${cctv.name}</div>
+      <div class="popup-header">
+        <div class="popup-title">${cctv.name}</div>
+        <div class="popup-status-badge ${cctv.status}">
+          <span class="status-dot"></span>
+          ${statusText}
+        </div>
+      </div>
       <div class="popup-body">
-        <div class="popup-status">
-          <span class="status-badge ${cctv.status}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background-color: ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; border: 1px solid ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
-            <span class="legend-dot ${cctv.status}" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background-color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; box-shadow: 0 0 0 3px ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};"></span>
-            ${statusText}
-          </span>
+        <div class="popup-info">
+          <div class="popup-info-row">
+            <div class="info-label">
+              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+              </svg>
+              IP Address
+            </div>
+            <div class="info-value ip-value">${cctv.ipAddress || 'N/A'}</div>
+          </div>
+          
+          <div class="popup-info-row">
+            <div class="info-label">
+              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Location
+            </div>
+            <div class="info-value">${cctv.location}</div>
+          </div>
+          
+          <div class="popup-info-row">
+            <div class="info-label">
+              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Last Update
+            </div>
+            <div class="info-value">${cctv.lastUpdate || 'N/A'}</div>
+          </div>
+          
+          <div class="popup-info-row">
+            <div class="info-label">
+              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+              </svg>
+              Coordinates
+            </div>
+            <div class="info-value coords-value">${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</div>
+          </div>
         </div>
-        <div class="popup-info" style="font-size: 13px; color: #333; line-height: 1.8; margin-top: 10px;">
-          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-            <span class="popup-info-label" style="font-weight: 500; color: #666;">IP Address:</span>
-            <span style="font-family: 'Courier New', monospace; color: #667eea;">${cctv.ipAddress || 'N/A'}</span>
-          </div>
-          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-            <span class="popup-info-label" style="font-weight: 500; color: #666;">Location:</span>
-            <span>${cctv.location}</span>
-          </div>
-          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-            <span class="popup-info-label" style="font-weight: 500; color: #666;">Last Update:</span>
-            <span>${cctv.lastUpdate || 'N/A'}</span>
-          </div>
-          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-            <span class="popup-info-label" style="font-weight: 500; color: #666;">Coordinates:</span>
-            <span>${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</span>
-          </div>
-        </div>
-        <div class="popup-actions" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+        
+        <div class="popup-actions">
           <button 
             onclick="window.viewCameraFromPopup('${cctv.name}')"
-            style="width: 100%; padding: 10px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
+            class="view-camera-btn"
           >
-            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
             View Camera
@@ -683,7 +708,6 @@ onUnmounted(() => {
   top: 0;
   z-index: 1001;
   border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-  position: relative;
 }
 
 .header-content {
@@ -1604,14 +1628,15 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* Global styles for Google Maps InfoWindow - Dark Theme */
+/* Global styles for Google Maps InfoWindow - PROFESSIONAL DESIGN */
 .gm-style-iw-c {
   background: rgba(26, 32, 44, 0.98) !important;
   backdrop-filter: blur(20px);
   border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
   padding: 0 !important;
+  min-width: 320px !important;
 }
 
 .gm-style-iw-d {
@@ -1623,32 +1648,193 @@ onUnmounted(() => {
 
 .gm-style .gm-style-iw-t::after {
   background: rgba(26, 32, 44, 0.98) !important;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
-/* Close button - make it white/light */
+/* Close button */
 .gm-ui-hover-effect {
   filter: invert(1) grayscale(100%) brightness(200%) !important;
-  opacity: 0.8;
+  opacity: 0.7;
+  top: 16px !important;
+  right: 16px !important;
 }
 
 .gm-ui-hover-effect:hover {
   opacity: 1;
 }
 
+/* Custom Popup Styles - PROFESSIONAL VERSION */
+.custom-popup {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+}
+
 .popup-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  padding-right: 50px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  position: relative;
+}
+
+.popup-title {
+  font-size: 17px;
+  font-weight: 700;
   color: white;
-  padding: 14px 16px;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.3px;
+}
+
+.popup-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
-  font-size: 15px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  padding-right: 40px; /* Space for close button */
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.popup-status-badge .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.popup-status-badge.up .status-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
+
+.popup-status-badge.down .status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .popup-body {
-  padding: 16px;
-  background: transparent;
-  width: 250px;
-}</style>
+  padding: 0;
+  background: rgba(26, 32, 44, 0.98);
+  width: 320px;
+}
+
+.popup-info {
+  padding: 20px;
+}
+
+.popup-info-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.popup-info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.info-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(102, 126, 234, 0.8);
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  text-align: right;
+  word-break: break-word;
+  max-width: 160px;
+}
+
+.info-value.ip-value {
+  font-family: 'Courier New', Consolas, monospace;
+  color: rgba(102, 126, 234, 0.95);
+  font-weight: 600;
+  font-size: 13px;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.info-value.coords-value {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.popup-actions {
+  padding: 16px 20px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.view-camera-btn {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.view-camera-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+}
+
+.view-camera-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}
+
+.btn-icon {
+  width: 20px;
+  height: 20px;
+}
+</style>
