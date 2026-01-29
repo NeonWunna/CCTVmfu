@@ -1628,7 +1628,7 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* Global styles for Google Maps InfoWindow - MODERN PROFESSIONAL DESIGN */
+/* Global styles for Google Maps InfoWindow - FIXED ZOOM-RESPONSIVE VERSION */
 .gm-style-iw-c {
   background: #1a202c !important;
   border: none !important;
@@ -1636,12 +1636,17 @@ onUnmounted(() => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(102, 126, 234, 0.2) !important;
   padding: 0 !important;
   max-width: 360px !important;
+  /* CRITICAL: Prevent scaling with map zoom */
+  transform: none !important;
+  transform-origin: center center !important;
 }
 
 .gm-style-iw-d {
   overflow: hidden !important;
   max-height: none !important;
   padding: 0 !important;
+  /* CRITICAL: Prevent scaling with map zoom */
+  transform: none !important;
 }
 
 .gm-style .gm-style-iw-t::after {
@@ -1669,11 +1674,21 @@ onUnmounted(() => {
   opacity: 1 !important;
 }
 
-/* Custom Popup Container */
+/* Custom Popup Container - FIXED ZOOM SCALING */
 .custom-popup {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   width: 360px;
   background: #1a202c;
+  /* CRITICAL: Force fixed dimensions regardless of map zoom */
+  transform: none !important;
+  transform-origin: center center !important;
+  zoom: 1 !important;
+}
+
+/* CRITICAL: Prevent all child elements from scaling */
+.custom-popup * {
+  transform: none !important;
+  zoom: 1 !important;
 }
 
 /* Header Section */
