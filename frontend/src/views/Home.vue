@@ -306,15 +306,38 @@ const addMarker = (cctv) => {
   `;
 
   marker.addListener("click", () => {
+    // Close any existing InfoWindow
     if (infoWindow.value) {
       infoWindow.value.close();
     }
-    // Create new InfoWindow if doesn't exist (or reuse)
-    if (!infoWindow.value) {
-      infoWindow.value = new google.maps.InfoWindow();
-    }
-    infoWindow.value.setContent(contentString);
-    infoWindow.value.open(map.value, marker);
+    
+    // Center the map on the marker position
+    map.value.panTo(marker.getPosition());
+    
+    // Small delay to allow pan animation to start, then open InfoWindow
+    setTimeout(() => {
+      // Create new InfoWindow if doesn't exist (or reuse)
+      if (!infoWindow.value) {
+        infoWindow.value = new google.maps.InfoWindow();
+      }
+      infoWindow.value.setContent(contentString);
+      infoWindow.value.open(map.value, marker);
+      
+      // After InfoWindow opens, adjust position to account for its height
+      // This ensures the InfoWindow is properly centered on screen
+      setTimeout(() => {
+        const currentCenter = map.value.getCenter();
+        const pixelOffset = 150; // Adjust based on InfoWindow height
+        const scale = Math.pow(2, map.value.getZoom());
+        const worldCoordinate = map.value.getProjection().fromLatLngToPoint(currentCenter);
+        const newWorldCoordinate = new google.maps.Point(
+          worldCoordinate.x,
+          worldCoordinate.y + (pixelOffset / scale)
+        );
+        const newCenter = map.value.getProjection().fromPointToLatLng(newWorldCoordinate);
+        map.value.panTo(newCenter);
+      }, 100);
+    }, 100);
   });
 
   markers.value.push(marker);
