@@ -247,8 +247,8 @@ const addMarker = (cctv) => {
         </div>
       </div>
       <div class="popup-body">
-        <div class="popup-info">
-          <div class="popup-info-row">
+        <div class="popup-info-grid">
+          <div class="info-item">
             <div class="info-label">
               <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
@@ -258,7 +258,7 @@ const addMarker = (cctv) => {
             <div class="info-value ip-value">${cctv.ipAddress || 'N/A'}</div>
           </div>
           
-          <div class="popup-info-row">
+          <div class="info-item">
             <div class="info-label">
               <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -269,7 +269,7 @@ const addMarker = (cctv) => {
             <div class="info-value">${cctv.location}</div>
           </div>
           
-          <div class="popup-info-row">
+          <div class="info-item">
             <div class="info-label">
               <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -279,7 +279,7 @@ const addMarker = (cctv) => {
             <div class="info-value">${cctv.lastUpdate || 'N/A'}</div>
           </div>
           
-          <div class="popup-info-row">
+          <div class="info-item">
             <div class="info-label">
               <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
@@ -1628,186 +1628,191 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* Global styles for Google Maps InfoWindow - PROFESSIONAL DESIGN */
+/* Global styles for Google Maps InfoWindow - MODERN PROFESSIONAL DESIGN */
 .gm-style-iw-c {
-  background: rgba(26, 32, 44, 0.98) !important;
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(102, 126, 234, 0.3);
+  background: #1a202c !important;
+  border: none !important;
   border-radius: 16px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(102, 126, 234, 0.2) !important;
   padding: 0 !important;
-  min-width: 320px !important;
+  max-width: 360px !important;
 }
 
 .gm-style-iw-d {
   overflow: hidden !important;
   max-height: none !important;
   padding: 0 !important;
-  background: transparent !important;
 }
 
 .gm-style .gm-style-iw-t::after {
-  background: rgba(26, 32, 44, 0.98) !important;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(102, 126, 234, 0.3);
+  background: #1a202c !important;
+  box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Close button */
 .gm-ui-hover-effect {
-  filter: invert(1) grayscale(100%) brightness(200%) !important;
-  opacity: 0.7;
-  top: 16px !important;
-  right: 16px !important;
+  top: 18px !important;
+  right: 18px !important;
+  width: 28px !important;
+  height: 28px !important;
+  opacity: 0.9 !important;
+}
+
+.gm-ui-hover-effect > span {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 6px !important;
 }
 
 .gm-ui-hover-effect:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
-/* Custom Popup Styles - PROFESSIONAL VERSION */
+/* Custom Popup Container */
 .custom-popup {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: white;
+  width: 360px;
+  background: #1a202c;
 }
 
+/* Header Section */
 .popup-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  padding-right: 50px;
+  padding: 24px;
+  padding-right: 55px;
   border-top-left-radius: 14px;
   border-top-right-radius: 14px;
-  position: relative;
 }
 
 .popup-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: white;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  letter-spacing: -0.3px;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
 }
 
 .popup-status-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 24px;
   font-size: 13px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 .popup-status-badge .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  display: inline-block;
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 .popup-status-badge.up .status-dot {
   background: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
 }
 
 .popup-status-badge.down .status-dot {
   background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
 }
 
-@keyframes pulse {
+@keyframes pulse-dot {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.7;
+    transform: scale(1.1);
   }
 }
 
+/* Body Section */
 .popup-body {
-  padding: 0;
-  background: rgba(26, 32, 44, 0.98);
-  width: 320px;
+  background: #1a202c;
 }
 
-.popup-info {
-  padding: 20px;
-}
-
-.popup-info-row {
+/* Info Grid */
+.popup-info-grid {
+  padding: 24px;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-direction: column;
+  gap: 18px;
 }
 
-.popup-info-row:last-child {
-  border-bottom: none;
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .info-label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.3px;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
-  flex-shrink: 0;
-  min-width: 120px;
+  letter-spacing: 0.8px;
 }
 
 .info-icon {
-  width: 18px;
-  height: 18px;
-  color: rgba(102, 126, 234, 0.8);
+  width: 16px;
+  height: 16px;
+  color: rgba(102, 126, 234, 0.7);
   flex-shrink: 0;
 }
 
 .info-value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: white;
-  text-align: right;
-  word-break: break-word;
-  max-width: 160px;
+  padding-left: 24px;
+  line-height: 1.5;
 }
 
 .info-value.ip-value {
-  font-family: 'Courier New', Consolas, monospace;
-  color: rgba(102, 126, 234, 0.95);
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.12);
+  padding: 8px 12px;
+  padding-left: 12px;
+  margin-left: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  display: inline-block;
   font-weight: 600;
-  font-size: 13px;
-  background: rgba(102, 126, 234, 0.1);
-  padding: 4px 10px;
-  border-radius: 6px;
 }
 
 .info-value.coords-value {
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.85);
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
+/* Actions Section */
 .popup-actions {
-  padding: 16px 20px 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 24px 24px;
 }
 
 .view-camera-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1815,26 +1820,47 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  letter-spacing: 0.3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.view-camera-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.view-camera-btn:hover::before {
+  opacity: 1;
 }
 
 .view-camera-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
 }
 
 .view-camera-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}
+
+.view-camera-btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 </style>
