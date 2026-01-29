@@ -311,33 +311,38 @@ const addMarker = (cctv) => {
       infoWindow.value.close();
     }
     
-    // Center the map on the marker position
-    map.value.panTo(marker.getPosition());
+    // Create new InfoWindow if doesn't exist (or reuse)
+    if (!infoWindow.value) {
+      infoWindow.value = new google.maps.InfoWindow();
+    }
+    infoWindow.value.setContent(contentString);
+    infoWindow.value.open(map.value, marker);
     
-    // Small delay to allow pan animation to start, then open InfoWindow
+    // After InfoWindow opens, pan the map to center the InfoWindow card on screen
     setTimeout(() => {
-      // Create new InfoWindow if doesn't exist (or reuse)
-      if (!infoWindow.value) {
-        infoWindow.value = new google.maps.InfoWindow();
-      }
-      infoWindow.value.setContent(contentString);
-      infoWindow.value.open(map.value, marker);
+      const projection = map.value.getProjection();
+      if (!projection) return;
       
-      // After InfoWindow opens, adjust position to account for its height
-      // This ensures the InfoWindow is properly centered on screen
-      setTimeout(() => {
-        const currentCenter = map.value.getCenter();
-        const pixelOffset = 150; // Adjust based on InfoWindow height
-        const scale = Math.pow(2, map.value.getZoom());
-        const worldCoordinate = map.value.getProjection().fromLatLngToPoint(currentCenter);
-        const newWorldCoordinate = new google.maps.Point(
-          worldCoordinate.x,
-          worldCoordinate.y + (pixelOffset / scale)
-        );
-        const newCenter = map.value.getProjection().fromPointToLatLng(newWorldCoordinate);
-        map.value.panTo(newCenter);
-      }, 100);
-    }, 100);
+      const markerPosition = marker.getPosition();
+      const markerLatLng = new google.maps.LatLng(markerPosition.lat(), markerPosition.lng());
+      
+      // Get the pixel position of the marker
+      const scale = Math.pow(2, map.value.getZoom());
+      const worldCoordinate = projection.fromLatLngToPoint(markerLatLng);
+      
+      // Calculate offset to center the InfoWindow card
+      // InfoWindow appears above the marker, so we need to shift down
+      const infoWindowHeight = 400; // Approximate height of the InfoWindow in pixels
+      const verticalOffset = infoWindowHeight / 2;
+      
+      // Calculate new center position
+      const newWorldY = worldCoordinate.y + (verticalOffset / scale);
+      const newWorldCoordinate = new google.maps.Point(worldCoordinate.x, newWorldY);
+      const newCenter = projection.fromPointToLatLng(newWorldCoordinate);
+      
+      // Smoothly pan to the new center
+      map.value.panTo(newCenter);
+    }, 50);
   });
 
   markers.value.push(marker);
