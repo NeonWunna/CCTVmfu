@@ -311,10 +311,15 @@ const addMarker = (cctv) => {
       infoWindow.value.close();
     }
     
-    // Create new InfoWindow if doesn't exist (or reuse)
+    // Create new InfoWindow with pixelOffset to position it over the marker
     if (!infoWindow.value) {
       infoWindow.value = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0, -10) // Offset to position above marker
+        pixelOffset: new google.maps.Size(0, 30) // Positive value moves it down
+      });
+    } else {
+      // Update pixelOffset for existing InfoWindow
+      infoWindow.value.setOptions({
+        pixelOffset: new google.maps.Size(0, 30)
       });
     }
     infoWindow.value.setContent(contentString);
