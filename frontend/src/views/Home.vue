@@ -313,36 +313,12 @@ const addMarker = (cctv) => {
     
     // Create new InfoWindow if doesn't exist (or reuse)
     if (!infoWindow.value) {
-      infoWindow.value = new google.maps.InfoWindow();
+      infoWindow.value = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0, -10) // Offset to position above marker
+      });
     }
     infoWindow.value.setContent(contentString);
     infoWindow.value.open(map.value, marker);
-    
-    // After InfoWindow opens, pan the map to center the InfoWindow card on screen
-    setTimeout(() => {
-      const projection = map.value.getProjection();
-      if (!projection) return;
-      
-      const markerPosition = marker.getPosition();
-      const markerLatLng = new google.maps.LatLng(markerPosition.lat(), markerPosition.lng());
-      
-      // Get the pixel position of the marker
-      const scale = Math.pow(2, map.value.getZoom());
-      const worldCoordinate = projection.fromLatLngToPoint(markerLatLng);
-      
-      // Calculate offset to center the InfoWindow card
-      // InfoWindow appears above the marker, so we need to shift down
-      const infoWindowHeight = 400; // Approximate height of the InfoWindow in pixels
-      const verticalOffset = infoWindowHeight / 2;
-      
-      // Calculate new center position
-      const newWorldY = worldCoordinate.y + (verticalOffset / scale);
-      const newWorldCoordinate = new google.maps.Point(worldCoordinate.x, newWorldY);
-      const newCenter = projection.fromPointToLatLng(newWorldCoordinate);
-      
-      // Smoothly pan to the new center
-      map.value.panTo(newCenter);
-    }, 50);
   });
 
   markers.value.push(marker);
