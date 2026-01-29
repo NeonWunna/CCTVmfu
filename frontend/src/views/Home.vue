@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import L from 'leaflet';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
@@ -13,6 +12,7 @@ const userName = ref("Admin User");
 const userRole = ref("Security Administrator");
 const showDropdown = ref(false);
 const searchQuery = ref("");
+const isMapLoaded = ref(false);
 
 // Toast state
 const toast = ref({
@@ -81,11 +81,12 @@ const fetchCameras = async () => {
   }
 };
 
-// Use shallowRef for Leaflet map instance to avoid deep reactivity performance cost
+// Use shallowRef for map instance
 const map = shallowRef(null);
 const mapContainer = useTemplateRef('mapContainer');
 const pulseIntervals = [];
-const markersLayer = shallowRef(null); // Layer group for markers
+const markers = shallowRef([]); // Array to store Google Maps markers
+const infoWindow = shallowRef(null); // Single InfoWindow instance
 
 const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up").length);
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down").length);
@@ -182,20 +183,20 @@ const viewCamera = (cctvName) => {
 const focusOnCamera = (camera) => {
   if (!map.value || !camera.lat || !camera.lng) return;
   
-  // Zoom and pan to camera location
-  map.value.setView([camera.lat, camera.lng], 18, {
-    animate: true,
-    duration: 1
-  });
+  // Center and zoom to camera
+  map.value.setCenter({ lat: camera.lat, lng: camera.lng });
+  map.value.setZoom(18);
   
-  // Find and open the popup for this camera
-  setTimeout(() => {
-    markersLayer.value.eachLayer((layer) => {
-      if (layer.getLatLng().lat === camera.lat && layer.getLatLng().lng === camera.lng) {
-        layer.openPopup();
-      }
-    });
-  }, 500);
+  // Find marker and open InfoWindow
+  const marker = markers.value.find(m => {
+    const pos = m.getPosition();
+    return Math.abs(pos.lat() - camera.lat) < 0.0001 && Math.abs(pos.lng() - camera.lng) < 0.0001;
+  });
+
+  if (marker) {
+    // Trigger click event on marker to open InfoWindow
+    google.maps.event.trigger(marker, 'click');
+  }
   
   showToast(`Focused on: ${camera.name}`, 'info');
 };
@@ -203,8 +204,9 @@ const focusOnCamera = (camera) => {
 const clearSearch = () => {
   searchQuery.value = "";
   if (map.value && cctvs.value.length > 0) {
-    // Reset to default view showing all cameras
-    map.value.setView([20.0443, 99.8937], 16);
+    // Reset to default view
+    map.value.setCenter({ lat: 20.0443, lng: 99.8937 });
+    map.value.setZoom(16);
   }
 };
 
@@ -214,107 +216,222 @@ const addMarker = (cctv) => {
   const color = cctv.status === "up" ? "#10b981" : "#ef4444";
   const statusText = cctv.status === "up" ? "Online" : "Offline";
 
-  // Create custom marker
-  const marker = L.circleMarker([cctv.lat, cctv.lng], {
-    radius: 10,
-    color: color,
-    fillColor: color,
-    fillOpacity: 0.8,
-    weight: 3
+  // Create marker with custom circle symbol
+  const marker = new google.maps.Marker({
+    position: { lat: cctv.lat, lng: cctv.lng },
+    map: map.value,
+    title: cctv.name,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10,
+      fillColor: color,
+      fillOpacity: 0.8,
+      strokeColor: color,
+      strokeWeight: 3,
+    }
   });
-  
-  if (markersLayer.value) {
-    markersLayer.value.addLayer(marker);
-  } else if (map.value) {
-    marker.addTo(map.value);
-  }
 
-  // Create custom popup content with IP and Last Update - Dark Theme
-  const popupContent = `
-    <div class="popup-header">${cctv.name}</div>
-    <div class="popup-body">
-      <div class="popup-status">
-        <span class="status-badge ${cctv.status}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background-color: ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; border: 1px solid ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
-          <span class="legend-dot ${cctv.status}" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background-color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; box-shadow: 0 0 0 3px ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};"></span>
-          ${statusText}
-        </span>
-      </div>
-      <div class="popup-info" style="font-size: 13px; color: rgba(255, 255, 255, 0.7); line-height: 1.8;">
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">IP Address:</span>
-          <span style="font-family: 'Courier New', monospace; color: rgba(102, 126, 234, 0.9);">${cctv.ipAddress || 'N/A'}</span>
+  // store original options for animations
+  marker.originalOptions = {
+    fillOpacity: 0.8
+  };
+
+  // Create InfoWindow content
+  const contentString = `
+    <div class="custom-popup">
+      <div class="popup-header">${cctv.name}</div>
+      <div class="popup-body">
+        <div class="popup-status">
+          <span class="status-badge ${cctv.status}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background-color: ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; border: 1px solid ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
+            <span class="legend-dot ${cctv.status}" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background-color: ${cctv.status === 'up' ? '#10b981' : '#ef4444'}; box-shadow: 0 0 0 3px ${cctv.status === 'up' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};"></span>
+            ${statusText}
+          </span>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Location:</span>
-          <span>${cctv.location}</span>
+        <div class="popup-info" style="font-size: 13px; color: #333; line-height: 1.8; margin-top: 10px;">
+          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+            <span class="popup-info-label" style="font-weight: 500; color: #666;">IP Address:</span>
+            <span style="font-family: 'Courier New', monospace; color: #667eea;">${cctv.ipAddress || 'N/A'}</span>
+          </div>
+          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+            <span class="popup-info-label" style="font-weight: 500; color: #666;">Location:</span>
+            <span>${cctv.location}</span>
+          </div>
+          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+            <span class="popup-info-label" style="font-weight: 500; color: #666;">Last Update:</span>
+            <span>${cctv.lastUpdate || 'N/A'}</span>
+          </div>
+          <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
+            <span class="popup-info-label" style="font-weight: 500; color: #666;">Coordinates:</span>
+            <span>${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</span>
+          </div>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Last Update:</span>
-          <span>${cctv.lastUpdate || 'N/A'}</span>
+        <div class="popup-actions" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+          <button 
+            onclick="window.viewCameraFromPopup('${cctv.name}')"
+            style="width: 100%; padding: 10px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
+          >
+            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            View Camera
+          </button>
         </div>
-        <div class="popup-info-item" style="display: flex; justify-content: space-between; padding: 6px 0;">
-          <span class="popup-info-label" style="font-weight: 500; color: rgba(255, 255, 255, 0.9);">Coordinates:</span>
-          <span>${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</span>
-        </div>
-      </div>
-      <div class="popup-actions" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-        <button 
-          onclick="window.viewCameraFromPopup('${cctv.name}')"
-          style="width: 100%; padding: 10px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
-          onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)'"
-          onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)'"
-        >
-          <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-          </svg>
-          View Camera
-        </button>
       </div>
     </div>
   `;
 
-  marker.bindPopup(popupContent, {
-    maxWidth: 300,
-    className: 'custom-popup'
+  marker.addListener("click", () => {
+    if (infoWindow.value) {
+      infoWindow.value.close();
+    }
+    // Create new InfoWindow if doesn't exist (or reuse)
+    if (!infoWindow.value) {
+      infoWindow.value = new google.maps.InfoWindow();
+    }
+    infoWindow.value.setContent(contentString);
+    infoWindow.value.open(map.value, marker);
   });
+
+  markers.value.push(marker);
 
   // Add pulsing animation for offline cameras
   if (cctv.status === "down") {
     const intervalId = setInterval(() => {
-      if (map.value && map.value.hasLayer(marker)) {
-         marker.setStyle({ fillOpacity: marker.options.fillOpacity === 0.8 ? 0.3 : 0.8 });
+      if (marker.getMap()) { // Check if marker is still on map
+         const icon = marker.getIcon();
+         const newOpacity = icon.fillOpacity === 0.8 ? 0.3 : 0.8;
+         marker.setIcon({
+           ...icon,
+           fillOpacity: newOpacity
+         });
       }
     }, 1000);
     pulseIntervals.push(intervalId);
   }
 };
 
-const initMap = () => {
-  if (!mapContainer.value) return;
-
-  // Initialize map with better styling
-  const mapInstance = L.map(mapContainer.value, {
-    zoomControl: true,
-    attributionControl: true
-  }).setView([20.0443, 99.8937], 16);
+const loadGoogleMapsScript = () => {
+  if (window.google && window.google.maps) {
+    initMap();
+    return;
+  }
   
-  map.value = mapInstance;
+  if (document.getElementById('google-maps-script')) return;
 
-  // Use a more professional map tile
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(mapInstance);
+  const script = document.createElement('script');
+  script.id = 'google-maps-script';
+  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM`;
+  script.async = true;
+  script.defer = true;
+  script.onload = () => {
+    isMapLoaded.value = true;
+    initMap();
+  };
+  script.onerror = () => {
+    showToast('Failed to load Google Maps', 'error');
+  };
+  
+  document.head.appendChild(script);
+};
 
-  // Create markers layer group
-  markersLayer.value = L.layerGroup().addTo(mapInstance);
+const initMap = () => {
+  if (!mapContainer.value || !window.google) return;
+
+  map.value = new google.maps.Map(mapContainer.value, {
+    center: { lat: 20.0443, lng: 99.8937 },
+    zoom: 16,
+    styles: [ // Dark mode style for Google Maps
+      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#263c3f" }],
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#6b9a76" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#38414e" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#212a37" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#9ca5b3" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#746855" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#1f2835" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#f3d19c" }],
+      },
+      {
+        featureType: "transit",
+        elementType: "geometry",
+        stylers: [{ color: "#2f3948" }],
+      },
+      {
+        featureType: "transit.station",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#d59563" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#17263c" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#515c6d" }],
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#17263c" }],
+      },
+    ],
+    mapTypeControl: false,
+    fullscreenControl: false,
+    streetViewControl: false
+  });
 };
 
 const renderMapMarkers = () => {
-  if (!markersLayer.value) return;
+  if (!map.value) return;
   
   // Clear existing markers
-  markersLayer.value.clearLayers();
+  markers.value.forEach(marker => marker.setMap(null));
+  markers.value = [];
   
   // Clear existing intervals
   pulseIntervals.forEach(id => clearInterval(id));
@@ -333,20 +450,17 @@ const renderMapMarkers = () => {
 
   // If searching and have results, adjust map view to show all filtered cameras
   if (searchQuery.value.trim() && camerasToDisplay.length > 0) {
-    const bounds = L.latLngBounds(
-      camerasToDisplay
-        .filter(c => c.lat && c.lng)
-        .map(c => [c.lat, c.lng])
-    );
+    const bounds = new google.maps.LatLngBounds();
+    camerasToDisplay
+      .filter(c => c.lat && c.lng)
+      .forEach(c => bounds.extend({ lat: c.lat, lng: c.lng }));
     
-    if (bounds.isValid()) {
-      map.value.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
-    }
+    map.value.fitBounds(bounds);
   }
 };
 
 onMounted(() => {
-  initMap();
+  loadGoogleMapsScript();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
   
@@ -377,14 +491,8 @@ onUnmounted(() => {
   pulseIntervals.length = 0;
 
   // Destroy map instance to prevent memory leaks
-  if (map.value) {
-    try {
-      map.value.remove();
-    } catch (e) {
-      console.warn('Map cleanup error:', e);
-    }
-    map.value = null;
-  }
+  // Destroy map instance to prevent memory leaks is handled by GMaps internally but we can clear refs
+  map.value = null;
 });
 </script>
 
@@ -1575,26 +1683,37 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* Global styles for Leaflet popup - Dark Theme */
-.leaflet-popup-content-wrapper {
-  background: rgba(26, 32, 44, 0.98);
+/* Global styles for Google Maps InfoWindow - Dark Theme */
+.gm-style-iw-c {
+  background: rgba(26, 32, 44, 0.98) !important;
   backdrop-filter: blur(20px);
   border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  padding: 0;
-  overflow: hidden;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  padding: 0 !important;
 }
 
-.leaflet-popup-content {
-  margin: 0;
-  min-width: 250px;
+.gm-style-iw-d {
+  overflow: hidden !important;
+  max-height: none !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
-.leaflet-popup-tip {
-  background: rgba(26, 32, 44, 0.98);
+.gm-style .gm-style-iw-t::after {
+  background: rgba(26, 32, 44, 0.98) !important;
   box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+/* Close button - make it white/light */
+.gm-ui-hover-effect {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+  opacity: 0.8;
+}
+
+.gm-ui-hover-effect:hover {
+  opacity: 1;
 }
 
 .popup-header {
@@ -1604,20 +1723,11 @@ onUnmounted(() => {
   font-weight: 600;
   font-size: 15px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  padding-right: 40px; /* Space for close button */
 }
 
 .popup-body {
   padding: 16px;
-  background: rgba(26, 32, 44, 0.98);
-}
-
-.custom-popup .leaflet-popup-close-button {
-  color: white;
-  font-size: 24px;
-  padding: 8px 12px;
-}
-
-.custom-popup .leaflet-popup-close-button:hover {
-  color: rgba(255, 255, 255, 0.8);
-}
-</style>
+  background: transparent;
+  width: 250px;
+}</style>
