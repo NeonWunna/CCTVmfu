@@ -19,6 +19,7 @@ const isEditMode = ref(false);
 const editingCameraId = ref(null);
 const isSubmitting = ref(false);
 const isRefreshing = ref(false);
+const tableContainer = ref(null); 
 
 // Toast state
 const toast = ref({
@@ -414,6 +415,19 @@ const handleKeyDown = (e) => {
   }
 };
 
+const handleSearch = () => {
+  // Use nextTick to wait for Vue to update the filtered list
+  setTimeout(() => {
+    const mainArea = document.querySelector('.main-area');
+    if (mainArea && searchQuery.value) {
+      mainArea.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, 100);
+};
+
 // Add event listener for ESC key - Logic moved to combined onUnmounted above
 
 </script>
@@ -562,13 +576,14 @@ const handleKeyDown = (e) => {
                 <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
-                <input 
-                  v-model="searchQuery"
-                  type="text" 
-                  placeholder="Search by name, location, or IP address..."
-                  class="search-input"
-                  aria-label="Search cameras"
-                >
+<input 
+  v-model="searchQuery"
+  @input="handleSearch"
+  type="text" 
+  placeholder="Search by name, location, or IP address..."
+  class="search-input"
+  aria-label="Search cameras"
+>
               </div>
 
               <button class="add-button refresh-btn" @click="refreshStatus" :disabled="isRefreshing">
@@ -1139,23 +1154,25 @@ const handleKeyDown = (e) => {
   backdrop-filter: blur(20px);
   border: 2px solid rgba(102, 126, 234, 0.2);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   height: 100%;
+  scroll-padding-top: 200px;
+  flex-direction: column;
 }
 
 .inventory-header {
-  margin-bottom: 2rem;
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(26, 32, 44, 0.95);
-  backdrop-filter: blur(20px);
-  padding: 1rem 0;
-  margin: -2rem -2rem 2rem -2rem;
-  padding: 1rem 2rem;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(180deg, rgba(26, 32, 44, 0.98) 0%, rgba(26, 32, 44, 0.95) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  margin: 0; /* Change from -2rem -2rem 2rem -2rem */
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0; /* ADD THIS */
 }
 
 .inventory-title h2 {
@@ -1283,6 +1300,7 @@ const handleKeyDown = (e) => {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
+  margin: 0 2rem 2rem 2rem;  /* Add this line */
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -1304,9 +1322,8 @@ const handleKeyDown = (e) => {
 
 /* Camera Table Styles */
 .table-container {
+  padding: 0 2rem 2rem 2rem;
   overflow-x: hidden;
-  border-radius: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .camera-table {
@@ -1856,11 +1873,6 @@ const handleKeyDown = (e) => {
 }
 
 @media (max-width: 768px) {
-    .inventory-header {
-    margin: -1rem -1rem 1.5rem -1rem;
-    padding: 1rem;
-  }
-
   .header-content {
     padding: 15px 20px;
   }
@@ -1952,7 +1964,9 @@ const handleKeyDown = (e) => {
 }
 
 .inventory-header {
-  margin-bottom: 1.5rem;
+  margin: -1rem -1rem 1.5rem -1rem;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 .inventory-title h2 {
