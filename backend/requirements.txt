@@ -11,3 +11,4 @@ httpx
 
 # Development
 python-dotenv
+opencv-python-headless

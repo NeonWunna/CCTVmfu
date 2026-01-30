@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import api from '../services/api';
 
 const router = useRouter();
 const route = useRoute();
@@ -28,17 +29,57 @@ const confirmModal = ref({
   loading: false
 });
 
-// Camera data (you can pass this via route params or fetch from API)
+// Camera data
 const cameraData = ref({
-  id: route.params.id || '1',
-  name: route.query.name || 'Main Gate CCTV',
-  location: route.query.location || 'Main Entrance',
-  ipAddress: route.query.ip || '192.168.1.100',
-  status: route.query.status || 'up',
-  coordinates: route.query.coordinates || '20.0451, 99.8825',
-  brand: route.query.brand || 'Hikvision',
-  lastUpdate: route.query.lastUpdate || new Date().toLocaleString()
+  id: route.params.id,
+  name: '',
+  location: '',
+  ipAddress: '',
+  status: 'up',
+  coordinates: '',
+  brand: '',
+  version: '',
+  lastUpdate: '',
+  rtspUrl: ''
 });
+
+const fetchCameraDetails = async () => {
+    if (!cameraData.value.id) return;
+    
+    try {
+        const response = await api.getCamera(cameraData.value.id);
+        const data = response.data;
+        cameraData.value = {
+            id: data.id,
+            name: data.name,
+            location: data.location,
+            ipAddress: data.ip_address,
+            status: data.status,
+            coordinates: data.coordinates,
+            brand: data.brand,
+            version: data.version,
+            lastUpdate: data.last_update,
+            rtspUrl: data.rtsp_url
+        };
+    } catch (error) {
+        console.error("Error fetching camera details:", error);
+        // Fallback to query params if available, mostly for demo
+        if (route.query.name) {
+             cameraData.value = {
+                ...cameraData.value,
+                name: route.query.name,
+                location: route.query.location,
+                ipAddress: route.query.ip,
+                status: route.query.status,
+                coordinates: route.query.coordinates,
+                brand: route.query.brand,
+                lastUpdate: route.query.lastUpdate
+             };
+        } else {
+             showToast("Failed to load camera details", "error");
+        }
+    }
+};
 
 const isRecording = ref(true);
 const isFullscreen = ref(false);
@@ -134,6 +175,8 @@ onMounted(() => {
   // Backend integration: Initialize video stream here
   console.log('Camera View mounted. Ready for video stream integration.');
   console.log('Camera IP:', cameraData.value.ipAddress);
+  
+  fetchCameraDetails();
   
   // Listen for fullscreen changes
   document.addEventListener('fullscreenchange', () => {
@@ -343,7 +386,8 @@ onMounted(() => {
           <div class="video-container">
             <!-- Placeholder for video stream -->
             <!-- Backend integration: Replace this div with actual video element -->
-            <div class="video-placeholder">
+            <!-- MJPEG Stream -->
+            <div class="video-placeholder" v-if="!cameraData.rtspUrl">
               <div class="placeholder-content">
                 <div class="camera-icon-large">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,28 +395,20 @@ onMounted(() => {
                   </svg>
                   <div class="scan-line-large"></div>
                 </div>
-                <h3>Video Stream Ready</h3>
+                <h3>Video Stream Unavailable</h3>
                 <p>Connect to: {{ cameraData.ipAddress }}</p>
-                <div class="integration-note">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span>Backend Integration Point: Insert video stream element here</span>
-                </div>
+                <p class="no-rtsp">No RTSP URL available for this camera.</p>
               </div>
-              
-              <!-- Scanning overlay effect -->
               <div class="scan-overlay"></div>
             </div>
 
-            <!-- Example of where backend developer will add video element:
-            <video 
-              id="cameraStream" 
-              autoplay 
-              playsinline
+            <img 
+              v-else
+              :src="`/api/cameras/${cameraData.id}/stream`" 
               class="video-stream"
-            ></video>
-            -->
+              alt="Live Camera Feed"
+              @error="e => e.target.style.display = 'none'"
+            />
 
             <!-- Live indicator -->
             <div class="live-indicator">
@@ -1272,5 +1308,58 @@ onMounted(() => {
   .control-btn {
     padding: 0.625rem;
   }
+}
+
+/* RTSP Styles */
+.rtsp-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    margin-top: 1rem;
+    max-width: 90%;
+}
+
+.rtsp-code {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.copy-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.rtsp-hint {
+    font-size: 0.8rem !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-style: italic;
+}
+
+.no-rtsp {
+    color: rgba(255, 255, 255, 0.5) !important;
+    margin-top: 0.5rem;
 }
 </style>

@@ -50,13 +50,20 @@ def import_cctv_data():
             if not ip_address:
                 continue
 
+            # Extract NO for RTSP URL generation
+            no = item.get('NO')
+            rtsp_url = None
+            if no:
+               rtsp_url = f"rtsp://mfustream:mediamfu2025@172.30.36.13:554/LiveMedia/ch{no}/Media1/trackID={no}"
+
             # Map JSON fields to model fields
             camera_data = {
                 'ip_address': ip_address,
                 'name': str(item.get('name')) if item.get('name') is not None else None,
                 'location': str(item.get('location')) if item.get('location') is not None else None,
                 'coordinates': f"{item.get('latitude')}, {item.get('longitude')}",
-                'status': 'down' # Default status, will be updated by background service
+                'status': 'down', # Default status, will be updated by background service
+                'rtsp_url': rtsp_url
             }
 
             # Check if camera exists

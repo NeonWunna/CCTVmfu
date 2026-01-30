@@ -44,6 +44,7 @@ const newCamera = ref({
   name: "",
   location: "",
   ipAddress: "",
+  rtspUrl: "",
   latitude: "",
   longitude: "",
   brand: "",
@@ -62,6 +63,7 @@ const fetchCameras = async () => {
         cameras.value = response.data.map(camera => ({
           ...camera,
           ipAddress: camera.ip_address,
+          rtspUrl: camera.rtsp_url,
           lastUpdate: camera.last_update
         }));
     } else {
@@ -239,6 +241,7 @@ const editCamera = (camera) => {
     name: camera.name,
     location: camera.location,
     ipAddress: camera.ipAddress,
+    rtspUrl: camera.rtspUrl || "",
     latitude: lat,
     longitude: long,
     brand: camera.brand,
@@ -280,6 +283,7 @@ const addNewCamera = () => {
     name: "",
     location: "",
     ipAddress: "",
+    rtspUrl: "",
     latitude: "",
     longitude: "",
     brand: "",
@@ -295,6 +299,7 @@ const closeModal = () => {
   const hasChanges = newCamera.value.name || 
                      newCamera.value.location || 
                      newCamera.value.ipAddress || 
+                     newCamera.value.rtspUrl || 
                      newCamera.value.latitude || 
                      newCamera.value.longitude || 
                      newCamera.value.brand ||
@@ -325,6 +330,7 @@ const resetForm = () => {
     name: "",
     location: "",
     ipAddress: "",
+    rtspUrl: "",
     latitude: "",
     longitude: "",
     brand: "",
@@ -349,6 +355,7 @@ const saveCamera = async () => {
     name: newCamera.value.name,
     location: newCamera.value.location,
     ip_address: newCamera.value.ipAddress,
+    rtsp_url: newCamera.value.rtspUrl,
     latitude: newCamera.value.latitude ? parseFloat(newCamera.value.latitude) : 0,
     longitude: newCamera.value.longitude ? parseFloat(newCamera.value.longitude) : 0,
     brand: newCamera.value.brand,
@@ -377,6 +384,7 @@ const saveCamera = async () => {
         const newCameraData = {
           ...response.data,
           ipAddress: response.data.ip_address,
+          rtspUrl: response.data.rtsp_url,
           lastUpdate: response.data.last_update
         };
         // Add new camera to TOP of list
@@ -620,6 +628,7 @@ const handleSearch = () => {
         <th>Camera Name</th>
         <th>Location</th>
         <th>IP Address</th>
+        <th>RTSP URL</th>
         <th>Coordinates</th>
         <th>Brand</th>
         <th>Version</th>
@@ -647,6 +656,9 @@ const handleSearch = () => {
     </td>
     <td data-label="Location">{{ camera.location }}</td>
     <td data-label="IP Address"><span class="ip-address">{{ camera.ipAddress }}</span></td>
+    <td data-label="RTSP URL">
+       <span class="rtsp-url" :title="camera.rtspUrl">{{ camera.rtspUrl ? (camera.rtspUrl.length > 20 ? camera.rtspUrl.substring(0, 20) + '...' : camera.rtspUrl) : '-' }}</span>
+    </td>
     <td data-label="Coordinates">{{ camera.coordinates || '-' }}</td>
     <td data-label="Brand">{{ camera.brand || '-' }}</td>
     <td data-label="Version">{{ camera.version || '-' }}</td>
@@ -721,6 +733,16 @@ const handleSearch = () => {
                 :class="{ 'error': validationErrors.ipAddress }"
               >
               <span v-if="validationErrors.ipAddress" class="error-message">{{ validationErrors.ipAddress }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="camera-rtsp">RTSP URL</label>
+              <input 
+                id="camera-rtsp"
+                v-model="newCamera.rtspUrl"
+                type="text" 
+                placeholder="e.g., rtsp://user:pass@192.168.1.10:554/stream"
+              >
             </div>
 
             <div class="form-row">

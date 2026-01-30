@@ -17,6 +17,7 @@ class CameraBase(BaseModel):
     brand: Optional[str] = Field(None, max_length=100, description="Camera brand/manufacturer")
     status: Optional[str] = Field("up", max_length=20, description="Camera status (up/down)")
     version: Optional[str] = Field(None, max_length=50, description="Firmware version")
+    rtsp_url: Optional[str] = Field(None, max_length=500, description="RTSP Stream URL")
     last_update: Optional[str] = Field(None, description="Last update timestamp")
 
     @field_validator("status")
@@ -39,6 +40,7 @@ class CameraCreate(BaseModel):
     brand: Optional[str] = Field(None, max_length=100)
     status: Optional[str] = Field("up", max_length=20)
     version: Optional[str] = Field(None, max_length=50)
+    rtsp_url: Optional[str] = Field(None, max_length=500)
 
     @field_validator("status")
     @classmethod
@@ -60,6 +62,7 @@ class CameraUpdate(BaseModel):
     brand: Optional[str] = Field(None, max_length=100)
     status: Optional[str] = Field(None, max_length=20)
     version: Optional[str] = Field(None, max_length=50)
+    rtsp_url: Optional[str] = Field(None, max_length=500)
     last_update: Optional[str] = None
 
     @field_validator("status")
