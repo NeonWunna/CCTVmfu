@@ -53,8 +53,8 @@ def import_cctv_data():
             # Map JSON fields to model fields
             camera_data = {
                 'ip_address': ip_address,
-                'name': item.get('name'),
-                'location': item.get('location'),
+                'name': str(item.get('name')) if item.get('name') is not None else None,
+                'location': str(item.get('location')) if item.get('location') is not None else None,
                 'coordinates': f"{item.get('latitude')}, {item.get('longitude')}",
                 'status': 'down' # Default status, will be updated by background service
             }
