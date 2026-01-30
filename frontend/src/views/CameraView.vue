@@ -81,9 +81,7 @@ const fetchCameraDetails = async () => {
     }
 };
 
-const isRecording = ref(true);
 const isFullscreen = ref(false);
-const videoQuality = ref('HD');
 
 const userInitials = computed(() => {
   return userName.value
@@ -144,16 +142,6 @@ const handleLogoError = (event) => {
   event.target.style.display = 'none';
 };
 
-const toggleRecording = () => {
-  isRecording.value = !isRecording.value;
-  showToast(isRecording.value ? 'Recording started' : 'Recording stopped', 'success');
-};
-
-const takeSnapshot = () => {
-  showToast('Snapshot captured successfully', 'success');
-  // Backend integration: Capture frame from video stream
-};
-
 const toggleFullscreen = () => {
   const videoContainer = document.querySelector('.video-container');
   if (!document.fullscreenElement) {
@@ -165,13 +153,17 @@ const toggleFullscreen = () => {
   }
 };
 
-const changeQuality = (quality) => {
-  videoQuality.value = quality;
-  showToast(`Video quality changed to ${quality}`, 'info');
-  // Backend integration: Change video stream quality
-};
-
 onMounted(() => {
+  // Check if this is the first load (no refresh flag in sessionStorage)
+  const hasRefreshed = sessionStorage.getItem('cameraViewRefreshed');
+  
+  if (!hasRefreshed) {
+    // Set the flag and refresh the page
+    sessionStorage.setItem('cameraViewRefreshed', 'true');
+    window.location.reload();
+    return; // Exit early since page will reload
+  }
+  
   // Backend integration: Initialize video stream here
   console.log('Camera View mounted. Ready for video stream integration.');
   console.log('Camera IP:', cameraData.value.ipAddress);
@@ -181,6 +173,13 @@ onMounted(() => {
   // Listen for fullscreen changes
   document.addEventListener('fullscreenchange', () => {
     isFullscreen.value = !!document.fullscreenElement;
+  });
+});
+
+// Clean up the refresh flag when leaving the page
+onMounted(() => {
+  window.addEventListener('beforeunload', () => {
+    sessionStorage.removeItem('cameraViewRefreshed');
   });
 });
 </script>
@@ -322,24 +321,6 @@ onMounted(() => {
                   <div class="info-value">{{ cameraData.brand }}</div>
                 </div>
               </div>
-
-              <div class="info-item">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <div>
-                  <div class="info-label">Last Update</div>
-                  <div class="info-value">{{ cameraData.lastUpdate }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recording Status -->
-          <div class="recording-card">
-            <div class="recording-indicator" :class="{ active: isRecording }">
-              <span class="rec-dot"></span>
-              <span class="rec-text">{{ isRecording ? 'RECORDING' : 'NOT RECORDING' }}</span>
             </div>
           </div>
         </aside>
@@ -350,33 +331,14 @@ onMounted(() => {
           <div class="controls-bar">
             <div class="controls-left">
               <h2>Live Feed</h2>
-              <span class="quality-badge">{{ videoQuality }}</span>
             </div>
             <div class="controls-right">
-              <button class="control-btn" @click="changeQuality('SD')" :class="{ active: videoQuality === 'SD' }">
-                <span>SD</span>
-              </button>
-              <button class="control-btn" @click="changeQuality('HD')" :class="{ active: videoQuality === 'HD' }">
-                <span>HD</span>
-              </button>
-              <button class="control-btn" @click="changeQuality('FHD')" :class="{ active: videoQuality === 'FHD' }">
-                <span>FHD</span>
-              </button>
-              <div class="divider"></div>
-              <button class="control-btn" @click="takeSnapshot" title="Take Snapshot">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-              </button>
-              <button class="control-btn" @click="toggleRecording" :class="{ active: isRecording }" title="Toggle Recording">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                </svg>
-              </button>
-              <button class="control-btn" @click="toggleFullscreen" title="Fullscreen">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button class="control-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
+                <svg v-if="!isFullscreen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+                <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
             </div>
@@ -409,17 +371,6 @@ onMounted(() => {
               alt="Live Camera Feed"
               @error="e => e.target.style.display = 'none'"
             />
-
-            <!-- Live indicator -->
-            <div class="live-indicator">
-              <span class="live-dot"></span>
-              <span>LIVE</span>
-            </div>
-
-            <!-- Timestamp overlay -->
-            <div class="timestamp-overlay">
-              {{ new Date().toLocaleString() }}
-            </div>
           </div>
         </section>
       </div>
@@ -889,64 +840,6 @@ onMounted(() => {
   color: rgba(102, 126, 234, 0.9);
 }
 
-/* Recording Card */
-.recording-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.recording-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.recording-indicator.active {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.rec-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #6b7280;
-}
-
-.recording-indicator.active .rec-dot {
-  background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-  animation: pulse-rec 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-rec {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
-  }
-}
-
-.rec-text {
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.recording-indicator.active .rec-text {
-  color: #ef4444;
-}
-
 /* Video Section */
 .video-section {
   display: flex;
@@ -979,16 +872,6 @@ onMounted(() => {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.quality-badge {
-  padding: 0.375rem 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
 .controls-right {
   display: flex;
   align-items: center;
@@ -1016,23 +899,9 @@ onMounted(() => {
   color: white;
 }
 
-.control-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-}
-
 .control-btn svg {
   width: 18px;
   height: 18px;
-}
-
-.divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 0.25rem;
 }
 
 /* Video Container */
@@ -1110,24 +979,6 @@ onMounted(() => {
   margin-bottom: 2rem;
 }
 
-.integration-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(102, 126, 234, 0.15);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-}
-
-.integration-note svg {
-  width: 18px;
-  height: 18px;
-  color: rgba(102, 126, 234, 0.8);
-}
-
 .scan-overlay {
   position: absolute;
   top: 0;
@@ -1146,59 +997,6 @@ onMounted(() => {
   100% {
     transform: translateY(calc(100vh - 200px));
   }
-}
-
-/* Live Indicator */
-.live-indicator {
-  position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(239, 68, 68, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 6px;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-  z-index: 10;
-}
-
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: white;
-  animation: pulse-live 1s ease-in-out infinite;
-}
-
-@keyframes pulse-live {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-/* Timestamp Overlay */
-.timestamp-overlay {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 6px;
-  color: white;
-  font-size: 0.875rem;
-  font-family: 'Courier New', monospace;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 10;
 }
 
 /* Video Stream (for backend integration) */
@@ -1225,8 +1023,7 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .info-card,
-  .recording-card {
+  .info-card {
     flex: 1;
     min-width: 250px;
   }
@@ -1296,13 +1093,8 @@ onMounted(() => {
     flex-direction: column;
   }
 
-  .info-card,
-  .recording-card {
+  .info-card {
     width: 100%;
-  }
-
-  .control-btn span {
-    display: none;
   }
 
   .control-btn {
