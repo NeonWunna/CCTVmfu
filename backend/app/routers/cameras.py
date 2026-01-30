@@ -17,7 +17,7 @@ router = APIRouter(prefix="/cameras")
 @router.get("", response_model=List[schemas.Camera])
 def list_cameras(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: int = 1000, 
     db: Session = Depends(get_db)
 ):
     """
