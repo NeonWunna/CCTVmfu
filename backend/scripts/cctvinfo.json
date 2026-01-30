@@ -1,0 +1,2128 @@
+{
+    "NO": 1,
+    "ip_address": "172.30.36.11",
+    "name": "Guardhouse-ANPR-01",
+    "latitude": 20.045,
+    "longitude": 99.8895,
+    "location": "E4"
+},
+{
+    "NO": 2,
+    "ip_address": "172.30.36.12",
+    "name": "Guardhouse-ANPR-02",
+    "latitude": 20.045,
+    "longitude": 99.8895,
+    "location": "E4"
+},
+{
+    "NO": 3,
+    "ip_address": "172.30.36.13",
+    "name": "FrontageRd-South",
+    "latitude": 20.0449,
+    "longitude": 99.8893,
+    "location": "E4"
+},
+{
+    "NO": 4,
+    "ip_address": "172.30.36.14",
+    "name": "LanDao-Junction-01",
+    "latitude": 20.0449,
+    "longitude": 99.8911,
+    "location": "E4"
+},
+{
+    "NO": 5,
+    "ip_address": "172.30.36.15",
+    "name": "LanDao-Junction-02",
+    "latitude": 20.0449,
+    "longitude": 99.8911,
+    "location": "E4"
+},
+{
+    "NO": 6,
+    "ip_address": "172.30.36.21",
+    "name": "Guardhouse-ANPR-03",
+    "latitude": 20.0451,
+    "longitude": 99.8895,
+    "location": "E-Park"
+},
+{
+    "NO": 7,
+    "ip_address": "172.30.36.22",
+    "name": "Guardhouse-ANPR-04",
+    "latitude": 20.0451,
+    "longitude": 99.8895,
+    "location": "E-Park"
+},
+{
+    "NO": 8,
+    "ip_address": "172.30.36.23",
+    "name": "InFrontOfTheUniversity",
+    "latitude": 20.0463,
+    "longitude": 99.8773,
+    "location": "E-Park"
+},
+{
+    "NO": 9,
+    "ip_address": "172.30.36.24",
+    "name": "FrontageRd-U-Turn-01",
+    "latitude": 20.0459,
+    "longitude": 99.8782,
+    "location": "E-Park"
+},
+{
+    "NO": 10,
+    "ip_address": "172.30.36.25",
+    "name": "FrontageRd-U-Turn-02",
+    "latitude": 20.0458,
+    "longitude": 99.8785,
+    "location": "E-Park"
+},
+{
+    "NO": 11,
+    "ip_address": "172.30.36.26",
+    "name": "U-Turn R0-01",
+    "latitude": 20.0452,
+    "longitude": 99.8877,
+    "location": "E-Park"
+},
+{
+    "NO": 12,
+    "ip_address": "172.30.36.27",
+    "name": "U-Turn R0-02",
+    "latitude": 20.0451,
+    "longitude": 99.888,
+    "location": "E-Park"
+},
+{
+    "NO": 13,
+    "ip_address": "172.30.36.28",
+    "name": "FrontageRd-North",
+    "latitude": 20.0454,
+    "longitude": 99.8889,
+    "location": "E-Park"
+},
+{
+    "NO": 14,
+    "ip_address": "172.30.36.29",
+    "name": "M-Square-Junction",
+    "latitude": 20.0454,
+    "longitude": 99.889,
+    "location": "E-Park"
+},
+{
+    "NO": 15,
+    "ip_address": "172.30.36.30",
+    "name": "M-Square-Parking-01",
+    "latitude": 20.0454,
+    "longitude": 99.8902,
+    "location": "E-Park"
+},
+{
+    "NO": 16,
+    "ip_address": "172.30.36.31",
+    "name": "LanDao-Junction-06",
+    "latitude": 20.0459,
+    "longitude": 99.8914,
+    "location": "E-Park"
+},
+{
+    "NO": 17,
+    "ip_address": "172.30.36.32",
+    "name": "LanDao-Junction-05",
+    "latitude": 20.0459,
+    "longitude": 99.8914,
+    "location": "E-Park"
+},
+{
+    "NO": 18,
+    "ip_address": "172.30.36.33",
+    "name": "LanDao-Junction-03",
+    "latitude": 20.0452,
+    "longitude": 99.8911,
+    "location": "E-Park"
+},
+{
+    "NO": 19,
+    "ip_address": "172.30.36.34",
+    "name": "LanDao-Junction-04",
+    "latitude": 20.0452,
+    "longitude": 99.8911,
+    "location": "E-Park"
+},
+{
+    "NO": 20,
+    "ip_address": "172.30.36.35",
+    "name": "E-Park-FL2-Lift",
+    "latitude": 20.0464,
+    "longitude": 99.8912,
+    "location": "E-Park"
+},
+{
+    "NO": 21,
+    "ip_address": "172.30.36.36",
+    "name": "E-Park-FL3-Lift",
+    "latitude": 20.0462,
+    "longitude": 99.8913,
+    "location": "E-Park"
+},
+{
+    "NO": 22,
+    "ip_address": "172.30.36.37",
+    "name": "E-Park-FL4-Lift",
+    "latitude": 20.0464,
+    "longitude": 99.891,
+    "location": "E-Park"
+},
+{
+    "NO": 23,
+    "ip_address": "172.30.36.38",
+    "name": "E-Park-FL5-Lift",
+    "latitude": 20.0464,
+    "longitude": 99.891,
+    "location": "E-Park"
+},
+{
+    "NO": 24,
+    "ip_address": "172.30.36.51",
+    "name": "M-Square-Parking-02",
+    "latitude": 20.046,
+    "longitude": 99.8901,
+    "location": "I-Park"
+},
+{
+    "NO": 25,
+    "ip_address": "172.30.36.52",
+    "name": "M-Square-Parking-03",
+    "latitude": 20.0459,
+    "longitude": 99.8903,
+    "location": "I-Park"
+},
+{
+    "NO": 26,
+    "ip_address": "172.30.36.53",
+    "name": "M-Square-Parking-04",
+    "latitude": 20.0459,
+    "longitude": 99.8905,
+    "location": "I-Park"
+},
+{
+    "NO": 27,
+    "ip_address": "172.30.36.54",
+    "name": "M-Square-Parking-05",
+    "latitude": 20.0458,
+    "longitude": 99.8905,
+    "location": "I-Park"
+},
+{
+    "NO": 28,
+    "ip_address": "172.30.36.55",
+    "name": "I-Park-FL2-Lift",
+    "latitude": 20.046,
+    "longitude": 99.8906,
+    "location": "I-Park"
+},
+{
+    "NO": 29,
+    "ip_address": "172.30.36.56",
+    "name": "I-Park-Post",
+    "latitude": 20.0459,
+    "longitude": 99.8908,
+    "location": "I-Park"
+},
+{
+    "NO": 30,
+    "ip_address": "172.30.36.57",
+    "name": "I-Park-FL2",
+    "latitude": 20.0464,
+    "longitude": 99.8907,
+    "location": "I-Park"
+},
+{
+    "NO": 31,
+    "ip_address": "172.30.36.58",
+    "name": "I-Park-FL3-Lift",
+    "latitude": 20.046,
+    "longitude": 99.8908,
+    "location": "I-Park"
+},
+{
+    "NO": 32,
+    "ip_address": "172.30.36.59",
+    "name": "I-Park-FL3",
+    "latitude": 20.0464,
+    "longitude": 99.8907,
+    "location": "I-Park"
+},
+{
+    "NO": 33,
+    "ip_address": "172.30.36.60",
+    "name": "I-Park-FL4-Lift",
+    "latitude": 20.046,
+    "longitude": 99.8907,
+    "location": "I-Park"
+},
+{
+    "NO": 34,
+    "ip_address": "172.30.36.61",
+    "name": "I-Park-FL4",
+    "latitude": 20.0463,
+    "longitude": 99.8908,
+    "location": "I-Park"
+},
+{
+    "NO": 35,
+    "ip_address": "172.30.36.71",
+    "name": "E3-ANPR",
+    "latitude": 20.046,
+    "longitude": 99.8924,
+    "location": "E3B"
+},
+{
+    "NO": 36,
+    "ip_address": "172.30.36.72",
+    "name": "E1-Parking-01",
+    "latitude": 20.046,
+    "longitude": 99.893,
+    "location": "E3B"
+},
+{
+    "NO": 37,
+    "ip_address": "172.30.36.73",
+    "name": "E1-Parking-02",
+    "latitude": 20.046,
+    "longitude": 99.893,
+    "location": "E3B"
+},
+{
+    "NO": 38,
+    "ip_address": "172.30.36.74",
+    "name": "E1-Parking-03",
+    "latitude": 20.0456,
+    "longitude": 99.8931,
+    "location": "E3"
+},
+{
+    "NO": 39,
+    "ip_address": "172.30.36.75",
+    "name": "E1-Parking-04",
+    "latitude": 20.0457,
+    "longitude": 99.8924,
+    "location": "E3"
+},
+{
+    "NO": 40,
+    "ip_address": "172.30.36.76",
+    "name": "E1-Motorcycle-01",
+    "latitude": 20.0459,
+    "longitude": 99.8934,
+    "location": "E3"
+},
+{
+    "NO": 41,
+    "ip_address": "172.30.36.77",
+    "name": "E1-Motorcycle-02",
+    "latitude": 20.0459,
+    "longitude": 99.8934,
+    "location": "E3"
+},
+{
+    "NO": 42,
+    "ip_address": "172.30.36.78",
+    "name": "E3-Parking-01",
+    "latitude": 20.0465,
+    "longitude": 99.8929,
+    "location": "E3A"
+},
+{
+    "NO": 43,
+    "ip_address": "172.30.36.79",
+    "name": "E3-Parking-02",
+    "latitude": 20.0466,
+    "longitude": 99.8928,
+    "location": "E3A"
+},
+{
+    "NO": 44,
+    "ip_address": "172.30.36.80",
+    "name": "E3-Parking-03",
+    "latitude": 20.0464,
+    "longitude": 99.8926,
+    "location": "E3A"
+},
+{
+    "NO": 45,
+    "ip_address": "172.30.36.81",
+    "name": "E3-Parking-04",
+    "latitude": 20.0465,
+    "longitude": 99.8926,
+    "location": "E3A"
+},
+{
+    "NO": 46,
+    "ip_address": "172.30.36.82",
+    "name": "E3A-FL1-Lift",
+    "latitude": 20.0465,
+    "longitude": 99.8931,
+    "location": "E3A"
+},
+{
+    "NO": 47,
+    "ip_address": "172.30.36.83",
+    "name": "E3A-FL2-Lift",
+    "latitude": 20.0467,
+    "longitude": 99.893,
+    "location": "E3A"
+},
+{
+    "NO": 48,
+    "ip_address": "172.30.36.84",
+    "name": "E3A-FL2-Stair",
+    "latitude": 20.0467,
+    "longitude": 99.893,
+    "location": "E3A"
+},
+{
+    "NO": 49,
+    "ip_address": "172.30.36.85",
+    "name": "E3A-FL2",
+    "latitude": 20.0466,
+    "longitude": 99.8923,
+    "location": "E3A"
+},
+{
+    "NO": 50,
+    "ip_address": "172.30.36.86",
+    "name": "E3A-FL3-Lift",
+    "latitude": 20.0466,
+    "longitude": 99.8928,
+    "location": "E3A"
+},
+{
+    "NO": 51,
+    "ip_address": "172.30.36.87",
+    "name": "E3A-FL3-Stair",
+    "latitude": 20.0466,
+    "longitude": 99.8928,
+    "location": "E3A"
+},
+{
+    "NO": 52,
+    "ip_address": "172.30.36.88",
+    "name": "E3A-FL3",
+    "latitude": 20.0465,
+    "longitude": 99.8922,
+    "location": "E3A"
+},
+{
+    "NO": 53,
+    "ip_address": "172.30.36.89",
+    "name": "E3A-FL4-Lift",
+    "latitude": 20.0465,
+    "longitude": 99.8929,
+    "location": "E3A"
+},
+{
+    "NO": 54,
+    "ip_address": "172.30.36.90",
+    "name": "E3A-FL4-Stair",
+    "latitude": 20.0465,
+    "longitude": 99.8929,
+    "location": "E3A"
+},
+{
+    "NO": 55,
+    "ip_address": "172.30.36.91",
+    "name": "E3A-FL4",
+    "latitude": 20.0465,
+    "longitude": 99.8923,
+    "location": "E3A"
+},
+{
+    "NO": 56,
+    "ip_address": "172.30.36.92",
+    "name": "E3A-FL5-Lift",
+    "latitude": 20.0462,
+    "longitude": 99.8928,
+    "location": "E3A"
+},
+{
+    "NO": 57,
+    "ip_address": "172.30.36.93",
+    "name": "E3A-FL5-Stair",
+    "latitude": 20.0461,
+    "longitude": 99.8928,
+    "location": "E3A"
+},
+{
+    "NO": 58,
+    "ip_address": "172.30.36.94",
+    "name": "E3A-FL5",
+    "latitude": 20.0463,
+    "longitude": 99.8924,
+    "location": "E3A"
+},
+{
+    "NO": 59,
+    "ip_address": "172.30.36.95",
+    "name": "E3B-FL1-Lift",
+    "latitude": 20.0463,
+    "longitude": 99.8928,
+    "location": "E3B"
+},
+{
+    "NO": 60,
+    "ip_address": "172.30.36.96",
+    "name": "E3B-FL1-Stair",
+    "latitude": 20.0466,
+    "longitude": 99.8929,
+    "location": "E3B"
+},
+{
+    "NO": 61,
+    "ip_address": "172.30.36.97",
+    "name": "E3-Entrance",
+    "latitude": 20.0459,
+    "longitude": 99.8928,
+    "location": "E3B"
+},
+{
+    "NO": 62,
+    "ip_address": "172.30.36.98",
+    "name": "E3B-FL1-Classroom-01",
+    "latitude": 20.0461,
+    "longitude": 99.8928,
+    "location": "E3B"
+},
+{
+    "NO": 63,
+    "ip_address": "172.30.36.99",
+    "name": "E3B-FL1-Classroom-02",
+    "latitude": 20.0461,
+    "longitude": 99.8926,
+    "location": "E3B"
+},
+{
+    "NO": 64,
+    "ip_address": "172.30.36.100",
+    "name": "E3B-FL2-Lift",
+    "latitude": 20.0463,
+    "longitude": 99.8927,
+    "location": "E3B"
+},
+{
+    "NO": 65,
+    "ip_address": "172.30.36.101",
+    "name": "E3B-FL2-Stair",
+    "latitude": 20.0462,
+    "longitude": 99.8928,
+    "location": "E3B"
+},
+{
+    "NO": 66,
+    "ip_address": "172.30.36.102",
+    "name": "E3B-FL2",
+    "latitude": 20.046,
+    "longitude": 99.8921,
+    "location": "E3B"
+},
+{
+    "NO": 67,
+    "ip_address": "172.30.36.103",
+    "name": "E3B-FL3-Lift",
+    "latitude": 20.0462,
+    "longitude": 99.893,
+    "location": "E3B"
+},
+{
+    "NO": 68,
+    "ip_address": "172.30.36.104",
+    "name": "E3B-FL3-Stair",
+    "latitude": 20.0463,
+    "longitude": 99.8929,
+    "location": "E3B"
+},
+{
+    "NO": 69,
+    "ip_address": "172.30.36.105",
+    "name": "E3B-FL3",
+    "latitude": 20.0461,
+    "longitude": 99.8923,
+    "location": "E3B"
+},
+{
+    "NO": 70,
+    "ip_address": "172.30.36.106",
+    "name": "E3B-FL4-Lift",
+    "latitude": 20.0461,
+    "longitude": 99.8929,
+    "location": "E3B"
+},
+{
+    "NO": 71,
+    "ip_address": "172.30.36.107",
+    "name": "E3B-FL4-Stair",
+    "latitude": 20.0462,
+    "longitude": 99.8928,
+    "location": "E3B"
+},
+{
+    "NO": 72,
+    "ip_address": "172.30.36.108",
+    "name": "E3B-FL4",
+    "latitude": 20.0461,
+    "longitude": 99.8926,
+    "location": "E3B"
+},
+{
+    "NO": 73,
+    "ip_address": "172.30.36.111",
+    "name": "E2-ANPR",
+    "latitude": 20.0442,
+    "longitude": 99.8931,
+    "location": "E2"
+},
+{
+    "NO": 74,
+    "ip_address": "172.30.36.112",
+    "name": "E2-Motorcycle-01",
+    "latitude": 20.044,
+    "longitude": 99.8937,
+    "location": "E2"
+},
+{
+    "NO": 75,
+    "ip_address": "172.30.36.113",
+    "name": "E2-Motorcycle-02",
+    "latitude": 20.044,
+    "longitude": 99.8934,
+    "location": "E2"
+},
+{
+    "NO": 76,
+    "ip_address": "172.30.36.114",
+    "name": "E2-Exit-01",
+    "latitude": 20.0437,
+    "longitude": 99.8941,
+    "location": "E2"
+},
+{
+    "NO": 77,
+    "ip_address": "172.30.36.115",
+    "name": "E2-Exit-02",
+    "latitude": 20.0437,
+    "longitude": 99.8941,
+    "location": "E2"
+},
+{
+    "NO": 78,
+    "ip_address": "172.30.36.116",
+    "name": "E2-Parking-01",
+    "latitude": 20.0444,
+    "longitude": 99.8929,
+    "location": "E2"
+},
+{
+    "NO": 79,
+    "ip_address": "172.30.36.117",
+    "name": "E2-Parking-02",
+    "latitude": 20.0444,
+    "longitude": 99.8924,
+    "location": "E2"
+},
+{
+    "NO": 80,
+    "ip_address": "172.30.36.118",
+    "name": "E2-Junction",
+    "latitude": 20.0441,
+    "longitude": 99.8917,
+    "location": "E2"
+},
+{
+    "NO": 81,
+    "ip_address": "172.30.36.121",
+    "name": "D1-ANPR",
+    "latitude": 20.0478,
+    "longitude": 99.8931,
+    "location": "D1"
+},
+{
+    "NO": 82,
+    "ip_address": "172.30.36.122",
+    "name": "D1-Parking-01",
+    "latitude": 20.0472,
+    "longitude": 99.8933,
+    "location": "D1"
+},
+{
+    "NO": 83,
+    "ip_address": "172.30.36.123",
+    "name": "D1-Parking-02",
+    "latitude": 20.0472,
+    "longitude": 99.8931,
+    "location": "D1"
+},
+{
+    "NO": 84,
+    "ip_address": "172.30.36.124",
+    "name": "D1-Motorcycle",
+    "latitude": 20.0477,
+    "longitude": 99.8936,
+    "location": "D1"
+},
+{
+    "NO": 85,
+    "ip_address": "172.30.36.131",
+    "name": "AV-Parking",
+    "latitude": 20.0466,
+    "longitude": 99.8932,
+    "location": "AV"
+},
+{
+    "NO": 86,
+    "ip_address": "172.30.36.141",
+    "name": "AD1-ANPR-Parking",
+    "latitude": 20.0452,
+    "longitude": 99.8971,
+    "location": "AD1"
+},
+{
+    "NO": 87,
+    "ip_address": "172.30.36.142",
+    "name": "AD1-Motorcycle",
+    "latitude": 20.0446,
+    "longitude": 99.8969,
+    "location": "AD1"
+},
+{
+    "NO": 88,
+    "ip_address": "172.30.36.151",
+    "name": "AD1-ANPR-Junction",
+    "latitude": 20.0451,
+    "longitude": 99.8981,
+    "location": "AD2"
+},
+{
+    "NO": 89,
+    "ip_address": "172.30.36.152",
+    "name": "AD2-ANPR-Junction",
+    "latitude": 20.0464,
+    "longitude": 99.8984,
+    "location": "AD2"
+},
+{
+    "NO": 90,
+    "ip_address": "172.30.36.153",
+    "name": "AD2-Parking-01",
+    "latitude": 20.0467,
+    "longitude": 99.8972,
+    "location": "AD2"
+},
+{
+    "NO": 91,
+    "ip_address": "172.30.36.154",
+    "name": "AD2-Parking-02",
+    "latitude": 20.0466,
+    "longitude": 99.8968,
+    "location": "AD2"
+},
+{
+    "NO": 92,
+    "ip_address": "172.30.36.161",
+    "name": "S4-Parking",
+    "latitude": 20.0462,
+    "longitude": 99.8962,
+    "location": "S4"
+},
+{
+    "NO": 93,
+    "ip_address": "172.30.36.171",
+    "name": "S6-Parking-01",
+    "latitude": 20.0472,
+    "longitude": 99.8953,
+    "location": "S6"
+},
+{
+    "NO": 94,
+    "ip_address": "172.30.36.172",
+    "name": "S6-Parking-02",
+    "latitude": 20.0472,
+    "longitude": 99.8954,
+    "location": "S6"
+},
+{
+    "NO": 95,
+    "ip_address": "172.30.36.181",
+    "name": "F2-Road-01",
+    "latitude": 20.0483,
+    "longitude": 99.8937,
+    "location": "F2"
+},
+{
+    "NO": 96,
+    "ip_address": "172.30.36.182",
+    "name": "F2-Road-02",
+    "latitude": 20.0483,
+    "longitude": 99.8937,
+    "location": "F2"
+},
+{
+    "NO": 97,
+    "ip_address": "172.30.36.191",
+    "name": "F3",
+    "latitude": 20.0495,
+    "longitude": 99.8938,
+    "location": "F3"
+},
+{
+    "NO": 98,
+    "ip_address": "172.30.36.201",
+    "name": "F4",
+    "latitude": 20.0484,
+    "longitude": 99.8926,
+    "location": "F4"
+},
+{
+    "NO": 99,
+    "ip_address": "172.30.36.202",
+    "name": "D1-Junction-01",
+    "latitude": 20.0481,
+    "longitude": 99.892,
+    "location": "F4"
+},
+{
+    "NO": 100,
+    "ip_address": "172.30.36.203",
+    "name": "D1-Junction-02",
+    "latitude": 20.0481,
+    "longitude": 99.892,
+    "location": "F4"
+},
+{
+    "NO": 101,
+    "ip_address": "172.30.36.211",
+    "name": "F6-Road-01",
+    "latitude": 20.0507,
+    "longitude": 99.8921,
+    "location": "F6"
+},
+{
+    "NO": 102,
+    "ip_address": "172.30.36.212",
+    "name": "F6-Road-02",
+    "latitude": 20.0507,
+    "longitude": 99.8921,
+    "location": "F6"
+},
+{
+    "NO": 103,
+    "ip_address": "172.30.36.221",
+    "name": "Saktong 1",
+    "latitude": 20.05,
+    "longitude": 99.8928,
+    "location": "Saktong 1"
+},
+{
+    "NO": 104,
+    "ip_address": "172.30.36.231",
+    "name": "Saktong 2",
+    "latitude": 20.0498,
+    "longitude": 99.8931,
+    "location": "Saktong 2"
+},
+{
+    "NO": 105,
+    "ip_address": "172.30.36.241",
+    "name": "S1-Paking",
+    "latitude": 20.0458,
+    "longitude": 99.8947,
+    "location": "S1"
+},
+{
+    "NO": 106,
+    "ip_address": "172.30.37.1",
+    "name": "C1-PTZ",
+    "latitude": 20.0449,
+    "longitude": 99.8953,
+    "location": "C1"
+},
+{
+    "NO": 107,
+    "ip_address": "172.30.37.2",
+    "name": "C1-S2",
+    "latitude": 20.0453,
+    "longitude": 99.8951,
+    "location": "C1"
+},
+{
+    "NO": 108,
+    "ip_address": "172.30.37.3",
+    "name": "C1-AD1-01",
+    "latitude": 20.0452,
+    "longitude": 99.8955,
+    "location": "C1"
+},
+{
+    "NO": 109,
+    "ip_address": "172.30.37.4",
+    "name": "C1-AD1-02",
+    "latitude": 20.0449,
+    "longitude": 99.8953,
+    "location": "C1"
+},
+{
+    "NO": 110,
+    "ip_address": "172.30.37.5",
+    "name": "C1-C2",
+    "latitude": 20.0448,
+    "longitude": 99.8953,
+    "location": "C1"
+},
+{
+    "NO": 111,
+    "ip_address": "172.30.37.6",
+    "name": "C1-C3",
+    "latitude": 20.0444,
+    "longitude": 99.8951,
+    "location": "C1"
+},
+{
+    "NO": 112,
+    "ip_address": "172.30.37.11",
+    "name": "C2-Parking-01",
+    "latitude": 20.044,
+    "longitude": 99.8957,
+    "location": "C2"
+},
+{
+    "NO": 113,
+    "ip_address": "172.30.37.12",
+    "name": "C2-Parking-02",
+    "latitude": 20.044,
+    "longitude": 99.8959,
+    "location": "C2"
+},
+{
+    "NO": 114,
+    "ip_address": "172.30.37.13",
+    "name": "C2-Motorcycle-01",
+    "latitude": 20.0441,
+    "longitude": 99.896,
+    "location": "C2"
+},
+{
+    "NO": 115,
+    "ip_address": "172.30.37.14",
+    "name": "C2-Motorcycle-02",
+    "latitude": 20.0439,
+    "longitude": 99.8961,
+    "location": "C2"
+},
+{
+    "NO": 116,
+    "ip_address": "172.30.37.15",
+    "name": "C2-Motorcycle-03",
+    "latitude": 20.0437,
+    "longitude": 99.8964,
+    "location": "C2"
+},
+{
+    "NO": 117,
+    "ip_address": "172.30.37.16",
+    "name": "C2-C5-Junction",
+    "latitude": 20.0437,
+    "longitude": 99.8964,
+    "location": "C2"
+},
+{
+    "NO": 118,
+    "ip_address": "172.30.37.21",
+    "name": "C3-101",
+    "latitude": 20.044,
+    "longitude": 99.8949,
+    "location": "C3"
+},
+{
+    "NO": 119,
+    "ip_address": "172.30.37.22",
+    "name": "C3-107",
+    "latitude": 20.044,
+    "longitude": 99.8955,
+    "location": "C3"
+},
+{
+    "NO": 120,
+    "ip_address": "172.30.37.23",
+    "name": "C3-Paking",
+    "latitude": 20.0439,
+    "longitude": 99.8948,
+    "location": "C3"
+},
+{
+    "NO": 121,
+    "ip_address": "172.30.37.31",
+    "name": "C4-01",
+    "latitude": 20.0444,
+    "longitude": 99.8946,
+    "location": "C4"
+},
+{
+    "NO": 122,
+    "ip_address": "172.30.37.32",
+    "name": "C4-02",
+    "latitude": 20.0444,
+    "longitude": 99.8946,
+    "location": "C4"
+},
+{
+    "NO": 123,
+    "ip_address": "172.30.37.41",
+    "name": "C5-Paking-01",
+    "latitude": 20.043,
+    "longitude": 99.8952,
+    "location": "C5"
+},
+{
+    "NO": 124,
+    "ip_address": "172.30.37.42",
+    "name": "C5-Paking-02",
+    "latitude": 20.0429,
+    "longitude": 99.8955,
+    "location": "C5"
+},
+{
+    "NO": 125,
+    "ip_address": "172.30.37.43",
+    "name": "C5-Junction",
+    "latitude": 20.043,
+    "longitude": 99.8955,
+    "location": "C5"
+},
+{
+    "NO": 126,
+    "ip_address": "172.30.37.51",
+    "name": "Hos-ANPR",
+    "latitude": 20.0415,
+    "longitude": 99.8934,
+    "location": "Hospital"
+},
+{
+    "NO": 127,
+    "ip_address": "172.30.37.52",
+    "name": "LanThong-Junction",
+    "latitude": 20.0413,
+    "longitude": 99.8955,
+    "location": "Hospital"
+},
+{
+    "NO": 128,
+    "ip_address": "172.30.37.53",
+    "name": "GoldenTree",
+    "latitude": 20.0422,
+    "longitude": 99.896,
+    "location": "Hospital"
+},
+{
+    "NO": 129,
+    "ip_address": "172.30.37.54",
+    "name": "LanThongTemple",
+    "latitude": 20.0417,
+    "longitude": 99.8963,
+    "location": "Hospital"
+},
+{
+    "NO": 130,
+    "ip_address": "172.30.37.55",
+    "name": "LanThong-Parking",
+    "latitude": 20.0414,
+    "longitude": 99.8966,
+    "location": "Hospital"
+},
+{
+    "NO": 131,
+    "ip_address": "172.30.37.61",
+    "name": "Gym-ANPR",
+    "latitude": 20.0547,
+    "longitude": 99.8942,
+    "location": "โรงยิม"
+},
+{
+    "NO": 132,
+    "ip_address": "172.30.37.62",
+    "name": "Gym-Junction",
+    "latitude": 20.0547,
+    "longitude": 99.8941,
+    "location": "โรงยิม"
+},
+{
+    "NO": 133,
+    "ip_address": "172.30.37.63",
+    "name": "Gym-01",
+    "latitude": 20.0573,
+    "longitude": 99.8953,
+    "location": "โรงยิม"
+},
+{
+    "NO": 134,
+    "ip_address": "172.30.37.64",
+    "name": "Gym-02",
+    "latitude": 20.0573,
+    "longitude": 99.8953,
+    "location": "โรงยิม"
+},
+{
+    "NO": 135,
+    "ip_address": "172.30.37.71",
+    "name": "LDC-ANPR",
+    "latitude": 20.0569,
+    "longitude": 99.8968,
+    "location": "LDC"
+},
+{
+    "NO": 136,
+    "ip_address": "172.30.37.72",
+    "name": "LDC-Junction",
+    "latitude": 20.0569,
+    "longitude": 99.8968,
+    "location": "LDC"
+},
+{
+    "NO": 137,
+    "ip_address": "172.30.37.81",
+    "name": "L2-Parking-01",
+    "latitude": 20.0586,
+    "longitude": 99.8987,
+    "location": "L2"
+},
+{
+    "NO": 138,
+    "ip_address": "172.30.37.82",
+    "name": "L2-Parking-02",
+    "latitude": 20.0586,
+    "longitude": 99.899,
+    "location": "L2"
+},
+{
+    "NO": 139,
+    "ip_address": "172.30.37.91",
+    "name": "L4-Parking-01",
+    "latitude": 20.058,
+    "longitude": 99.8981,
+    "location": "L4"
+},
+{
+    "NO": 140,
+    "ip_address": "172.30.37.92",
+    "name": "L4-Parking-02",
+    "latitude": 20.0584,
+    "longitude": 99.8985,
+    "location": "L4"
+},
+{
+    "NO": 141,
+    "ip_address": "172.30.37.101",
+    "name": "L5-Parking-01",
+    "latitude": 20.0576,
+    "longitude": 99.8976,
+    "location": "L5"
+},
+{
+    "NO": 142,
+    "ip_address": "172.30.37.102",
+    "name": "L5-Parking-02",
+    "latitude": 20.058,
+    "longitude": 99.898,
+    "location": "L5"
+},
+{
+    "NO": 143,
+    "ip_address": "172.30.37.111",
+    "name": "L6-Parking-01",
+    "latitude": 20.0568,
+    "longitude": 99.8972,
+    "location": "L6"
+},
+{
+    "NO": 144,
+    "ip_address": "172.30.37.112",
+    "name": "L6-Parking-02",
+    "latitude": 20.0573,
+    "longitude": 99.8975,
+    "location": "L6"
+},
+{
+    "NO": 145,
+    "ip_address": "172.30.37.121",
+    "name": "A-ANPR",
+    "latitude": 20.0534,
+    "longitude": 99.8963,
+    "location": "A1-2"
+},
+{
+    "NO": 146,
+    "ip_address": "172.30.37.131",
+    "name": "A1-2-Parking",
+    "latitude": 20.0534,
+    "longitude": 99.8959,
+    "location": "A1-3"
+},
+{
+    "NO": 147,
+    "ip_address": "172.30.37.132",
+    "name": "A1-3-Parking",
+    "latitude": 20.0533,
+    "longitude": 99.8958,
+    "location": "A1-3"
+},
+{
+    "NO": 148,
+    "ip_address": "172.30.37.133",
+    "name": "A2-3-Parking-01",
+    "latitude": 20.0532,
+    "longitude": 99.8954,
+    "location": "A1-3"
+},
+{
+    "NO": 149,
+    "ip_address": "172.30.37.134",
+    "name": "A2-3-Parking-02",
+    "latitude": 20.0532,
+    "longitude": 99.8951,
+    "location": "A1-3"
+},
+{
+    "NO": 150,
+    "ip_address": "172.30.37.141",
+    "name": "A1-1-Parking",
+    "latitude": 20.0538,
+    "longitude": 99.8956,
+    "location": "A2-1"
+},
+{
+    "NO": 151,
+    "ip_address": "172.30.37.142",
+    "name": "A2-1-Parking",
+    "latitude": 20.0539,
+    "longitude": 99.8954,
+    "location": "A2-1"
+},
+{
+    "NO": 152,
+    "ip_address": "172.30.37.143",
+    "name": "A2-2-Parking",
+    "latitude": 20.0538,
+    "longitude": 99.8951,
+    "location": "A2-1"
+},
+{
+    "NO": 153,
+    "ip_address": "172.30.37.151",
+    "name": "A1-4-Parking-01",
+    "latitude": 20.053,
+    "longitude": 99.8945,
+    "location": "A1-4"
+},
+{
+    "NO": 154,
+    "ip_address": "172.30.37.152",
+    "name": "A1-4--Parking-02",
+    "latitude": 20.0531,
+    "longitude": 99.8945,
+    "location": "A1-4"
+},
+{
+    "NO": 155,
+    "ip_address": "172.30.37.161",
+    "name": "A2-4-Parking",
+    "latitude": 20.0533,
+    "longitude": 99.8945,
+    "location": "A2-4"
+},
+{
+    "NO": 156,
+    "ip_address": "172.30.37.171",
+    "name": "A-H6-Entrance",
+    "latitude": 20.0526,
+    "longitude": 99.8939,
+    "location": "ป้อมยามด้านหลังบ้าน A"
+},
+{
+    "NO": 157,
+    "ip_address": "172.30.37.172",
+    "name": "A-Back-IN",
+    "latitude": 20.0526,
+    "longitude": 99.8939,
+    "location": "ป้อมยามด้านหลังบ้าน A"
+},
+{
+    "NO": 158,
+    "ip_address": "172.30.37.173",
+    "name": "A-H5-Entrance",
+    "latitude": 20.0526,
+    "longitude": 99.894,
+    "location": "ป้อมยามด้านหลังบ้าน A"
+},
+{
+    "NO": 159,
+    "ip_address": "172.30.37.174",
+    "name": "A-Back-Out",
+    "latitude": 20.0528,
+    "longitude": 99.8941,
+    "location": "ป้อมยามด้านหลังบ้าน A"
+},
+{
+    "NO": 160,
+    "ip_address": "172.30.37.181",
+    "name": "Wanasom-Parking",
+    "latitude": 20.056,
+    "longitude": 99.9118,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 160,
+    "ip_address": "172.30.37.182",
+    "name": "Wanasom-Lobby-01",
+    "latitude": 20.0561,
+    "longitude": 99.9115,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 162,
+    "ip_address": "172.30.37.183",
+    "name": "Wanasom-Lobby-02",
+    "latitude": 20.0563,
+    "longitude": 99.9113,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 163,
+    "ip_address": "172.30.37.184",
+    "name": "Wanasom-Lobby-03",
+    "latitude": 20.0562,
+    "longitude": 99.9116,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 164,
+    "ip_address": "172.30.37.185",
+    "name": "Wanasom-Lobby-04",
+    "latitude": 20.0562,
+    "longitude": 99.9116,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 165,
+    "ip_address": "172.30.37.186",
+    "name": "Wanasom-Lobby-05",
+    "latitude": 20.0561,
+    "longitude": 99.9116,
+    "location": "วนาศรม อาคาร Lobby"
+},
+{
+    "NO": 166,
+    "ip_address": "172.30.37.191",
+    "name": "Wanasom-A-FL1-01",
+    "latitude": 20.056,
+    "longitude": 99.912,
+    "location": "วนาศรม อาคาร A"
+},
+{
+    "NO": 167,
+    "ip_address": "172.30.37.192",
+    "name": "Wanasom-A-FL1-02",
+    "latitude": 20.0559,
+    "longitude": 99.9122,
+    "location": "วนาศรม อาคาร A"
+},
+{
+    "NO": 168,
+    "ip_address": "172.30.37.193",
+    "name": "Wanasom-A-FL2-01",
+    "latitude": 20.0561,
+    "longitude": 99.912,
+    "location": "วนาศรม อาคาร A"
+},
+{
+    "NO": 169,
+    "ip_address": "172.30.37.194",
+    "name": "Wanasom-A-FL2-02",
+    "latitude": 20.0559,
+    "longitude": 99.9122,
+    "location": "วนาศรม อาคาร A"
+},
+{
+    "NO": 170,
+    "ip_address": "172.30.37.201",
+    "name": "Wanasom-04",
+    "latitude": 20.0561,
+    "longitude": 99.912,
+    "location": "วนาศรม อาคารสปา"
+},
+{
+    "NO": 171,
+    "ip_address": "172.30.37.202",
+    "name": "Wanasom-05",
+    "latitude": 20.056,
+    "longitude": 99.912,
+    "location": "วนาศรม อาคารสปา"
+},
+{
+    "NO": 172,
+    "ip_address": "172.30.37.203",
+    "name": "Wanasom-Spa-FL1",
+    "latitude": 20.0558,
+    "longitude": 99.9119,
+    "location": "วนาศรม อาคารสปา"
+},
+{
+    "NO": 173,
+    "ip_address": "172.30.37.204",
+    "name": "Wanasom-Spa-FL2",
+    "latitude": 20.0559,
+    "longitude": 99.9119,
+    "location": "วนาศรม อาคารสปา"
+},
+{
+    "NO": 174,
+    "ip_address": "172.30.37.211",
+    "name": "Wanatas",
+    "latitude": 20.0563,
+    "longitude": 99.9111,
+    "location": "วนาศรม อาคารวนาทัศน์"
+},
+{
+    "NO": 175,
+    "ip_address": "172.30.37.212",
+    "name": "Wanasom-01",
+    "latitude": 20.0565,
+    "longitude": 99.9114,
+    "location": "วนาศรม อาคารวนาทัศน์"
+},
+{
+    "NO": 176,
+    "ip_address": "172.30.37.221",
+    "name": "WNS-Canteen-01",
+    "latitude": 20.0565,
+    "longitude": 99.9117,
+    "location": "วนาศรม ห้องอาหาร"
+},
+{
+    "NO": 177,
+    "ip_address": "172.30.37.222",
+    "name": "WNS-Canteen-02",
+    "latitude": 20.057,
+    "longitude": 99.9118,
+    "location": "วนาศรม ห้องอาหาร"
+},
+{
+    "NO": 178,
+    "ip_address": "172.30.37.223",
+    "name": "Wanasom-Canteen",
+    "latitude": 20.0565,
+    "longitude": 99.9118,
+    "location": "วนาศรม ห้องอาหาร"
+},
+{
+    "NO": 179,
+    "ip_address": "172.30.37.224",
+    "name": "WNS-Canteen-03",
+    "latitude": 20.057,
+    "longitude": 99.9119,
+    "location": "วนาศรม ห้องอาหาร"
+},
+{
+    "NO": 180,
+    "ip_address": "172.30.37.231",
+    "name": "Wanasom-B-01",
+    "latitude": 20.0557,
+    "longitude": 99.9122,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 181,
+    "ip_address": "172.30.37.232",
+    "name": "Wanasom-B-02",
+    "latitude": 20.0556,
+    "longitude": 99.9123,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 182,
+    "ip_address": "172.30.37.233",
+    "name": "Wanasom-B-FL1-01",
+    "latitude": 20.0559,
+    "longitude": 99.9124,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 183,
+    "ip_address": "172.30.37.234",
+    "name": "Wanasom-B-FL1-02",
+    "latitude": 20.0557,
+    "longitude": 99.9124,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 184,
+    "ip_address": "172.30.37.235",
+    "name": "Wanasom-B-FL2-01",
+    "latitude": 20.0559,
+    "longitude": 99.9124,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 185,
+    "ip_address": "172.30.37.236",
+    "name": "Wanasom-B-FL2-02",
+    "latitude": 20.0558,
+    "longitude": 99.9124,
+    "location": "วนาศรม อาคาร B"
+},
+{
+    "NO": 186,
+    "ip_address": "172.30.37.241",
+    "name": "Wanasom-C2",
+    "latitude": 20.0554,
+    "longitude": 99.9119,
+    "location": "วนาศรม อาคาร C"
+},
+{
+    "NO": 187,
+    "ip_address": "172.30.37.242",
+    "name": "Wanasom-C3",
+    "latitude": 20.0553,
+    "longitude": 99.9123,
+    "location": "วนาศรม อาคาร C"
+},
+{
+    "NO": 188,
+    "ip_address": "172.30.37.243",
+    "name": "Wanasom-C4",
+    "latitude": 20.0555,
+    "longitude": 99.9125,
+    "location": "วนาศรม อาคาร C"
+},
+{
+    "NO": 189,
+    "ip_address": "172.30.37.244",
+    "name": "Wanasom-C6",
+    "latitude": 20.0553,
+    "longitude": 99.9127,
+    "location": "วนาศรม อาคาร C"
+},
+{
+    "NO": 190,
+    "ip_address": "172.30.37.245",
+    "name": "Wanasom-Pool-01",
+    "latitude": 20.0552,
+    "longitude": 99.912,
+    "location": "วนาศรม สระว่ายน้ำ"
+},
+{
+    "NO": 191,
+    "ip_address": "172.30.37.246",
+    "name": "Wanasom-Pool-02",
+    "latitude": 20.055,
+    "longitude": 99.9119,
+    "location": "วนาศรม สระว่ายน้ำ"
+},
+{
+    "NO": 192,
+    "ip_address": "172.30.37.247",
+    "name": "Wanasom-Pool-03",
+    "latitude": 20.0551,
+    "longitude": 99.9119,
+    "location": "วนาศรม สระว่ายน้ำ"
+},
+{
+    "NO": 193,
+    "ip_address": "172.30.38.1",
+    "name": "Wanasom-D",
+    "latitude": 20.0549,
+    "longitude": 99.9114,
+    "location": "วนาศรม อาคาร D"
+},
+{
+    "NO": 194,
+    "ip_address": "172.30.38.2",
+    "name": "Wanasom-D-FL1-01",
+    "latitude": 20.0549,
+    "longitude": 99.9114,
+    "location": "วนาศรม อาคาร D"
+},
+{
+    "NO": 195,
+    "ip_address": "172.30.38.3",
+    "name": "Wanasom-D-FL1-02",
+    "latitude": 20.0548,
+    "longitude": 99.9112,
+    "location": "วนาศรม อาคาร D"
+},
+{
+    "NO": 196,
+    "ip_address": "172.30.38.4",
+    "name": "Wanasom-D-FL2-01",
+    "latitude": 20.055,
+    "longitude": 99.9114,
+    "location": "วนาศรม อาคาร D"
+},
+{
+    "NO": 197,
+    "ip_address": "172.30.38.5",
+    "name": "Wanasom-D-FL2-02",
+    "latitude": 20.0548,
+    "longitude": 99.9114,
+    "location": "วนาศรม อาคาร D"
+},
+{
+    "NO": 198,
+    "ip_address": "172.30.38.11",
+    "name": "Wanasom-E-FL1-01",
+    "latitude": 20.0547,
+    "longitude": 99.9112,
+    "location": "วนาศรม อาคาร E"
+},
+{
+    "NO": 199,
+    "ip_address": "172.30.38.12",
+    "name": "Wanasom-E-FL1-02",
+    "latitude": 20.0546,
+    "longitude": 99.9111,
+    "location": "วนาศรม อาคาร E"
+},
+{
+    "NO": 200,
+    "ip_address": "172.30.38.13",
+    "name": "Wanasom-E-FL2-01",
+    "latitude": 20.0547,
+    "longitude": 99.9113,
+    "location": "วนาศรม อาคาร E"
+},
+{
+    "NO": 201,
+    "ip_address": "172.30.38.14",
+    "name": "Wanasom-E-FL2-02",
+    "latitude": 20.0545,
+    "longitude": 99.9111,
+    "location": "วนาศรม อาคาร E"
+},
+{
+    "NO": 202,
+    "ip_address": "172.30.38.21",
+    "name": "Wanasom-03",
+    "latitude": 20.0554,
+    "longitude": 99.9112,
+    "location": "วนาศรม อาคาร F"
+},
+{
+    "NO": 203,
+    "ip_address": "172.30.38.22",
+    "name": "Wanasom-F-FL1-01",
+    "latitude": 20.0555,
+    "longitude": 99.9113,
+    "location": "วนาศรม อาคาร F"
+},
+{
+    "NO": 204,
+    "ip_address": "172.30.38.23",
+    "name": "Wanasom-F-FL1-02",
+    "latitude": 20.0551,
+    "longitude": 99.9113,
+    "location": "วนาศรม อาคาร F"
+},
+{
+    "NO": 205,
+    "ip_address": "172.30.38.24",
+    "name": "Wanasom-F-FL2-01",
+    "latitude": 20.0554,
+    "longitude": 99.9112,
+    "location": "วนาศรม อาคาร F"
+},
+{
+    "NO": 206,
+    "ip_address": "172.30.38.25",
+    "name": "Wanasom-F-FL2-02",
+    "latitude": 20.0552,
+    "longitude": 99.9113,
+    "location": "วนาศรม อาคาร F"
+},
+{
+    "NO": 207,
+    "ip_address": "172.30.38.31",
+    "name": "Wsawan-02",
+    "latitude": 20.0554,
+    "longitude": 99.9103,
+    "location": "อาคารวนาสวรรค์"
+},
+{
+    "NO": 208,
+    "ip_address": "172.30.38.32",
+    "name": "Wsawan-Parking",
+    "latitude": 20.0554,
+    "longitude": 99.91,
+    "location": "อาคารวนาสวรรค์"
+},
+{
+    "NO": 209,
+    "ip_address": "172.30.38.33",
+    "name": "Wanasom",
+    "latitude": 20.056,
+    "longitude": 99.9103,
+    "location": "อาคารวนาสวรรค์"
+},
+{
+    "NO": 210,
+    "ip_address": "172.30.38.34",
+    "name": "Wsawan-02",
+    "latitude": 20.0553,
+    "longitude": 99.9102,
+    "location": "อาคารวนาสวรรค์"
+},
+{
+    "NO": 211,
+    "ip_address": "172.30.38.35",
+    "name": "Wsawan-03",
+    "latitude": 20.0552,
+    "longitude": 99.9104,
+    "location": "อาคารวนาสวรรค์"
+},
+{
+    "NO": 212,
+    "ip_address": "172.30.38.41",
+    "name": "L-Park-03",
+    "latitude": 20.0463,
+    "longitude": 99.8911,
+    "location": "L-Park"
+},
+{
+    "NO": 213,
+    "ip_address": "172.30.38.42",
+    "name": "L-Park-I-Park",
+    "latitude": 20.0458,
+    "longitude": 99.891,
+    "location": "L-Park"
+},
+{
+    "NO": 214,
+    "ip_address": "172.30.38.43",
+    "name": "L-Park-01",
+    "latitude": 20.046,
+    "longitude": 99.8911,
+    "location": "L-Park"
+},
+{
+    "NO": 215,
+    "ip_address": "172.30.38.44",
+    "name": "L-Park-02",
+    "latitude": 20.046,
+    "longitude": 99.8911,
+    "location": "L-Park"
+},
+{
+    "NO": 216,
+    "ip_address": "172.30.38.45",
+    "name": "L-Park-E-Park",
+    "latitude": 20.0463,
+    "longitude": 99.8912,
+    "location": "L-Park"
+},
+{
+    "NO": 217,
+    "ip_address": "172.30.38.51",
+    "name": "WW-FL1-01",
+    "latitude": 20.056,
+    "longitude": 99.8983,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 218,
+    "ip_address": "172.30.38.52",
+    "name": "WW-Lobby-01",
+    "latitude": 20.0558,
+    "longitude": 99.8982,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 219,
+    "ip_address": "172.30.38.53",
+    "name": "WW-Lobby-02",
+    "latitude": 20.0557,
+    "longitude": 99.8982,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 220,
+    "ip_address": "172.30.38.54",
+    "name": "WW-Parking-01",
+    "latitude": 20.0558,
+    "longitude": 99.8982,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 221,
+    "ip_address": "172.30.38.55",
+    "name": "WW-FL1-02",
+    "latitude": 20.0557,
+    "longitude": 99.8983,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 222,
+    "ip_address": "172.30.38.56",
+    "name": "WW-FL2-03",
+    "latitude": 20.0555,
+    "longitude": 99.8986,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 223,
+    "ip_address": "172.30.38.57",
+    "name": "WW-FireExit-FL1",
+    "latitude": 20.0554,
+    "longitude": 99.8985,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 224,
+    "ip_address": "172.30.38.58",
+    "name": "WW-Parking-02",
+    "latitude": 20.0554,
+    "longitude": 99.8985,
+    "location": "วนาเวศน์ ชั้น 1"
+},
+{
+    "NO": 225,
+    "ip_address": "172.30.38.61",
+    "name": "WW-Parking-03",
+    "latitude": 20.0558,
+    "longitude": 99.8982,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 226,
+    "ip_address": "172.30.38.62",
+    "name": "WW-FL2-01",
+    "latitude": 20.0557,
+    "longitude": 99.8981,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 227,
+    "ip_address": "172.30.38.63",
+    "name": "WW-FL2-02",
+    "latitude": 20.0557,
+    "longitude": 99.8983,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 228,
+    "ip_address": "172.30.38.64",
+    "name": "WW-FL2-03",
+    "latitude": 20.0556,
+    "longitude": 99.8983,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 229,
+    "ip_address": "172.30.38.65",
+    "name": "WW-FL2-04",
+    "latitude": 20.0554,
+    "longitude": 99.8987,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 230,
+    "ip_address": "172.30.38.66",
+    "name": "WW-FireExit-FL2",
+    "latitude": 20.0554,
+    "longitude": 99.8985,
+    "location": "วนาเวศน์ ชั้น 2"
+},
+{
+    "NO": 231,
+    "ip_address": "172.30.38.71",
+    "name": "WW-FL3-01",
+    "latitude": 20.056,
+    "longitude": 99.8978,
+    "location": "วนาเวศน์ ชั้น 3"
+},
+{
+    "NO": 232,
+    "ip_address": "172.30.38.72",
+    "name": "WW-FL3-02",
+    "latitude": 20.0556,
+    "longitude": 99.8983,
+    "location": "วนาเวศน์ ชั้น 3"
+},
+{
+    "NO": 233,
+    "ip_address": "172.30.38.73",
+    "name": "WW-FL3-03",
+    "latitude": 20.0551,
+    "longitude": 99.8987,
+    "location": "วนาเวศน์ ชั้น 3"
+},
+{
+    "NO": 234,
+    "ip_address": "172.30.38.74",
+    "name": "WW-FireExit-FL3",
+    "latitude": 20.0552,
+    "longitude": 99.8988,
+    "location": "วนาเวศน์ ชั้น 3"
+},
+{
+    "NO": 235,
+    "ip_address": "172.30.38.81",
+    "name": "WW-FL4-01",
+    "latitude": 20.0559,
+    "longitude": 99.898,
+    "location": "วนาเวศน์ ชั้น 4"
+},
+{
+    "NO": 236,
+    "ip_address": "172.30.38.82",
+    "name": "WW-FL4-02",
+    "latitude": 20.0555,
+    "longitude": 99.8984,
+    "location": "วนาเวศน์ ชั้น 4"
+},
+{
+    "NO": 237,
+    "ip_address": "172.30.38.83",
+    "name": "WW-FL4-03",
+    "latitude": 20.0554,
+    "longitude": 99.8986,
+    "location": "วนาเวศน์ ชั้น 4"
+},
+{
+    "NO": 238,
+    "ip_address": "172.30.38.84",
+    "name": "WW-FireExit-FL4",
+    "latitude": 20.0553,
+    "longitude": 99.8987,
+    "location": "วนาเวศน์ ชั้น 4"
+},
+{
+    "NO": 239,
+    "ip_address": "172.30.38.91",
+    "name": "WW-FL5-01",
+    "latitude": 20.0557,
+    "longitude": 99.8989,
+    "location": "วนาเวศน์ ชั้น 5"
+},
+{
+    "NO": 240,
+    "ip_address": "172.30.38.92",
+    "name": "WW-FL5-02",
+    "latitude": 20.0556,
+    "longitude": 99.899,
+    "location": "วนาเวศน์ ชั้น 5"
+},
+{
+    "NO": 241,
+    "ip_address": "172.30.38.93",
+    "name": "WW-FL5-03",
+    "latitude": 20.0553,
+    "longitude": 99.8989,
+    "location": "วนาเวศน์ ชั้น 5"
+},
+{
+    "NO": 242,
+    "ip_address": "172.30.38.94",
+    "name": "WW-FireExit-FL5",
+    "latitude": 20.0558,
+    "longitude": 99.8989,
+    "location": "วนาเวศน์ ชั้น 5"
+},
+{
+    "NO": 243,
+    "ip_address": "172.30.38.101",
+    "name": "L8-FL3-01",
+    "latitude": 20.0559,
+    "longitude": 99.8982,
+    "location": "ลำดวน 8 ชั้น 3"
+},
+{
+    "NO": 244,
+    "ip_address": "172.30.38.102",
+    "name": "L8-FL3-02",
+    "latitude": 20.056,
+    "longitude": 99.8982,
+    "location": "ลำดวน 8 ชั้น 3"
+},
+{
+    "NO": 245,
+    "ip_address": "172.30.38.103",
+    "name": "L8-FireExit-FL3",
+    "latitude": 20.0561,
+    "longitude": 99.8981,
+    "location": "ลำดวน 8 ชั้น 3"
+},
+{
+    "NO": 246,
+    "ip_address": "172.30.38.104",
+    "name": "L8-FL3-03",
+    "latitude": 20.0561,
+    "longitude": 99.8981,
+    "location": "ลำดวน 8 ชั้น 3"
+},
+{
+    "NO": 247,
+    "ip_address": "172.30.38.111",
+    "name": "L8-FL4-01",
+    "latitude": 20.0559,
+    "longitude": 99.8985,
+    "location": "ลำดวน 8 ชั้น 4"
+},
+{
+    "NO": 248,
+    "ip_address": "172.30.38.112",
+    "name": "L8-FL4-02",
+    "latitude": 20.0568,
+    "longitude": 99.8978,
+    "location": "ลำดวน 8 ชั้น 4"
+},
+{
+    "NO": 249,
+    "ip_address": "172.30.38.113",
+    "name": "L8-FL4-03",
+    "latitude": 20.0563,
+    "longitude": 99.8979,
+    "location": "ลำดวน 8 ชั้น 4"
+},
+{
+    "NO": 250,
+    "ip_address": "172.30.38.114",
+    "name": "L8-FireExit-FL4",
+    "latitude": 20.0563,
+    "longitude": 99.8979,
+    "location": "ลำดวน 8 ชั้น 4"
+},
+{
+    "NO": 251,
+    "ip_address": "172.30.38.121",
+    "name": "L8-FL5-01",
+    "latitude": 20.0559,
+    "longitude": 99.8983,
+    "location": "ลำดวน 8 ชั้น 5"
+},
+{
+    "NO": 252,
+    "ip_address": "172.30.38.122",
+    "name": "L8-FL5-02",
+    "latitude": 20.0561,
+    "longitude": 99.8981,
+    "location": "ลำดวน 8 ชั้น 5"
+},
+{
+    "NO": 253,
+    "ip_address": "172.30.38.123",
+    "name": "L8-FL5-03",
+    "latitude": 20.0564,
+    "longitude": 99.8984,
+    "location": "ลำดวน 8 ชั้น 5"
+},
+{
+    "NO": 254,
+    "ip_address": "172.30.38.124",
+    "name": "L8-FireExit-FL5",
+    "latitude": 20.0563,
+    "longitude": 99.8984,
+    "location": "ลำดวน 8 ชั้น 5"
+},
+{
+    "NO": 255,
+    "ip_address": "172.30.38.131",
+    "name": "L8-FL6-01",
+    "latitude": 20.0558,
+    "longitude": 99.8982,
+    "location": "ลำดวน 8 ชั้น 6"
+},
+{
+    "NO": 256,
+    "ip_address": "172.30.38.132",
+    "name": "L8-FL6-02",
+    "latitude": 20.0559,
+    "longitude": 99.8984,
+    "location": "ลำดวน 8 ชั้น 6"
+},
+{
+    "NO": 257,
+    "ip_address": "172.30.38.133",
+    "name": "L8-FL6-03",
+    "latitude": 20.0562,
+    "longitude": 99.8981,
+    "location": "ลำดวน 8 ชั้น 6"
+},
+{
+    "NO": 258,
+    "ip_address": "172.30.38.134",
+    "name": "L8-FL6-04",
+    "latitude": 20.0564,
+    "longitude": 99.8979,
+    "location": "ลำดวน 8 ชั้น 6"
+},
+{
+    "NO": 259,
+    "ip_address": "172.30.38.135",
+    "name": "L8-FireExit-FL6",
+    "latitude": 20.0564,
+    "longitude": 99.8981,
+    "location": "ลำดวน 8 ชั้น 6"
+},
+{
+    "NO": 260,
+    "ip_address": "172.30.38.141",
+    "name": "L8-FL7-01",
+    "latitude": 20.0558,
+    "longitude": 99.8982,
+    "location": "ลำดวน 8 ชั้น 7"
+},
+{
+    "NO": 261,
+    "ip_address": "172.30.38.142",
+    "name": "L8-FL7-02",
+    "latitude": 20.0559,
+    "longitude": 99.8983,
+    "location": "ลำดวน 8 ชั้น 7"
+},
+{
+    "NO": 262,
+    "ip_address": "172.30.38.143",
+    "name": "L8-FL7-03",
+    "latitude": 20.0563,
+    "longitude": 99.8982,
+    "location": "ลำดวน 8 ชั้น 7"
+},
+{
+    "NO": 263,
+    "ip_address": "172.30.38.144",
+    "name": "L8-FL7-04",
+    "latitude": 20.0564,
+    "longitude": 99.898,
+    "location": "ลำดวน 8 ชั้น 7"
+},
+{
+    "NO": 264,
+    "ip_address": "172.30.38.145",
+    "name": "L8-FireExit-FL7",
+    "latitude": 20.0565,
+    "longitude": 99.8983,
+    "location": "ลำดวน 8 ชั้น 7"
+},
+{
+    "NO": 265,
+    "ip_address": "172.28.107.108",
+    "name": "WarRoom",
+    "latitude": 20.0535,
+    "longitude": 99.8924,
+    "location": "ศูนย์ลำดวน"
+},
+{
+    "NO": 266,
+    "ip_address": "172.28.107.109",
+    "name": 6999,
+    "latitude": 20.0535,
+    "longitude": 99.8924,
+    "location": "ศูนย์ลำดวน"
+}
