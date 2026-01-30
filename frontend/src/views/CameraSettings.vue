@@ -424,16 +424,25 @@ const handleKeyDown = (e) => {
 };
 
 const handleSearch = () => {
-  // Use nextTick to wait for Vue to update the filtered list
   setTimeout(() => {
-    const mainArea = document.querySelector('.main-area');
-    if (mainArea && searchQuery.value) {
-      mainArea.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+    const firstRow = document.querySelector('.camera-table tbody tr:first-child');
+    
+    if (firstRow) {
+      // Scroll the first row into view
+      firstRow.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
       });
+      
+      // Then adjust by scrolling up a bit to account for sticky headers
+      const mainArea = document.querySelector('.main-area');
+      if (mainArea) {
+        // Scroll up by the height of inventory header (~170px)
+        mainArea.scrollTop = mainArea.scrollTop - 170;
+      }
     }
-  }, 100);
+  }, 0);
 };
 
 // Add event listener for ESC key - Logic moved to combined onUnmounted above
@@ -637,6 +646,9 @@ const handleSearch = () => {
       </tr>
     </thead>
     <tbody>
+    <tr class="spacer-row">
+    <td colspan="10"></td>
+  </tr>
   <tr v-for="camera in filteredCameras" :key="camera.id" class="camera-row">
     <td data-label="Status">
       <span class="status-badge" :class="camera.status">
@@ -1179,22 +1191,25 @@ const handleSearch = () => {
   padding: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
+  overflow-x: hidden; /* ADD THIS */
   height: 100%;
-  scroll-padding-top: 200px;
+  display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .inventory-header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: linear-gradient(180deg, rgba(26, 32, 44, 0.98) 0%, rgba(26, 32, 44, 0.95) 100%);
+  z-index: 10; /* Higher than table header */
+  background: rgba(26, 32, 44, 1);
   backdrop-filter: blur(20px) saturate(180%);
-  margin: 0; /* Change from -2rem -2rem 2rem -2rem */
+  margin: 0;
   padding: 1.5rem 2rem;
   border-bottom: 2px solid rgba(102, 126, 234, 0.3);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0; /* ADD THIS */
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .inventory-title h2 {
@@ -1352,14 +1367,13 @@ const handleSearch = () => {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed; /* Add this line */
 }
 
 .camera-table thead {
-  background: rgba(102, 126, 234, 0.15);
+  background: rgba(26, 32, 44, 1); /* Solid background - same as inventory header */
   position: sticky;
-  top: 0;
-  z-index: 10;
+  top: 0.1px;
+  z-index: 9;
 }
 
 .camera-table thead th {
@@ -1419,6 +1433,9 @@ const handleSearch = () => {
 .camera-name-text {
   font-weight: 600;
   color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .table-actions {
@@ -2121,5 +2138,15 @@ const handleSearch = () => {
   justify-content: flex-end;
   flex: 1;
 }
+}
+.spacer-row {
+  height: 50px;
+  pointer-events: none;
+  background: transparent !important;
+}
+
+.spacer-row td {
+  padding: 0 !important;
+  border: none !important;
 }
 </style>
