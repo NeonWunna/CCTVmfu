@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
@@ -144,13 +144,32 @@ const handleLogoError = (event) => {
 
 const toggleFullscreen = () => {
   const videoContainer = document.querySelector('.video-container');
+  
   if (!document.fullscreenElement) {
-    videoContainer.requestFullscreen();
-    isFullscreen.value = true;
+    if (videoContainer.requestFullscreen) {
+      videoContainer.requestFullscreen();
+    } else if (videoContainer.webkitRequestFullscreen) {
+      videoContainer.webkitRequestFullscreen();
+    } else if (videoContainer.mozRequestFullScreen) {
+      videoContainer.mozRequestFullScreen();
+    } else if (videoContainer.msRequestFullscreen) {
+      videoContainer.msRequestFullscreen();
+    }
   } else {
-    document.exitFullscreen();
-    isFullscreen.value = false;
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
   }
+};
+
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement;
 };
 
 onMounted(() => {
@@ -171,16 +190,23 @@ onMounted(() => {
   fetchCameraDetails();
   
   // Listen for fullscreen changes
-  document.addEventListener('fullscreenchange', () => {
-    isFullscreen.value = !!document.fullscreenElement;
-  });
-});
-
-// Clean up the refresh flag when leaving the page
-onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+  
+  // Clean up the refresh flag when leaving the page
   window.addEventListener('beforeunload', () => {
     sessionStorage.removeItem('cameraViewRefreshed');
   });
+});
+
+onBeforeUnmount(() => {
+  // Remove fullscreen event listeners
+  document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
 });
 </script>
 
@@ -327,28 +353,9 @@ onMounted(() => {
 
         <!-- Video Section -->
         <section class="video-section">
-          <!-- Video Controls Bar -->
-          <div class="controls-bar">
-            <div class="controls-left">
-              <h2>Live Feed</h2>
-            </div>
-            <div class="controls-right">
-              <button class="control-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
-                <svg v-if="!isFullscreen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-                </svg>
-                <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-
           <!-- Video Container -->
           <div class="video-container">
             <!-- Placeholder for video stream -->
-            <!-- Backend integration: Replace this div with actual video element -->
-            <!-- MJPEG Stream -->
             <div class="video-placeholder" v-if="!cameraData.rtspUrl">
               <div class="placeholder-content">
                 <div class="camera-icon-large">
@@ -371,6 +378,16 @@ onMounted(() => {
               alt="Live Camera Feed"
               @error="e => e.target.style.display = 'none'"
             />
+
+            <!-- Fullscreen button overlay on video -->
+            <button class="fullscreen-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
+              <svg v-if="!isFullscreen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+              </svg>
+              <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9l6 6m0-6l-6 6m12-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </button>
           </div>
         </section>
       </div>
@@ -847,63 +864,6 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.controls-bar {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.controls-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.controls-left h2 {
-  color: white;
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.controls-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.control-btn {
-  padding: 0.625rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(102, 126, 234, 0.4);
-  color: white;
-}
-
-.control-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
 /* Video Container */
 .video-container {
   background: rgba(0, 0, 0, 0.5);
@@ -1006,6 +966,37 @@ onMounted(() => {
   object-fit: cover;
 }
 
+/* Fullscreen Button on Video */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.fullscreen-btn:hover {
+  background: rgba(102, 126, 234, 0.8);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.fullscreen-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .content-wrapper {
@@ -1054,21 +1045,6 @@ onMounted(() => {
     padding: 1rem;
   }
 
-  .controls-bar {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .controls-left,
-  .controls-right {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .controls-right {
-    flex-wrap: wrap;
-  }
-
   .camera-icon-large {
     width: 80px;
     height: 80px;
@@ -1096,58 +1072,6 @@ onMounted(() => {
   .info-card {
     width: 100%;
   }
-
-  .control-btn {
-    padding: 0.625rem;
-  }
-}
-
-/* RTSP Styles */
-.rtsp-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    margin-top: 1rem;
-    max-width: 90%;
-}
-
-.rtsp-code {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    color: #667eea;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-    word-break: break-all;
-    border: 1px solid rgba(102, 126, 234, 0.3);
-}
-
-.copy-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.copy-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-}
-
-.rtsp-hint {
-    font-size: 0.8rem !important;
-    color: rgba(255, 255, 255, 0.5) !important;
-    font-style: italic;
 }
 
 .no-rtsp {
