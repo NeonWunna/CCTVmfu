@@ -1147,6 +1147,15 @@ const handleKeyDown = (e) => {
 
 .inventory-header {
   margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(26, 32, 44, 0.95);
+  backdrop-filter: blur(20px);
+  padding: 1rem 0;
+  margin: -2rem -2rem 2rem -2rem;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .inventory-title h2 {
@@ -1847,6 +1856,11 @@ const handleKeyDown = (e) => {
 }
 
 @media (max-width: 768px) {
+    .inventory-header {
+    margin: -1rem -1rem 1.5rem -1rem;
+    padding: 1rem;
+  }
+
   .header-content {
     padding: 15px 20px;
   }
