@@ -179,7 +179,11 @@ const viewCamera = (cctvName) => {
     });
   }
 };
-
+const closeInfoWindow = () => {
+  if (infoWindow.value) {
+    infoWindow.value.close();
+  }
+};
 const focusOnCamera = (camera, shouldPan = false) => {
   if (!map.value || !camera.lat || !camera.lng) return;
   
@@ -266,73 +270,84 @@ const addMarker = (cctv) => {
   marker.originalIcon = svgMarker;
 
   // Create InfoWindow content - PROFESSIONAL VERSION
-  const contentString = `
-    <div class="custom-popup">
-      <div class="popup-header">
-        <div class="popup-title">${cctv.name}</div>
-        <div class="popup-status-badge ${cctv.status}">
-          <span class="status-dot"></span>
-          ${statusText}
-        </div>
-      </div>
-      <div class="popup-body">
-        <div class="popup-info-grid">
-          <div class="info-item">
-            <div class="info-label">
-              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-              </svg>
-              IP Address
-            </div>
-            <div class="info-value ip-value">${cctv.ipAddress || 'N/A'}</div>
+const contentString = `
+  <div class="custom-popup">
+    <div class="popup-header">
+<div class="popup-title-row">
+  <div class="popup-title">${cctv.name}</div>
+  <button 
+    onclick="window.closeInfoWindowFromPopup()"
+    class="close-btn-compact"
+    title="Close"
+  >
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+</div>
+<div class="popup-status-row">
+  <div class="popup-status-badge ${cctv.status}">
+    <span class="status-dot"></span>
+    ${statusText}
+  </div>
+  <button 
+    onclick="window.viewCameraFromPopup('${cctv.name}')"
+    class="view-camera-btn-compact"
+    title="View Camera"
+  >
+    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+    </svg>
+    <span>View Camera</span>
+  </button>
+</div>
+    </div>
+    <div class="popup-body">
+      <div class="popup-info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+            </svg>
+            IP Address
           </div>
-          
-          <div class="info-item">
-            <div class="info-label">
-              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              Location
-            </div>
-            <div class="info-value">${cctv.location}</div>
-          </div>
-          
-          <div class="info-item">
-            <div class="info-label">
-              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Last Update
-            </div>
-            <div class="info-value">${cctv.lastUpdate || 'N/A'}</div>
-          </div>
-          
-          <div class="info-item">
-            <div class="info-label">
-              <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-              </svg>
-              Coordinates
-            </div>
-            <div class="info-value coords-value">${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</div>
-          </div>
+          <div class="info-value ip-value">${cctv.ipAddress || 'N/A'}</div>
         </div>
         
-        <div class="popup-actions">
-          <button 
-            onclick="window.viewCameraFromPopup('${cctv.name}')"
-            class="view-camera-btn"
-          >
-            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            View Camera
-          </button>
+            Location
+          </div>
+          <div class="info-value">${cctv.location}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Last Update
+          </div>
+          <div class="info-value">${cctv.lastUpdate || 'N/A'}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+            </svg>
+            Coordinates
+          </div>
+          <div class="info-value coords-value">${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</div>
         </div>
       </div>
     </div>
-  `;
+  </div>
+`;
 
   marker.addListener("click", () => {
     // Close any existing InfoWindow
@@ -341,12 +356,13 @@ const addMarker = (cctv) => {
     }
     
     // Create new InfoWindow
-    if (!infoWindow.value) {
-      infoWindow.value = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0, 10), // Small offset
-        disableAutoPan: true, 
-        maxWidth: 360
-      });
+if (!infoWindow.value) {
+  infoWindow.value = new google.maps.InfoWindow({
+    pixelOffset: new google.maps.Size(0, -10), // NEGATIVE offset to move UP
+    disableAutoPan: true, 
+    disableCloseButton: true,
+    maxWidth: 360
+  });
     } else {
       // Update options for existing InfoWindow
       infoWindow.value.setOptions({
@@ -481,7 +497,7 @@ onMounted(() => {
   loadGoogleMapsScript();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
-  
+  window.closeInfoWindowFromPopup = closeInfoWindow;  
   // Fetch initial data
   fetchCameras();
   
@@ -503,7 +519,7 @@ onMounted(() => {
 onUnmounted(() => {
   // Clean up global function
   delete window.viewCameraFromPopup;
-  
+  delete window.closeInfoWindowFromPopup;
   // Clear all pulsing intervals
   pulseIntervals.forEach(id => clearInterval(id));
   pulseIntervals.length = 0;
@@ -1701,6 +1717,10 @@ onUnmounted(() => {
 
 <style>
 /* Global styles for Google Maps InfoWindow - FIXED ZOOM-RESPONSIVE VERSION */
+.gm-style-iw-chr {
+  display: none !important;
+}
+
 .gm-style-iw-c {
   background: #1a202c !important;
   border: none !important;
@@ -1708,17 +1728,21 @@ onUnmounted(() => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(102, 126, 234, 0.2) !important;
   padding: 0 !important;
   max-width: 360px !important;
-  /* CRITICAL: Prevent scaling with map zoom */
   transform: none !important;
   transform-origin: center center !important;
+  overflow: hidden !important; /* ADD THIS LINE */
 }
 
 .gm-style-iw-d {
-  overflow: hidden !important;
+  overflow: visible !important; /* CHANGE from hidden */
   max-height: none !important;
   padding: 0 !important;
-  /* CRITICAL: Prevent scaling with map zoom */
+  margin: 0 !important; /* ADD THIS */
   transform: none !important;
+}
+
+.gm-style-iw-tc {
+  display: none !important; /* HIDE the tail/arrow */
 }
 
 .gm-style .gm-style-iw-t::after {
@@ -1728,22 +1752,26 @@ onUnmounted(() => {
 
 /* Close button */
 .gm-ui-hover-effect {
-  top: 18px !important;
-  right: 18px !important;
-  width: 28px !important;
-  height: 28px !important;
+  top: 8px !important;  /* Changed from 12px - move it up more */
+  right: 8px !important;  /* Changed from 12px */
+  width: 28px !important;  /* Smaller */
+  height: 28px !important;  /* Smaller */
   opacity: 0.9 !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(10px) !important;
 }
 
 .gm-ui-hover-effect > span {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  width: 16px !important;
-  height: 16px !important;
-  margin: 6px !important;
+  background-color: white !important;  /* Changed from rgba */
+  width: 18px !important;
+  height: 18px !important;
+  margin: 7px !important;
 }
 
 .gm-ui-hover-effect:hover {
   opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.3) !important;  /* Add this */
 }
 
 /* Custom Popup Container - FIXED ZOOM SCALING */
@@ -1766,17 +1794,27 @@ onUnmounted(() => {
 /* Header Section */
 .popup-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24px;
-  padding-right: 55px;
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
+  padding: 14px 18px;
+  padding-top: 14px; /* CHANGE back to match sides */
+  padding-right: 45px;
+  border-top-left-radius: 16px; /* MATCH the container */
+  border-top-right-radius: 16px; /* MATCH the container */
+  margin: 0 !important; /* ADD THIS */
+}
+
+.popup-title-row {
+  display: flex;
+  align-items: flex-start; /* CHANGED from center */
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
 .popup-title {
+  flex: 0 0 auto; /* CHANGED from flex: 1 */
   font-size: 20px;
   font-weight: 700;
   color: white;
-  margin-bottom: 12px;
   letter-spacing: -0.5px;
   line-height: 1.3;
 }
@@ -1811,7 +1849,12 @@ onUnmounted(() => {
   background: #ef4444;
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
 }
-
+.popup-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 @keyframes pulse-dot {
   0%, 100% {
     opacity: 1;
@@ -1888,66 +1931,77 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Actions Section */
-.popup-actions {
-  padding: 0 24px 24px;
-}
-
-.view-camera-btn {
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* Professional Compact Button - Next to Title */
+.view-camera-btn-compact {
+  padding: 10px 18px;
+  background: rgba(26, 32, 44, 0.9); /* Dark background */
   color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
+  border: 2px solid rgba(102, 126, 234, 0.6); /* Purple border */
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-  letter-spacing: 0.5px;
+  gap: 8px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  position: relative;
-  overflow: hidden;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
 }
 
-.view-camera-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.view-camera-btn-compact:hover {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.9);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
-.view-camera-btn:hover::before {
-  opacity: 1;
+.view-camera-btn-compact:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.view-camera-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
-}
-
-.view-camera-btn:active {
-  transform: translateY(0);
-}
-
-.view-camera-btn > * {
-  position: relative;
-  z-index: 1;
-}
-
-.btn-icon {
+.view-camera-btn-compact .btn-icon {
   width: 18px;
   height: 18px;
+}
+
+/* Close Button - Compact Circle */
+.close-btn-compact {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: rgba(26, 32, 44, 0.9); /* Dark background */
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(239, 68, 68, 0.6); /* Red border */
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.close-btn-compact:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.9);
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.close-btn-compact:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+.close-btn-compact svg {
+  width: 18px;
+  height: 18px;
+  color: white;
 }
 </style>
