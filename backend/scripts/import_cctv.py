@@ -53,8 +53,9 @@ def import_cctv_data():
             # Extract NO for RTSP URL generation
             no = item.get('NO')
             rtsp_url = None
-            if no:
-               rtsp_url = f"rtsp://mfustream:mediamfu2025@172.30.36.13:554/LiveMedia/ch{no}/Media1/trackID={no}"
+            if ip_address:
+               # Use the camera's IP address and default to channel 1 for direct connection
+               rtsp_url = f"rtsp://mfustream:mediamfu2025@{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
 
             # Map JSON fields to model fields
             camera_data = {
