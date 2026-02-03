@@ -657,7 +657,6 @@ const handleSearch = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr class="spacer-row"><td colspan="10"></td></tr>
                 <tr v-for="camera in filteredCameras" :key="camera.id" class="camera-row">
                   <td data-label="Status">
                     <span class="status-badge" :class="camera.status">
@@ -1482,21 +1481,6 @@ const handleSearch = () => {
   font-size: 0.875rem;
   vertical-align: middle;
 }
-
-.spacer-row {
-  height: 50px;
-  pointer-events: none;
-  background: transparent !important;
-}
-.spacer-row:hover {
-  transform: none !important;
-  box-shadow: none !important;
-}
-.spacer-row td {
-  padding: 0 !important;
-  border: none !important;
-}
-
 /* ===== TABLE CELL CONTENT ===== */
 .camera-name-cell {
   display: flex;

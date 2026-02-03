@@ -14,6 +14,10 @@ const showDropdown = ref(false);
 const searchQuery = ref("");
 const isMapLoaded = ref(false);
 
+// Filter state
+const showFilterDropdown = ref(false);
+const selectedFilter = ref("all"); // "all", "online", "offline"
+
 // Toast state
 const toast = ref({
   show: false,
@@ -93,15 +97,36 @@ const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down")
 const totalCount = computed(() => cctvs.value.length);
 
 const filteredCameras = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return cctvs.value;
+  let filtered = cctvs.value;
+
+  // Apply search filter
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(camera => 
+      camera.name.toLowerCase().includes(query) ||
+      (camera.ipAddress && camera.ipAddress.toLowerCase().includes(query))
+    );
   }
-  
-  const query = searchQuery.value.toLowerCase().trim();
-  return cctvs.value.filter(camera => 
-    camera.name.toLowerCase().includes(query) ||
-    (camera.ipAddress && camera.ipAddress.toLowerCase().includes(query))
-  );
+
+  // Apply status filter
+  if (selectedFilter.value === "online") {
+    filtered = filtered.filter(c => c.status === "up");
+  } else if (selectedFilter.value === "offline") {
+    filtered = filtered.filter(c => c.status === "down");
+  }
+
+  return filtered;
+});
+
+const filterOptions = [
+  { value: "all", label: "All Cameras", icon: "all" },
+  { value: "online", label: "Online Only", icon: "online" },
+  { value: "offline", label: "Offline Only", icon: "offline" }
+];
+
+const currentFilterLabel = computed(() => {
+  const option = filterOptions.find(opt => opt.value === selectedFilter.value);
+  return option ? option.label : "All Cameras";
 });
 
 const userInitials = computed(() => {
@@ -129,10 +154,43 @@ const closeToast = () => {
 
 const toggleProfileMenu = () => {
   showDropdown.value = !showDropdown.value;
+  showFilterDropdown.value = false;
+};
+
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+  showDropdown.value = false;
 };
 
 const closeDropdown = () => {
   showDropdown.value = false;
+};
+
+const closeFilterDropdown = () => {
+  showFilterDropdown.value = false;
+};
+
+const handleClickOutside = (event) => {
+  const filterButton = document.querySelector('.filter-button-container');
+  const filterDropdown = document.querySelector('.filter-dropdown');
+  
+  if (showFilterDropdown.value && 
+      filterButton && 
+      !filterButton.contains(event.target) &&
+      filterDropdown &&
+      !filterDropdown.contains(event.target)) {
+    showFilterDropdown.value = false;
+  }
+};
+
+const selectFilter = (value) => {
+  selectedFilter.value = value;
+  showFilterDropdown.value = false;
+  
+  // Update map markers when filter changes
+  if (map.value) {
+    renderMapMarkers();
+  }
 };
 
 const goToCameraSettings = () => {
@@ -179,11 +237,13 @@ const viewCamera = (cctvName) => {
     });
   }
 };
+
 const closeInfoWindow = () => {
   if (infoWindow.value) {
     infoWindow.value.close();
   }
 };
+
 const focusOnCamera = (camera, shouldPan = false) => {
   if (!map.value || !camera.lat || !camera.lng) return;
   
@@ -209,10 +269,12 @@ const focusOnCamera = (camera, shouldPan = false) => {
 
 const clearSearch = () => {
   searchQuery.value = "";
+  selectedFilter.value = "all";
   if (map.value && cctvs.value.length > 0) {
     // Reset to default view
     map.value.setCenter({ lat: 20.0443, lng: 99.8937 });
     map.value.setZoom(16);
+    renderMapMarkers();
   }
 };
 
@@ -471,8 +533,8 @@ const renderMapMarkers = () => {
   pulseIntervals.forEach(id => clearInterval(id));
   pulseIntervals.length = 0;
 
-  // Determine which cameras to display based on search
-  const camerasToDisplay = searchQuery.value.trim() ? filteredCameras.value : cctvs.value;
+  // Determine which cameras to display based on search and filter
+  const camerasToDisplay = filteredCameras.value;
 
   // Add CCTV markers
   camerasToDisplay.forEach(cctv => {
@@ -482,8 +544,8 @@ const renderMapMarkers = () => {
     }
   });
 
-  // If searching and have results, adjust map view to show all filtered cameras
-  if (searchQuery.value.trim() && camerasToDisplay.length > 0) {
+  // If searching/filtering and have results, adjust map view to show all filtered cameras
+  if ((searchQuery.value.trim() || selectedFilter.value !== 'all') && camerasToDisplay.length > 0) {
     const bounds = new google.maps.LatLngBounds();
     camerasToDisplay
       .filter(c => c.lat && c.lng)
@@ -497,15 +559,19 @@ onMounted(() => {
   loadGoogleMapsScript();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
-  window.closeInfoWindowFromPopup = closeInfoWindow;  
+  window.closeInfoWindowFromPopup = closeInfoWindow;
+  
+  // Add click outside handler
+  document.addEventListener('click', handleClickOutside);
+  
   // Fetch initial data
   fetchCameras();
   
   // Set up auto-refresh every 30 seconds
   const refreshInterval = setInterval(fetchCameras, 30000);
   
-  // Watch search query changes and update markers
-  watch(searchQuery, () => {
+  // Watch search query and filter changes and update markers
+  watch([searchQuery, selectedFilter], () => {
     if (map.value) {
       renderMapMarkers();
     }
@@ -513,6 +579,7 @@ onMounted(() => {
   
   onUnmounted(() => {
     clearInterval(refreshInterval);
+    document.removeEventListener('click', handleClickOutside);
   });
 });
 
@@ -520,6 +587,10 @@ onUnmounted(() => {
   // Clean up global function
   delete window.viewCameraFromPopup;
   delete window.closeInfoWindowFromPopup;
+  
+  // Remove click outside handler
+  document.removeEventListener('click', handleClickOutside);
+  
   // Clear all pulsing intervals
   pulseIntervals.forEach(id => clearInterval(id));
   pulseIntervals.length = 0;
@@ -631,29 +702,70 @@ onUnmounted(() => {
       </div>
 
       <div class="panel-center">
-        <div class="search-wrapper">
-          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Search cameras by name or IP..."
-            class="search-input"
-            aria-label="Search cameras"
-          >
-          <button 
-            v-if="searchQuery" 
-            @click="clearSearch" 
-            class="clear-button"
-            aria-label="Clear search"
-          >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <div class="search-filter-group">
+          <div class="search-wrapper">
+            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
-          </button>
+            <input 
+              v-model="searchQuery"
+              type="text" 
+              placeholder="Search cameras by name or IP..."
+              class="search-input"
+              aria-label="Search cameras"
+            >
+            <button 
+              v-if="searchQuery || selectedFilter !== 'all'" 
+              @click="clearSearch" 
+              class="clear-button"
+              aria-label="Clear search"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="filter-button-container">
+            <button class="filter-button" @click="toggleFilterDropdown" :class="{ active: selectedFilter !== 'all' }">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              <span class="filter-text">{{ currentFilterLabel }}</span>
+              <svg class="filter-arrow" :class="{ open: showFilterDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <transition name="dropdown">
+              <div v-show="showFilterDropdown" class="filter-dropdown">
+                <button 
+                  v-for="option in filterOptions" 
+                  :key="option.value"
+                  class="filter-option"
+                  :class="{ active: selectedFilter === option.value }"
+                  @click="selectFilter(option.value)"
+                >
+                  <svg v-if="option.icon === 'all'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  <svg v-else-if="option.icon === 'online'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span>{{ option.label }}</span>
+                  <svg v-if="selectedFilter === option.value" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </button>
+              </div>
+            </transition>
+          </div>
         </div>
-        <div v-if="searchQuery" class="search-results-info">
+
+        <div v-if="searchQuery || selectedFilter !== 'all'" class="search-results-info">
           <span class="results-count">
             {{ filteredCameras.length }} camera{{ filteredCameras.length !== 1 ? 's' : '' }} found
           </span>
@@ -699,11 +811,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Search Results Panel (only show when searching) -->
+    <!-- Search Results Panel (only show when searching or filtering) -->
     <transition name="slide-down">
-      <div v-if="searchQuery && filteredCameras.length > 0" class="search-results-panel">
+      <div v-if="(searchQuery || selectedFilter !== 'all') && filteredCameras.length > 0" class="search-results-panel">
         <div class="results-header">
-          <h3>Search Results</h3>
+          <h3>{{ selectedFilter !== 'all' ? currentFilterLabel : 'Search Results' }}</h3>
           <button @click="clearSearch" class="close-results">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -738,13 +850,13 @@ onUnmounted(() => {
 
     <!-- No Results Message -->
     <transition name="fade">
-      <div v-if="searchQuery && filteredCameras.length === 0" class="no-results">
+      <div v-if="(searchQuery || selectedFilter !== 'all') && filteredCameras.length === 0" class="no-results">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
         <h3>No cameras found</h3>
-        <p>Try searching with a different name or IP address</p>
-        <button @click="clearSearch" class="clear-search-button">Clear Search</button>
+        <p>Try adjusting your search or filter criteria</p>
+        <button @click="clearSearch" class="clear-search-button">Clear All Filters</button>
       </div>
     </transition>
 
@@ -1030,7 +1142,7 @@ onUnmounted(() => {
 
 .panel-center {
   flex: 1;
-  max-width: 500px;
+  max-width: 600px;
   min-width: 280px;
 }
 
@@ -1184,10 +1296,17 @@ onUnmounted(() => {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Search & Filter Group */
+.search-filter-group {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 /* Search in Status Panel - Dark Theme */
 .search-wrapper {
   position: relative;
-  width: 100%;
+  flex: 1;
 }
 
 .search-icon {
@@ -1249,6 +1368,113 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Filter Button */
+.filter-button-container {
+  position: relative;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filter-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.4);
+  color: white;
+}
+
+.filter-button.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border-color: rgba(102, 126, 234, 0.5);
+  color: #667eea;
+}
+
+.filter-button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.filter-text {
+  display: inline-block;
+}
+
+.filter-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.filter-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: rgba(26, 32, 44, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  min-width: 220px;
+  overflow: hidden;
+  z-index: 1000;
+  padding: 0.5rem;
+}
+
+.filter-option {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filter-option:hover {
+  background: rgba(102, 126, 234, 0.2);
+  color: white;
+}
+
+.filter-option.active {
+  background: rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.filter-option svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.filter-option .check-icon {
+  margin-left: auto;
+  color: #10b981;
 }
 
 .search-results-info {
@@ -1622,6 +1848,30 @@ onUnmounted(() => {
 
   .legend {
     flex-wrap: wrap;
+  }
+
+  .search-filter-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .search-wrapper {
+    width: 100%;
+  }
+
+  .filter-button-container {
+    width: 100%;
+  }
+
+  .filter-button {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
   }
 
   .stats {
