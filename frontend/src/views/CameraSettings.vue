@@ -18,6 +18,10 @@ const isEditMode = ref(false);
 const editingCameraId = ref(null);
 const isRefreshing = ref(false);
 
+// Filter state
+const showFilterDropdown = ref(false);
+const selectedFilter = ref("all"); // "all", "online", "offline"
+
 // Toast state
 const toast = ref({
   show: false,
@@ -89,12 +93,14 @@ let pollInterval = null;
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('click', handleClickOutside);
   fetchCameras();
   pollInterval = setInterval(fetchCameras, 10000);
 });
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('click', handleClickOutside);
   if (pollInterval) clearInterval(pollInterval);
 });
 
@@ -114,13 +120,21 @@ const totalCount = computed(() => cameras.value.length);
 const filteredCameras = computed(() => {
   let filtered = cameras.value;
 
+  // Apply search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = cameras.value.filter(camera =>
+    filtered = filtered.filter(camera =>
       camera.name.toLowerCase().includes(query) ||
       camera.location.toLowerCase().includes(query) ||
       camera.ipAddress.toLowerCase().includes(query)
     );
+  }
+
+  // Apply status filter
+  if (selectedFilter.value === "online") {
+    filtered = filtered.filter(c => c.status === "up");
+  } else if (selectedFilter.value === "offline") {
+    filtered = filtered.filter(c => c.status === "down");
   }
 
   return filtered.sort((a, b) => {
@@ -128,6 +142,17 @@ const filteredCameras = computed(() => {
     if (a.status === 'down' && b.status === 'up') return 1;
     return 0;
   });
+});
+
+const filterOptions = [
+  { value: "all", label: "All Cameras", icon: "all" },
+  { value: "online", label: "Online Only", icon: "online" },
+  { value: "offline", label: "Offline Only", icon: "offline" }
+];
+
+const currentFilterLabel = computed(() => {
+  const option = filterOptions.find(opt => opt.value === selectedFilter.value);
+  return option ? option.label : "All Cameras";
 });
 
 const showToast = (message, type = 'info') => {
@@ -170,10 +195,39 @@ const validateForm = () => {
 
 const toggleProfileMenu = () => {
   showDropdown.value = !showDropdown.value;
+  showFilterDropdown.value = false;
+};
+
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+  showDropdown.value = false;
 };
 
 const closeDropdown = () => {
   showDropdown.value = false;
+};
+
+const closeFilterDropdown = () => {
+  showFilterDropdown.value = false;
+};
+
+const handleClickOutside = (event) => {
+  const filterButton = document.querySelector('.filter-button-container');
+  const filterDropdown = document.querySelector('.filter-dropdown');
+  
+  if (showFilterDropdown.value && 
+      filterButton && 
+      !filterButton.contains(event.target) &&
+      filterDropdown &&
+      !filterDropdown.contains(event.target)) {
+    showFilterDropdown.value = false;
+  }
+};
+
+const selectFilter = (value) => {
+  selectedFilter.value = value;
+  showFilterDropdown.value = false;
+  handleSearch();
 };
 
 const goToDashboard = () => {
@@ -353,6 +407,9 @@ const handleKeyDown = (e) => {
   if (e.key === 'Escape' && showAddModal.value) {
     closeModal();
   }
+  if (e.key === 'Escape' && showFilterDropdown.value) {
+    showFilterDropdown.value = false;
+  }
 };
 
 const handleSearch = () => {
@@ -503,18 +560,58 @@ const handleSearch = () => {
             </div>
 
             <div class="inventory-controls">
-              <div class="search-box">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input
-                  v-model="searchQuery"
-                  @input="handleSearch"
-                  type="text"
-                  placeholder="Search by name, location, or IP address..."
-                  class="search-input"
-                  aria-label="Search cameras"
-                >
+              <div class="search-filter-group">
+                <div class="search-box">
+                  <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <input
+                    v-model="searchQuery"
+                    @input="handleSearch"
+                    type="text"
+                    placeholder="Search by name, location, or IP address..."
+                    class="search-input"
+                    aria-label="Search cameras"
+                  >
+                </div>
+
+                <div class="filter-button-container">
+                  <button class="filter-button" @click="toggleFilterDropdown" :class="{ active: selectedFilter !== 'all' }">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    <span class="filter-text">{{ currentFilterLabel }}</span>
+                    <svg class="filter-arrow" :class="{ open: showFilterDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+
+                  <transition name="dropdown">
+                    <div v-show="showFilterDropdown" class="filter-dropdown">
+                      <button 
+                        v-for="option in filterOptions" 
+                        :key="option.value"
+                        class="filter-option"
+                        :class="{ active: selectedFilter === option.value }"
+                        @click="selectFilter(option.value)"
+                      >
+                        <svg v-if="option.icon === 'all'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        <svg v-else-if="option.icon === 'online'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>{{ option.label }}</span>
+                        <svg v-if="selectedFilter === option.value" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </transition>
+                </div>
               </div>
 
               <button class="btn btn-secondary refresh-btn" @click="refreshStatus" :disabled="isRefreshing">
@@ -540,7 +637,7 @@ const handleSearch = () => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
             <h3>No cameras found</h3>
-            <p>Try adjusting your search criteria</p>
+            <p>Try adjusting your search or filter criteria</p>
           </div>
 
           <div v-else class="table-container">
@@ -1122,10 +1219,16 @@ const handleSearch = () => {
   flex-wrap: wrap;
 }
 
-/* ===== SEARCH ===== */
+/* ===== SEARCH & FILTER GROUP ===== */
+.search-filter-group {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 300px;
+}
+
 .search-box {
   flex: 1;
-  min-width: 250px;
   position: relative;
 }
 .search-icon {
@@ -1156,6 +1259,113 @@ const handleSearch = () => {
   border-color: #667eea;
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* ===== FILTER BUTTON ===== */
+.filter-button-container {
+  position: relative;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filter-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.4);
+  color: white;
+}
+
+.filter-button.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border-color: rgba(102, 126, 234, 0.5);
+  color: #667eea;
+}
+
+.filter-button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.filter-text {
+  display: inline-block;
+}
+
+.filter-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.filter-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* ===== FILTER DROPDOWN ===== */
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: rgba(26, 32, 44, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  min-width: 220px;
+  overflow: hidden;
+  z-index: 1000;
+  padding: 0.5rem;
+}
+
+.filter-option {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filter-option:hover {
+  background: rgba(102, 126, 234, 0.2);
+  color: white;
+}
+
+.filter-option.active {
+  background: rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.filter-option svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.filter-option .check-icon {
+  margin-left: auto;
+  color: #10b981;
 }
 
 /* ===== BUTTONS ===== */
@@ -1721,8 +1931,29 @@ const handleSearch = () => {
     gap: 0.75rem;
   }
   
+  .search-filter-group {
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+  }
+  
   .search-box {
     min-width: 0;
+    width: 100%;
+  }
+  
+  .filter-button-container {
+    width: 100%;
+  }
+  
+  .filter-button {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .filter-dropdown {
+    left: 0;
+    right: 0;
     width: 100%;
   }
   
