@@ -13,7 +13,7 @@ def import_cctv_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    json_file_path = os.path.join(os.path.dirname(__file__), 'cctvinfo.json')
+    json_file_path = os.path.join(os.path.dirname(__file__), 'cctvinfo2.json')
     
     if not os.path.exists(json_file_path):
         print(f"Error: File not found at {json_file_path}")
@@ -46,23 +46,23 @@ def import_cctv_data():
         count_updated = 0
         
         for item in data:
-            ip_address = item.get('ip_address')
+            ip_address = item.get('IP ADDRESS')
             if not ip_address:
                 continue
 
-            # Extract NO for RTSP URL generation
-            no = item.get('NO')
-            rtsp_url = None
-            if ip_address:
-               # Use the camera's IP address and default to channel 1 for direct connection
-               rtsp_url = f"rtsp://mfustream:mediamfu2025@{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+            # Extract generated RTSP or use specific field
+            rtsp_url = item.get('ANPR&PTZ RTSP')
+            
+            # If the specific field is empty, generate the default format
+            if not rtsp_url and ip_address:
+               rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
 
             # Map JSON fields to model fields
             camera_data = {
                 'ip_address': ip_address,
-                'name': str(item.get('name')) if item.get('name') is not None else None,
-                'location': str(item.get('location')) if item.get('location') is not None else None,
-                'coordinates': f"{item.get('latitude')}, {item.get('longitude')}",
+                'name': str(item.get('CAMERA NAME_NEW')) if item.get('CAMERA NAME_NEW') is not None else None,
+                'location': str(item.get('Location')) if item.get('Location') is not None else None,
+                'coordinates': f"{item.get('Latitude')}, {item.get('Longtitude')}",
                 'status': 'down', # Default status, will be updated by background service
                 'rtsp_url': rtsp_url
             }
