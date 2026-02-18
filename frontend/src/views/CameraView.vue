@@ -36,6 +36,7 @@ const cameraData = ref({
   location: '',
   ipAddress: '',
   status: 'up',
+  imageStatus: 'normal',
   coordinates: '',
   brand: '',
   version: '',
@@ -65,6 +66,7 @@ const fetchCameraDetails = async () => {
       location:    data.location,
       ipAddress:   data.ip_address,
       status:      data.status,
+      imageStatus: data.image_status,
       coordinates: data.coordinates,
       brand:       data.brand,
       version:     data.version,
@@ -249,9 +251,9 @@ onBeforeUnmount(() => {
                 <div class="scan-line"></div>
               </div>
               <h3>{{ cameraData.name }}</h3>
-              <span class="status-badge" :class="cameraData.status">
+              <span class="status-badge" :class="cameraData.status === 'down' ? 'down' : (cameraData.imageStatus === 'blur' ? 'blur' : 'up')">
                 <span class="status-dot"></span>
-                {{ cameraData.status === 'up' ? 'Online' : 'Offline' }}
+                {{ cameraData.status === 'down' ? 'Offline' : (cameraData.imageStatus === 'blur' ? 'Blurry' : 'Online') }}
               </span>
             </div>
 
@@ -671,6 +673,11 @@ onBeforeUnmount(() => {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
 }
+.status-badge.blur {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.3);
+}
 .status-dot {
   width: 8px;
   height: 8px;
@@ -683,6 +690,11 @@ onBeforeUnmount(() => {
 }
 .status-badge.down .status-dot {
   background: #ef4444;
+}
+.status-badge.blur .status-dot {
+  background: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 @keyframes pulse-dot {
   0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }

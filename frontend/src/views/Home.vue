@@ -71,7 +71,8 @@ const fetchCameras = async () => {
         lng: coords.lng,
         // Map backend snake_case to frontend camelCase
         ipAddress: camera.ip_address,
-        lastUpdate: camera.last_update
+        lastUpdate: camera.last_update,
+        imageStatus: camera.image_status // 'normal' or 'blur'
       };
     });
     
@@ -92,8 +93,9 @@ const pulseIntervals = [];
 const markers = shallowRef([]); // Array to store Google Maps markers
 const infoWindow = shallowRef(null); // Single InfoWindow instance
 
-const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up").length);
+const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up" && c.imageStatus !== 'blur').length);
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down").length);
+const blurCount = computed(() => cctvs.value.filter(c => c.status === "up" && c.imageStatus === 'blur').length);
 const totalCount = computed(() => cctvs.value.length);
 
 const filteredCameras = computed(() => {
@@ -110,9 +112,11 @@ const filteredCameras = computed(() => {
 
   // Apply status filter
   if (selectedFilter.value === "online") {
-    filtered = filtered.filter(c => c.status === "up");
+    filtered = filtered.filter(c => c.status === "up" && c.imageStatus !== 'blur');
   } else if (selectedFilter.value === "offline") {
     filtered = filtered.filter(c => c.status === "down");
+  } else if (selectedFilter.value === "blur") {
+    filtered = filtered.filter(c => c.status === "up" && c.imageStatus === 'blur');
   }
 
   return filtered;
@@ -121,6 +125,7 @@ const filteredCameras = computed(() => {
 const filterOptions = [
   { value: "all", label: "All Cameras", icon: "all" },
   { value: "online", label: "Online Only", icon: "online" },
+  { value: "blur", label: "Blurry Only", icon: "blur" },
   { value: "offline", label: "Offline Only", icon: "offline" }
 ];
 
@@ -230,6 +235,7 @@ const viewCamera = (cctvName) => {
         location: camera.location,
         ip: camera.ipAddress,
         status: camera.status,
+        imageStatus: camera.imageStatus,
         coordinates: `${camera.lat}, ${camera.lng}`,
         brand: camera.brand || 'N/A',
         lastUpdate: camera.lastUpdate || new Date().toLocaleString()
@@ -281,8 +287,16 @@ const clearSearch = () => {
 const addMarker = (cctv) => {
   if (!map.value) return;
   
-  const color = cctv.status === "up" ? "#10b981" : "#ef4444";
-  const statusText = cctv.status === "up" ? "Online" : "Offline";
+  let color = "#10b981"; // Green (Online)
+  let statusText = "Online";
+  
+  if (cctv.status === "down") {
+    color = "#ef4444"; // Red (Offline)
+    statusText = "Offline";
+  } else if (cctv.imageStatus === "blur") {
+    color = "#f97316"; // Orange (Blurry)
+    statusText = "Blurry";
+  }
 
   // Create professional custom SVG marker with camera icon
   const svgMarker = {
@@ -348,7 +362,7 @@ const contentString = `
   </button>
 </div>
 <div class="popup-status-row">
-  <div class="popup-status-badge ${cctv.status}">
+  <div class="popup-status-badge ${cctv.status === 'down' ? 'down' : (cctv.imageStatus === 'blur' ? 'blur' : 'up')}">
     <span class="status-dot"></span>
     ${statusText}
   </div>
@@ -752,6 +766,10 @@ onUnmounted(() => {
                   <svg v-else-if="option.icon === 'online'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
+                  <svg v-else-if="option.icon === 'blur'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
                   <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
@@ -794,6 +812,19 @@ onUnmounted(() => {
           <div class="stat-info">
             <div class="stat-label">ONLINE</div>
             <div class="stat-value">{{ onlineCount }}</div>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-blur">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">BLURRY</div>
+            <div class="stat-value">{{ blurCount }}</div>
           </div>
         </div>
 
@@ -1197,6 +1228,24 @@ onUnmounted(() => {
   background-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
   animation: pulse-red 2s ease-in-out infinite;
+}
+
+.status-badge.up .status-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.status-badge.down .status-dot {
+  background: #ef4444;
+}
+.status-badge.blur .status-dot {
+  background: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
 }
 
 @keyframes pulse-green {
