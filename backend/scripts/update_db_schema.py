@@ -16,8 +16,8 @@ def update_schema():
         
         columns = [
             ("image_status", "VARCHAR(20) DEFAULT 'normal'"),
-            ("sharpness_value", "INTEGER"), # Or FLOAT
-            ("last_image_check", "DATETIME"),
+            ("sharpness_value", "FLOAT"), 
+            ("last_image_check", "TIMESTAMP"),
             ("blur_consistency_count", "INTEGER DEFAULT 0"),
             ("normal_consistency_count", "INTEGER DEFAULT 0")
         ]
