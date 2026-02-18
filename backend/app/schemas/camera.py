@@ -19,6 +19,9 @@ class CameraBase(BaseModel):
     version: Optional[str] = Field(None, max_length=50, description="Firmware version")
     rtsp_url: Optional[str] = Field(None, max_length=500, description="RTSP Stream URL")
     last_update: Optional[str] = Field(None, description="Last update timestamp")
+    image_status: Optional[str] = Field("normal", max_length=20, description="Image status (normal/blur)")
+    sharpness_value: Optional[float] = Field(None, description="Sharpness variance value")
+    last_image_check: Optional[datetime] = Field(None, description="Last image check timestamp")
 
     @field_validator("status")
     @classmethod

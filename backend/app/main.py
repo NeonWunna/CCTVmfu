@@ -10,6 +10,7 @@ from app.db.session import engine, SessionLocal
 from app.routers import cameras, health
 from app.services import CameraService
 from app.services.ping_worker import PingWorker
+from app.services.blur_worker import BlurWorker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,19 +22,30 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Start background ping worker
-    worker = PingWorker(concurrent_limit=200)
-    worker_task = asyncio.create_task(worker.start_loop())
+    ping_worker = PingWorker(concurrent_limit=200)
+    ping_worker_task = asyncio.create_task(ping_worker.start_loop())
+
+    # Startup: Start background blur worker
+    # Check every 5 mins (300s)
+    blur_worker = BlurWorker(concurrent_limit=50, loop_interval=300)
+    blur_worker_task = asyncio.create_task(blur_worker.start_loop())
     
-    # Store worker reference in app state if we want to access it later (e.g. to trigger manual check)
-    app.state.ping_worker = worker
+    # Store worker references in app state
+    app.state.ping_worker = ping_worker
+    app.state.blur_worker = blur_worker
     
     yield
     
-    # Shutdown: Stop worker
-    worker.stop()
-    worker_task.cancel()
+    # Shutdown: Stop workers
+    ping_worker.stop()
+    ping_worker_task.cancel()
+    
+    blur_worker.stop()
+    blur_worker_task.cancel()
+    
     try:
-        await worker_task
+        await ping_worker_task
+        await blur_worker_task
     except asyncio.CancelledError:
         pass
 
