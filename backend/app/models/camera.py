@@ -2,7 +2,7 @@
 Camera Model
 SQLAlchemy model for camera entity.
 """
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Float
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -23,6 +23,9 @@ class Camera(Base):
     version = Column(String(500), nullable=True)
     rtsp_url = Column(String(500), nullable=True)
     last_update = Column(String(50), nullable=True)
+    image_status = Column(String(20), default="normal", nullable=False) # normal, blur
+    blur_score = Column(Float, nullable=True)
+    last_blur_check = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
