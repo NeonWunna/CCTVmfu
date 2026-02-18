@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.utils.network import ping_ip
+from app import models, schemas
 import logging
 
 logger = logging.getLogger(__name__)
@@ -163,14 +163,19 @@ class CameraService:
         """
         db_camera = self.get_camera(camera_id)
         if db_camera and db_camera.ip_address:
-            # Ping the camera
-            is_reachable = ping_ip(db_camera.ip_address)
+            # Check port 80 first, then 554
+            from app.utils.network import check_port
+            is_reachable = check_port(db_camera.ip_address, 80)
+            if not is_reachable:
+                is_reachable = check_port(db_camera.ip_address, 554)
+                
             new_status = "up" if is_reachable else "down"
             
             # Update if status changed
             # We also update active timestamp if it's reachable or status changes
-            if db_camera.status != new_status:
-                logger.info(f"Camera {camera_id} ({db_camera.name}) status changed: {db_camera.status} -> {new_status}")
+            if db_camera.status != new_status or (db_camera.status == "up" and is_reachable):
+                if db_camera.status != new_status:
+                    logger.info(f"Camera {camera_id} ({db_camera.name}) status changed: {db_camera.status} -> {new_status}")
                 db_camera.status = new_status
                 db_camera.last_update = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
                 self.db.commit()
@@ -178,11 +183,4 @@ class CameraService:
             
         return db_camera
 
-    def check_all_cameras_status(self) -> None:
-        """
-        Check status of all cameras.
-        This could be slow if there are many cameras.
-        """
-        cameras = self.get_cameras(limit=10000) # Get all
-        for camera in cameras:
-            self.check_camera_status(camera.id)
+    # check_all_cameras_status removed in favor of PingWorker

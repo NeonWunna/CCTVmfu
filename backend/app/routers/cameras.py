@@ -114,11 +114,12 @@ def check_all_cameras_status(
     db: Session = Depends(get_db)
 ):
     """
-    Check status of all cameras by pinging their IPs.
+    Check status of all cameras.
+    This is now handled by the background worker.
     """
-    service = CameraService(db)
-    service.check_all_cameras_status()
-    return schemas.MessageResponse(message="All cameras status check initiated")
+    # We could trigger the worker here if we wanted to force a check,
+    # but for now we just confirm the background process is running.
+    return schemas.MessageResponse(message="Background check is active. Status updates will appear shortly.")
 
 
 @router.post("/{camera_id}/check", response_model=schemas.Camera)

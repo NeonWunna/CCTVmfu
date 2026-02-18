@@ -1,6 +1,7 @@
 import subprocess
 import platform
 import logging
+import asyncio
 
 def ping_ip(ip_address: str, timeout: int = 2) -> bool:
     """
@@ -33,4 +34,36 @@ def ping_ip(ip_address: str, timeout: int = 2) -> bool:
         return response.returncode == 0
     except Exception as e:
         logging.error(f"Error pinging {ip_address}: {e}")
+        return False
+
+async def check_port_async(ip_address: str, port: int = 80, timeout: float = 1.0) -> bool:
+    """
+    Check if a TCP port is open asynchronously.
+    
+    Args:
+        ip_address: IP address to check
+        port: Port to check (default 80)
+        timeout: Timeout in seconds
+        
+    Returns:
+        True if reachable, False otherwise
+    """
+    try:
+        conn = asyncio.open_connection(ip_address, port)
+        reader, writer = await asyncio.wait_for(conn, timeout=timeout)
+        writer.close()
+        await writer.wait_closed()
+        return True
+    except:
+        return False
+
+def check_port(ip_address: str, port: int = 80, timeout: int = 1) -> bool:
+    """
+    Check if a TCP port is open (synchronous).
+    """
+    import socket
+    try:
+        with socket.create_connection((ip_address, port), timeout=timeout):
+            return True
+    except:
         return False
