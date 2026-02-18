@@ -21,37 +21,29 @@ This project contains a backend API and frontend for the MFU CCTV system.
 To start the application:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Troubleshooting
 
 #### KeyError: 'ContainerConfig'
 
-If you encounter the following error during `docker-compose up`:
+If you encounter `KeyError: 'ContainerConfig'` during `docker-compose up`, this is due to an incompatibility between legacy `docker-compose` (v1) and modern Docker Engine.
 
+**Solution 1: Use `docker compose` (v2) (Recommended)**
+
+Instead of `docker-compose`, use the modern command:
+
+```bash
+docker compose up -d --build
 ```
-KeyError: 'ContainerConfig'
-```
 
-This is caused by an incompatibility between `docker-compose` version 1.29.2 (or older) and images built with Docker BuildKit.
+**Solution 2: Disable BuildKit (Workaround for v1)**
 
-**Solution 1: Disable BuildKit (Recommended for older Compose)**
-
-Run the command with `DOCKER_BUILDKIT=0`:
+If you must use v1, disable BuildKit:
 
 ```bash
 DOCKER_BUILDKIT=0 docker-compose up -d --build
-```
-
-**Solution 2: Upgrade Docker Compose**
-
-Upgrade to Docker Compose V2.
-
-```bash
-# Example for Linux
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 #### Database Schema Issues
@@ -59,5 +51,5 @@ sudo chmod +x /usr/local/bin/docker-compose
 If you see errors related to database schema mismatches, you may need to reset the database (WARNING: Data loss):
 
 ```bash
-docker-compose exec backend python scripts/reset_db.py
+docker compose exec backend python scripts/reset_db.py
 ```
