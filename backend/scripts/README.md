@@ -5,10 +5,13 @@ Ensure you are in the project root directory.
 ```bash
 # Import Data
 python backend/scripts/import_cctv.py
+sudo docker-compose exec backend python scripts/import_cctv.py
 
 # Verify Import
 python backend/scripts/verify_import.py
 ```
+# Update Schema
+sudo docker-compose exec backend python scripts/update_db_schema.py
 
 ## Run in Docker (Production/Dev Container)
 If you are running the stack with Docker Compose:
