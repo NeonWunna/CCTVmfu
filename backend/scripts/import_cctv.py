@@ -9,36 +9,14 @@ from app.db.session import SessionLocal, engine
 from app.db.base import Base
 from app.models.camera import Camera
 
-
 def import_cctv_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    files_to_import = ['cctvinfo2.json', 'oldcctvinfo.json']
-    
-    db = SessionLocal()
-    counters = {'new': 0, 'updated': 0}
-
-    try:
-        for filename in files_to_import:
-            process_file(filename, db, counters)
-        
-        db.commit()
-        print(f"Import completed successfully.")
-        print(f"New cameras added: {counters['new']}")
-        print(f"Cameras updated: {counters['updated']}")
-
-    except Exception as e:
-        print(f"An error occurred during import: {e}")
-        db.rollback()
-    finally:
-        db.close()
-
-def process_file(filename, db, counters):
-    json_file_path = os.path.join(os.path.dirname(__file__), filename)
+    json_file_path = os.path.join(os.path.dirname(__file__), 'cctvinfo2.json')
     
     if not os.path.exists(json_file_path):
-        print(f"Warning: File not found at {json_file_path}")
+        print(f"Error: File not found at {json_file_path}")
         return
 
     print(f"Reading data from {json_file_path}...")
@@ -59,51 +37,67 @@ def process_file(filename, db, counters):
              content = content.replace(',]', ']')
              data = json.loads(content)
         else:
-             print(f"Error decoding JSON in {filename}")
              raise
 
-    print(f"Processing {len(data)} items from {filename}...")
 
-    for item in data:
-        ip_address = item.get('IP ADDRESS')
-        if not ip_address:
-            continue
-
-        # Extract generated RTSP or use specific field
-        rtsp_url = item.get('ANPR&PTZ RTSP')
+    db = SessionLocal()
+    try:
+        count_new = 0
+        count_updated = 0
         
-        # If the specific field is empty, generate the default format
-        if not rtsp_url and ip_address:
-           rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+        for item in data:
+            ip_address = item.get('IP ADDRESS')
+            if not ip_address:
+                continue
 
-        # Map JSON fields to model fields
-        camera_data = {
-            'ip_address': ip_address,
-            'name': str(item.get('CAMERA NAME_NEW')) if item.get('CAMERA NAME_NEW') is not None else None,
-            'location': str(item.get('Location')) if item.get('Location') is not None else None,
-            'coordinates': f"{item.get('Latitude')}, {item.get('Longtitude')}",
-            'status': 'down', # Default status, will be updated by background service
-            'rtsp_url': rtsp_url
-        }
-
-        # Check if camera exists
-        existing_camera = db.query(Camera).filter(Camera.ip_address == ip_address).first()
-
-        if existing_camera:
-            # Update existing camera
-            changed = False
-            for key, value in camera_data.items():
-                if getattr(existing_camera, key) != value:
-                    setattr(existing_camera, key, value)
-                    changed = True
+            # Extract generated RTSP or use specific field
+            rtsp_url = item.get('ANPR&PTZ RTSP')
             
-            if changed:
-                counters['updated'] += 1
-        else:
-            # Create new camera
-            new_camera = Camera(**camera_data)
-            db.add(new_camera)
-            counters['new'] += 1
+            # If the specific field is empty, generate the default format
+            if not rtsp_url and ip_address:
+               rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+
+            # Map JSON fields to model fields
+            camera_data = {
+                'ip_address': ip_address,
+                'name': str(item.get('CAMERA NAME_NEW')) if item.get('CAMERA NAME_NEW') is not None else None,
+                'location': str(item.get('Location')) if item.get('Location') is not None else None,
+                'coordinates': f"{item.get('Latitude')}, {item.get('Longtitude')}",
+                'status': 'down', # Default status, will be updated by background service
+                'rtsp_url': rtsp_url
+            }
+
+            # Check if camera exists
+            existing_camera = db.query(Camera).filter(Camera.ip_address == ip_address).first()
+
+            if existing_camera:
+                # Update existing camera
+                changed = False
+                for key, value in camera_data.items():
+                    # converting coordinates to proper string format for comparison might be tricky so we just update
+                    # simpler to just update fields
+                    if getattr(existing_camera, key) != value:
+                        setattr(existing_camera, key, value)
+                        changed = True
+                
+                if changed:
+                    count_updated += 1
+            else:
+                # Create new camera
+                new_camera = Camera(**camera_data)
+                db.add(new_camera)
+                count_new += 1
+
+        db.commit()
+        print(f"Import completed successfully.")
+        print(f"New cameras added: {count_new}")
+        print(f"Cameras updated: {count_updated}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     import_cctv_data()
