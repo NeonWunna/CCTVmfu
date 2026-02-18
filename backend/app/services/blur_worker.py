@@ -3,7 +3,7 @@ import asyncio
 import logging
 import cv2
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app import models
 from app.db.session import SessionLocal
@@ -123,7 +123,7 @@ class BlurWorker:
                     camera.blur_consistency_count += 1
                     camera.normal_consistency_count = 0
                     
-                    if camera.blur_consistency_count >= 3:
+                    if camera.blur_consistency_count >= 1:
                         if camera.image_status != "blur":
                             camera.image_status = "blur"
                             updates_count += 1
@@ -150,18 +150,29 @@ class BlurWorker:
 
     async def start_loop(self):
         """
-        Start the infinite loop.
+        Start the infinite loop, running once every day at midnight (TH Time).
         """
         self.running = True
-        logger.info("Blur Worker Loop Started.")
+        logger.info("Blur Worker Loop Started (Scheduled for Midnight).")
+        
         while self.running:
             try:
+                now = datetime.now(THAILAND_TZ)
+                # Find next midnight
+                next_run = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                wait_seconds = (next_run - now).total_seconds()
+                
+                logger.info(f"Waiting {wait_seconds:.2f}s until next midnight check...")
+                await asyncio.sleep(wait_seconds)
+                
+                if not self.running:
+                    break
+                    
                 await self.run_once()
             except Exception as e:
                 logger.error(f"Critical error in blur loop: {e}")
-            
-            # Wait for interval
-            await asyncio.sleep(self.loop_interval)
+                # Prevent tight loop on error, wait a minute before retrying calculation
+                await asyncio.sleep(60)
 
     def stop(self):
         self.running = False
