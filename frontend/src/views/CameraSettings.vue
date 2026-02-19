@@ -59,12 +59,26 @@ const fetchCameras = async () => {
   try {
     const response = await api.getCameras();
     if (Array.isArray(response.data)) {
-      cameras.value = response.data.map(camera => ({
-        ...camera,
-        ipAddress: camera.ip_address,
-        rtspUrl: camera.rtsp_url,
-        lastUpdate: camera.last_update
-      }));
+      cameras.value = response.data.map(camera => {
+        // Map backend status to frontend status
+        let mappedStatus = 'online'; // Default
+        if (camera.status === 'down') {
+          mappedStatus = 'offline';
+        } else if (camera.status === 'up' && camera.image_status === 'blur') {
+          mappedStatus = 'blurry';
+        } else if (camera.status === 'up') {
+          mappedStatus = 'online';
+        }
+        
+        return {
+          ...camera,
+          ipAddress: camera.ip_address,
+          rtspUrl: camera.rtsp_url,
+          lastUpdate: camera.last_update,
+          status: mappedStatus,
+          originalStatus: camera.status // Keep original for editing if needed
+        };
+      });
     } else {
       console.warn('API returned non-array data:', response.data);
       cameras.value = [];
@@ -113,8 +127,8 @@ const userInitials = computed(() =>
     .slice(0, 2)
 );
 
-const onlineCount = computed(() => cameras.value.filter(c => c.status === "up").length);
-const offlineCount = computed(() => cameras.value.filter(c => c.status === "down").length);
+const onlineCount = computed(() => cameras.value.filter(c => c.status === "online" || c.status === "blurry").length);
+const offlineCount = computed(() => cameras.value.filter(c => c.status === "offline").length);
 const totalCount = computed(() => cameras.value.length);
 
 const filteredCameras = computed(() => {
@@ -132,14 +146,15 @@ const filteredCameras = computed(() => {
 
   // Apply status filter
   if (selectedFilter.value === "online") {
-    filtered = filtered.filter(c => c.status === "up");
+    filtered = filtered.filter(c => c.status === "online" || c.status === "blurry");
   } else if (selectedFilter.value === "offline") {
-    filtered = filtered.filter(c => c.status === "down");
+    filtered = filtered.filter(c => c.status === "offline");
   }
 
   return filtered.sort((a, b) => {
-    if (a.status === 'up' && b.status === 'down') return -1;
-    if (a.status === 'down' && b.status === 'up') return 1;
+    // Sort offline to bottom typically, or grouping
+    if (a.status === 'online' && b.status === 'offline') return -1;
+    if (a.status === 'offline' && b.status === 'online') return 1;
     return 0;
   });
 });
@@ -661,7 +676,10 @@ const handleSearch = () => {
                   <td data-label="Status">
                     <span class="status-badge" :class="camera.status">
                       <span class="status-dot"></span>
-                      {{ camera.status === 'up' ? 'Online' : 'Offline' }}
+                      {{ 
+                        camera.status === 'offline' ? 'Offline' : 
+                        (camera.status === 'blurry' ? 'Blurry' : 'Online') 
+                      }}
                     </span>
                   </td>
                   <td data-label="Camera Name">
@@ -1532,29 +1550,39 @@ const handleSearch = () => {
   border: 1px solid;
   white-space: nowrap;
 }
-.status-badge.up {
+.status-badge.online {
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
   border-color: rgba(16, 185, 129, 0.3);
 }
-.status-badge.down {
+.status-badge.offline {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
+}
+.status-badge.blurry {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.3);
 }
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
-.status-badge.up .status-dot {
+.status-badge.online .status-dot {
   background: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
   animation: pulse-dot 2s ease-in-out infinite;
 }
-.status-badge.down .status-dot {
+.status-badge.offline .status-dot {
   background: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+.status-badge.blurry .status-dot {
+  background: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }

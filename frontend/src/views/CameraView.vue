@@ -60,12 +60,22 @@ const fetchCameraDetails = async () => {
 
   try {
     const { data } = await api.getCamera(cameraId);
-    cameraData.value = {
-      id:          data.id,
-      name:        data.name,
-      location:    data.location,
-      ipAddress:   data.ip_address,
-      status:      data.status,
+      // Map backend status to frontend status
+      let mappedStatus = 'online'; // Default
+      if (data.status === 'down') {
+        mappedStatus = 'offline';
+      } else if (data.status === 'up' && data.image_status === 'blur') {
+        mappedStatus = 'blurry';
+      } else if (data.status === 'up') {
+        mappedStatus = 'online';
+      }
+
+      cameraData.value = {
+        id:          data.id,
+        name:        data.name,
+        location:    data.location,
+        ipAddress:   data.ip_address,
+        status:      mappedStatus,
       imageStatus: data.image_status,
       coordinates: data.coordinates,
       brand:       data.brand,
