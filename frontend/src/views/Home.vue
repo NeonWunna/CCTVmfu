@@ -542,6 +542,13 @@ const renderMapMarkers = () => {
 };
 
 onMounted(() => {
+  // Check if we need to reload once (requested by user)
+  if (!sessionStorage.getItem('hasReloaded')) {
+    sessionStorage.setItem('hasReloaded', 'true');
+    window.location.reload();
+    return;
+  }
+
   loadGoogleMapsScript();
   // Make viewCamera available globally for popup buttons
   window.viewCameraFromPopup = viewCamera;
