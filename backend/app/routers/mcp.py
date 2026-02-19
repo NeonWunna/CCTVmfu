@@ -22,6 +22,10 @@ async def event_generator(session_id: str, queue: asyncio.Queue):
     Generator for SSE. Yields messages from the queue.
     """
     try:
+        # Send padding to bypass proxy buffering (e.g. Nginx, Cloudflare)
+        # Some proxies wait for a certain amount of data before flushing the stream.
+        yield f": {' ' * 2048}\n\n"
+        
         # Send initialized event immediately with the message endpoint URI
         # Standard MCP: client uses this URI to POST messages
         endpoint_uri = f"/mcp/message?sessionId={session_id}"
