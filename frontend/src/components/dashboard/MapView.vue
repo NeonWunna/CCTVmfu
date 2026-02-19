@@ -132,31 +132,92 @@ const createMarkerIcon = (status, options = {}) => {
   };
 };
 
+const CLUSTER_SIZE_STEPS = [38, 46, 54];
+const CLUSTER_STATUS_ORDER = ['online', 'no_signal', 'offline', 'blurry'];
+
+const normalizeStatus = (status) => {
+  if (status === 'no_rtsp') return 'no_signal';
+  if (status === 'offline' || status === 'no_signal' || status === 'blurry') return status;
+  return 'online';
+};
+
+const getClusterSizeByCount = (count) => {
+  if (count < 20) return CLUSTER_SIZE_STEPS[0];
+  if (count < 60) return CLUSTER_SIZE_STEPS[1];
+  return CLUSTER_SIZE_STEPS[2];
+};
+
+const getDominantStatus = (clusterMarkers = []) => {
+  const counts = {
+    online: 0,
+    no_signal: 0,
+    offline: 0,
+    blurry: 0
+  };
+
+  clusterMarkers.forEach((marker) => {
+    const status = normalizeStatus(marker?.cameraStatus);
+    counts[status] += 1;
+  });
+
+  let dominantStatus = 'online';
+  let dominantCount = -1;
+
+  CLUSTER_STATUS_ORDER.forEach((status) => {
+    if (counts[status] > dominantCount) {
+      dominantStatus = status;
+      dominantCount = counts[status];
+    }
+  });
+
+  return dominantStatus;
+};
+
 const buildClusterStyle = (size, fillColor) => ({
   url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${fillColor}" fill-opacity="0.28" />
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="${fillColor}" />
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="none" stroke="#ffffff" stroke-width="2.8" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 6}" fill="${fillColor}" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 6}" fill="none" stroke="#ffffff" stroke-width="2.4" />
     </svg>`
   )}`,
   width: size,
   height: size,
   textColor: '#ffffff',
-  textSize: size >= 52 ? 13 : 11,
+  textSize: size >= CLUSTER_SIZE_STEPS[2] ? 13 : 11,
+  anchorText: [0, 0],
   fontWeight: '700'
 });
 
-const clusterStyles = [
-  buildClusterStyle(36, '#0ea5e9'),
-  buildClusterStyle(44, '#0284c7'),
-  buildClusterStyle(52, '#0369a1')
-];
+const legacyClusterStyles = CLUSTER_STATUS_ORDER.flatMap((status) =>
+  CLUSTER_SIZE_STEPS.map((size) => buildClusterStyle(size, getStatusColor(status)))
+);
+
+const buildLegacyClusterCalculator = () => (clusterMarkers, numStyles) => {
+  const count = clusterMarkers.length;
+  const dominantStatus = getDominantStatus(clusterMarkers);
+  const sizeIndex = count < 20 ? 0 : count < 60 ? 1 : 2;
+  const statusIndex = CLUSTER_STATUS_ORDER.indexOf(dominantStatus);
+  const styleIndex = Math.max(
+    1,
+    Math.min(statusIndex * CLUSTER_SIZE_STEPS.length + sizeIndex + 1, numStyles)
+  );
+
+  return {
+    text: String(count),
+    index: styleIndex,
+    title: `${count} cameras`
+  };
+};
 
 const buildClusterRenderer = () => ({
-  render: ({ count, position }) => {
-    const size = count < 20 ? 36 : count < 60 ? 44 : 52;
-    const color = count < 20 ? '#0ea5e9' : count < 60 ? '#0284c7' : '#0369a1';
+  render: (cluster) => {
+    const count = cluster?.count ?? cluster?.markers?.length ?? 0;
+    const position = cluster?.position;
+    const dominantStatus = getDominantStatus(cluster?.markers || []);
+    const size = getClusterSizeByCount(count);
+    const color = getStatusColor(dominantStatus);
+
     return new google.maps.Marker({
       position,
       zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
@@ -164,17 +225,18 @@ const buildClusterRenderer = () => ({
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
           `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
             <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${color}" fill-opacity="0.3" />
-            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="${color}" />
-            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="none" stroke="#ffffff" stroke-width="2.8" />
+            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 6}" fill="${color}" />
+            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 6}" fill="none" stroke="#ffffff" stroke-width="2.4" />
           </svg>`
         )}`,
         scaledSize: new google.maps.Size(size, size),
-        anchor: new google.maps.Point(size / 2, size / 2)
+        anchor: new google.maps.Point(size / 2, size / 2),
+        labelOrigin: new google.maps.Point(size / 2, size / 2)
       },
       label: {
         text: String(count),
         color: '#ffffff',
-        fontSize: size >= 52 ? '13px' : '11px',
+        fontSize: size >= CLUSTER_SIZE_STEPS[2] ? '13px' : '11px',
         fontWeight: '700'
       }
     });
@@ -339,7 +401,8 @@ const renderMarkers = (autoFit = true) => {
           maxZoom: 17,
           minimumClusterSize: 4,
           zoomOnClick: true,
-          styles: clusterStyles
+          styles: legacyClusterStyles,
+          calculator: buildLegacyClusterCalculator()
         });
 
         google.maps.event.addListener(markerCluster.value, 'clusterclick', (cluster) => {
