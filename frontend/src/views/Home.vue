@@ -1,31 +1,38 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, shallowRef, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import logoUrl from '../assets/mfu-logo.png';
+import api from '../services/api';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
-import api from '../services/api';
+import AppHeader from '../components/dashboard/AppHeader.vue';
+import StatsCards from '../components/dashboard/StatsCards.vue';
+import FiltersBar from '../components/dashboard/FiltersBar.vue';
+import MapView from '../components/dashboard/MapView.vue';
+import CameraInfoPanel from '../components/dashboard/CameraInfoPanel.vue';
 
 const router = useRouter();
+const mapViewRef = ref(null);
 
-const userName = ref("Admin User");
-const userRole = ref("Security Administrator");
-const showDropdown = ref(false);
-const searchQuery = ref("");
-const isMapLoaded = ref(false);
+const userName = ref('Admin User');
+const userRole = ref('Security Administrator');
 
-// Filter state
-const showFilterDropdown = ref(false);
-const selectedFilter = ref("all"); // "all", "online", "offline"
+const cctvs = ref([]);
+const searchQuery = ref('');
+const selectedFilter = ref('all');
+const selectedCamera = ref(null);
+const loadingCameras = ref(true);
 
-// Toast state
+const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
+const sidebarExpanded = ref(viewportWidth.value >= 1200);
+const mobileFiltersOpen = ref(false);
+
 const toast = ref({
   show: false,
   message: '',
   type: 'info'
 });
 
-// Confirm modal state
 const confirmModal = ref({
   show: false,
   title: '',
@@ -34,130 +41,107 @@ const confirmModal = ref({
   loading: false
 });
 
-const cctvs = ref([]);
+const filterOptions = [
+  { value: 'all', label: 'All Cameras' },
+  { value: 'online', label: 'Online' },
+  { value: 'offline', label: 'Offline' },
+  { value: 'no_signal', label: 'No Signal' },
+  { value: 'blurry', label: 'Blurry' }
+];
+
+const isMobile = computed(() => viewportWidth.value < 768);
+const activeCameraId = computed(() => selectedCamera.value?.id ?? null);
 
 const parseCoordinates = (coordString) => {
   if (!coordString) return { lat: 0, lng: 0 };
+
   try {
-    // Expected format: "20.0451, 99.8825" or "-99.0, 79.2313"
     const parts = coordString.split(',');
     if (parts.length !== 2) return { lat: 0, lng: 0 };
-    
-    // Keep minus sign, digits, and dots only
-    const latStr = parts[0].replace(/[^\d.-]/g, '');
-    const lngStr = parts[1].replace(/[^\d.-]/g, '');
-    
-    const lat = parseFloat(latStr);
-    const lng = parseFloat(lngStr);
-    
+
+    const lat = parseFloat(parts[0].replace(/[^\d.-]/g, ''));
+    const lng = parseFloat(parts[1].replace(/[^\d.-]/g, ''));
+
     return {
-      lat: isNaN(lat) ? 0 : lat,
-      lng: isNaN(lng) ? 0 : lng
+      lat: Number.isFinite(lat) ? lat : 0,
+      lng: Number.isFinite(lng) ? lng : 0
     };
-  } catch (e) {
-    console.warn("Failed to parse coordinates:", coordString);
+  } catch (error) {
+    console.warn('Failed to parse coordinates:', coordString, error);
     return { lat: 0, lng: 0 };
   }
+};
+
+const normalizeCamera = (camera) => {
+  const coords = parseCoordinates(camera.coordinates);
+
+  let mappedStatus = 'online';
+  if (camera.status === 'offline') {
+    mappedStatus = 'offline';
+  } else if (camera.status === 'no_signal' || camera.status === 'no_rtsp') {
+    mappedStatus = 'no_signal';
+  } else if (camera.status === 'online' && camera.image_status === 'blur') {
+    mappedStatus = 'blurry';
+  } else {
+    mappedStatus = camera.status;
+  }
+
+  return {
+    ...camera,
+    lat: coords.lat,
+    lng: coords.lng,
+    ipAddress: camera.ip_address,
+    lastUpdate: camera.last_update,
+    imageStatus: camera.image_status,
+    status: mappedStatus
+  };
 };
 
 const fetchCameras = async () => {
   try {
     const response = await api.getCameras();
-    cctvs.value = response.data.map(camera => {
-      const coords = parseCoordinates(camera.coordinates);
-      // Map backend status to frontend status
-      // Backend Statuses: online, offline, no_signal, no_rtsp
-      let mappedStatus = 'online'; // Default
+    const nextCameras = Array.isArray(response.data)
+      ? response.data.map(normalizeCamera)
+      : [];
 
-      if (camera.status === 'offline') {
-        mappedStatus = 'offline';
-      } else if (camera.status === 'no_signal' || camera.status === 'no_rtsp') {
-        mappedStatus = 'no_signal';
-      } else if (camera.status === 'online' && camera.image_status === 'blur') {
-        mappedStatus = 'blurry';
-      } else {
-        // Default to what the backend says if it's online or anything else unknown
-        mappedStatus = camera.status;
-      }
-      
-      return {
-        ...camera,
-        lat: coords.lat,
-        lng: coords.lng,
-        // Map backend snake_case to frontend camelCase
-        ipAddress: camera.ip_address,
-        lastUpdate: camera.last_update,
-        status: mappedStatus,
-        imageStatus: camera.image_status
-      };
-    });
-    
-    // Update map markers after data is loaded
-    if (map.value) {
-      renderMapMarkers();
+    cctvs.value = nextCameras;
+
+    if (selectedCamera.value) {
+      selectedCamera.value =
+        nextCameras.find((camera) => camera.id === selectedCamera.value.id) ?? null;
     }
   } catch (error) {
     console.error('Error fetching cameras:', error);
     showToast('Failed to load camera data', 'error');
+  } finally {
+    loadingCameras.value = false;
   }
 };
 
-// Use shallowRef for map instance
-const map = shallowRef(null);
-const mapContainer = useTemplateRef('mapContainer');
-const pulseIntervals = [];
-const markers = shallowRef([]); // Array to store Google Maps markers
-const infoWindow = shallowRef(null); // Single InfoWindow instance
-
-const onlineCount = computed(() => cctvs.value.filter(c => c.status === "online").length);
-const offlineCount = computed(() => cctvs.value.filter(c => c.status === "offline").length);
-const blurCount = computed(() => cctvs.value.filter(c => c.status === "blurry").length);
-const noSignalCount = computed(() => cctvs.value.filter(c => c.status === "no_signal").length);
 const totalCount = computed(() => cctvs.value.length);
+const onlineCount = computed(() => cctvs.value.filter((camera) => camera.status === 'online').length);
+const offlineCount = computed(() => cctvs.value.filter((camera) => camera.status === 'offline').length);
+const noSignalCount = computed(() => cctvs.value.filter((camera) => camera.status === 'no_signal').length);
+const blurryCount = computed(() => cctvs.value.filter((camera) => camera.status === 'blurry').length);
 
 const filteredCameras = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
   let filtered = cctvs.value;
 
-  // Apply search filter
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim();
-    filtered = filtered.filter(camera => 
+  if (query) {
+    filtered = filtered.filter((camera) =>
       camera.name.toLowerCase().includes(query) ||
       (camera.ipAddress && camera.ipAddress.toLowerCase().includes(query))
     );
   }
 
-  // Apply status filter
-  if (selectedFilter.value !== "all") {
-    filtered = filtered.filter(c => c.status === selectedFilter.value);
+  if (selectedFilter.value !== 'all') {
+    filtered = filtered.filter((camera) => camera.status === selectedFilter.value);
   }
 
-  return filtered;
+  return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 });
 
-const filterOptions = [
-  { value: "all", label: "All Cameras", icon: "all" },
-  { value: "online", label: "Online Only", icon: "online" },
-  { value: "blurry", label: "Blurry Only", icon: "blur" },
-  { value: "no_signal", label: "No Signal", icon: "no_signal" },
-  { value: "offline", label: "Offline Only", icon: "offline" }
-];
-
-const currentFilterLabel = computed(() => {
-  const option = filterOptions.find(opt => opt.value === selectedFilter.value);
-  return option ? option.label : "All Cameras";
-});
-
-const userInitials = computed(() => {
-  return userName.value
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-});
-
-// Helper function to show toast
 const showToast = (message, type = 'info') => {
   toast.value = {
     show: true,
@@ -166,54 +150,60 @@ const showToast = (message, type = 'info') => {
   };
 };
 
-// Helper function to close toast
 const closeToast = () => {
   toast.value.show = false;
 };
 
-const toggleProfileMenu = () => {
-  showDropdown.value = !showDropdown.value;
-  showFilterDropdown.value = false;
+const clearFilters = async () => {
+  searchQuery.value = '';
+  selectedFilter.value = 'all';
+  await nextTick();
+  mapViewRef.value?.fitToVisibleMarkers();
 };
 
-const toggleFilterDropdown = () => {
-  showFilterDropdown.value = !showFilterDropdown.value;
-  showDropdown.value = false;
+const selectFilter = (filterValue) => {
+  selectedFilter.value = filterValue;
 };
 
-const closeDropdown = () => {
-  showDropdown.value = false;
-};
-
-const closeFilterDropdown = () => {
-  showFilterDropdown.value = false;
-};
-
-const handleClickOutside = (event) => {
-  const filterButton = document.querySelector('.filter-button-container');
-  const filterDropdown = document.querySelector('.filter-dropdown');
-  
-  if (showFilterDropdown.value && 
-      filterButton && 
-      !filterButton.contains(event.target) &&
-      filterDropdown &&
-      !filterDropdown.contains(event.target)) {
-    showFilterDropdown.value = false;
+const selectFilterFromStats = (filterValue) => {
+  selectFilter(filterValue);
+  if (isMobile.value) {
+    mobileFiltersOpen.value = false;
   }
 };
 
-const selectFilter = (value) => {
-  selectedFilter.value = value;
-  showFilterDropdown.value = false;
-  
-  // Update map markers when filter changes
-  if (map.value) {
-    renderMapMarkers();
+const focusCamera = (camera) => {
+  selectedCamera.value = camera;
+  mapViewRef.value?.focusCamera(camera, true);
+  if (isMobile.value) {
+    mobileFiltersOpen.value = false;
   }
+};
+
+const handleMarkerSelect = (camera) => {
+  selectedCamera.value = camera;
+};
+
+const openCameraView = (camera = selectedCamera.value) => {
+  if (!camera) return;
+
+  router.push({
+    name: 'CameraView',
+    params: { id: camera.id },
+    query: {
+      name: camera.name,
+      location: camera.location,
+      ip: camera.ipAddress,
+      status: camera.status,
+      imageStatus: camera.imageStatus,
+      coordinates: `${camera.lat}, ${camera.lng}`,
+      brand: camera.brand || 'N/A',
+      lastUpdate: camera.lastUpdate || new Date().toLocaleString()
+    }
+  });
 };
 
 const goToCameraSettings = () => {
-  closeDropdown();
   router.push('/camera-settings');
 };
 
@@ -222,389 +212,74 @@ const logout = () => {
     show: true,
     title: 'Confirm Logout',
     message: 'Are you sure you want to logout?',
+    loading: false,
     onConfirm: () => {
       localStorage.removeItem('isAuthenticated');
       confirmModal.value.show = false;
-      closeDropdown();
       router.push('/login');
       showToast('Logged out successfully', 'info');
     }
   };
 };
 
-const handleLogoError = (event) => {
-  event.target.style.display = 'none';
+const handleConfirmCancel = () => {
+  confirmModal.value.show = false;
 };
 
-const viewCamera = (cctvName) => {
-  // Find the camera data
-  const camera = cctvs.value.find(c => c.name === cctvName);
-  if (camera) {
-    // Navigate to camera view with data
-    router.push({
-      name: 'CameraView',
-      params: { id: camera.id },
-      query: {
-        name: camera.name,
-        location: camera.location,
-        ip: camera.ipAddress,
-        status: camera.status,
-        imageStatus: camera.imageStatus,
-        coordinates: `${camera.lat}, ${camera.lng}`,
-        brand: camera.brand || 'N/A',
-        lastUpdate: camera.lastUpdate || new Date().toLocaleString()
-      }
-    });
+const toggleSidebar = () => {
+  sidebarExpanded.value = !sidebarExpanded.value;
+};
+
+const openMobileFilters = () => {
+  if (isMobile.value) {
+    mobileFiltersOpen.value = true;
   }
 };
 
-const closeInfoWindow = () => {
-  if (infoWindow.value) {
-    infoWindow.value.close();
+const handleResize = () => {
+  viewportWidth.value = window.innerWidth;
+  if (viewportWidth.value >= 768) {
+    mobileFiltersOpen.value = false;
   }
 };
 
-const focusOnCamera = (camera, shouldPan = false) => {
-  if (!map.value || !camera.lat || !camera.lng) return;
-  
-  // Pan and zoom ONLY if requested (e.g., from search results)
-  if (shouldPan) {
-    map.value.setCenter({ lat: camera.lat, lng: camera.lng });
-    map.value.setZoom(18);
-  }
-  
-  // Find marker and open InfoWindow
-  const marker = markers.value.find(m => {
-    const pos = m.getPosition();
-    return Math.abs(pos.lat() - camera.lat) < 0.0001 && Math.abs(pos.lng() - camera.lng) < 0.0001;
-  });
-
-  if (marker) {
-    // Trigger click event on marker to open InfoWindow
-    google.maps.event.trigger(marker, 'click');
-  }
-  
-  showToast(`Focused on: ${camera.name}`, 'info');
-};
-
-const clearSearch = () => {
-  searchQuery.value = "";
-  selectedFilter.value = "all";
-  if (map.value && cctvs.value.length > 0) {
-    // Reset to default view
-    map.value.setCenter({ lat: 20.0443, lng: 99.8937 });
-    map.value.setZoom(16);
-    renderMapMarkers();
-  }
-};
-
-const addMarker = (cctv) => {
-  if (!map.value) return;
-  
-  let color = "#10b981"; // Green (Online)
-  let statusText = "Online";
-  
-  if (cctv.status === "offline") {
-    color = "#ef4444"; // Red (Offline)
-    statusText = "Offline";
-  } else if (cctv.status === "blurry") {
-    color = "#f97316"; // Orange (Blurry)
-    statusText = "Blurry";
-  } else if (cctv.status === 'no_signal') {
-    color = "#3b82f6"; // Blue
-    statusText = "No Signal";
-  }
-
-  // Create professional custom SVG marker with camera icon
-  const svgMarker = {
-    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-            <feOffset dx="0" dy="2" result="offsetblur"/>
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.3"/>
-            </feComponentTransfer>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <!-- Outer glow circle -->
-        <circle cx="24" cy="24" r="20" fill="${color}" opacity="0.2"/>
-        <!-- Main circle -->
-        <circle cx="24" cy="24" r="16" fill="${color}" filter="url(#shadow)"/>
-        <!-- White border -->
-        <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
-        <!-- Camera icon -->
-        <g transform="translate(24, 24)">
-          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" 
-                fill="white" stroke="none"/>
-          <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
-        </g>
-      </svg>
-    `),
-    scaledSize: new google.maps.Size(48, 48),
-    anchor: new google.maps.Point(24, 24),
-  };
-
-  const marker = new google.maps.Marker({
-    position: { lat: cctv.lat, lng: cctv.lng },
-    map: map.value,
-    title: cctv.name,
-    icon: svgMarker,
-    animation: google.maps.Animation.DROP,
-    optimized: false, // Required for SVG to render properly
-  });
-
-  // store original icon for animations
-  marker.originalIcon = svgMarker;
-
-  // Create InfoWindow content - PROFESSIONAL VERSION
-const contentString = `
-  <div class="custom-popup">
-    <div class="popup-header">
-<div class="popup-title-row">
-  <div class="popup-title">${cctv.name}</div>
-  <button 
-    onclick="window.closeInfoWindowFromPopup()"
-    class="close-btn-compact"
-    title="Close"
-  >
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  </button>
-</div>
-<div class="popup-status-row">
-  <div class="popup-status-badge ${cctv.status}">
-    <span class="status-dot"></span>
-    ${statusText}
-  </div>
-  <button 
-    onclick="window.viewCameraFromPopup('${cctv.name}')"
-    class="view-camera-btn-compact"
-    title="View Camera"
-  >
-    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-    </svg>
-    <span>View Camera</span>
-  </button>
-</div>
-    </div>
-    <div class="popup-body">
-      <div class="popup-info-grid">
-        <div class="info-item">
-          <div class="info-label">
-            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-            </svg>
-            IP Address
-          </div>
-          <div class="info-value ip-value">${cctv.ipAddress || 'N/A'}</div>
-        </div>
-        
-        <div class="info-item">
-          <div class="info-label">
-            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            Location
-          </div>
-          <div class="info-value">${cctv.location}</div>
-        </div>
-        
-        <div class="info-item">
-          <div class="info-label">
-            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Last Update
-          </div>
-          <div class="info-value">${cctv.lastUpdate || 'N/A'}</div>
-        </div>
-        
-        <div class="info-item">
-          <div class="info-label">
-            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-            </svg>
-            Coordinates
-          </div>
-          <div class="info-value coords-value">${cctv.lat.toFixed(4)}, ${cctv.lng.toFixed(4)}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-`;
-
-  marker.addListener("click", () => {
-    // Close any existing InfoWindow
-    if (infoWindow.value) {
-      infoWindow.value.close();
-    }
-    
-    // Create new InfoWindow
-if (!infoWindow.value) {
-  infoWindow.value = new google.maps.InfoWindow({
-    pixelOffset: new google.maps.Size(0, -10), // NEGATIVE offset to move UP
-    disableAutoPan: true, 
-    disableCloseButton: true,
-    maxWidth: 360
-  });
-    } else {
-      // Update options for existing InfoWindow
-      infoWindow.value.setOptions({
-        pixelOffset: new google.maps.Size(0, 10),
-        disableAutoPan: true,
-        maxWidth: 360
-      });
-    }
-    infoWindow.value.setContent(contentString);
-    infoWindow.value.open(map.value, marker);
-  });
-
-  markers.value.push(marker);
-};
-
-const loadGoogleMapsScript = () => {
-  if (window.google && window.google.maps) {
-    initMap();
-    return;
-  }
-  
-  if (document.getElementById('google-maps-script')) return;
-
-  const script = document.createElement('script');
-  script.id = 'google-maps-script';
-  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM`;
-  script.async = true;
-  script.defer = true;
-  script.onload = () => {
-    isMapLoaded.value = true;
-    initMap();
-  };
-  script.onerror = () => {
-    showToast('Failed to load Google Maps', 'error');
-  };
-  
-  document.head.appendChild(script);
-};
-
-const initMap = () => {
-  if (!mapContainer.value || !window.google) return;
-
-  map.value = new google.maps.Map(mapContainer.value, {
-    center: { lat: 20.0443, lng: 99.8937 },
-    zoom: 16,
-    mapTypeId: 'hybrid',
-    mapTypeControl: false,
-    fullscreenControl: false,
-    streetViewControl: false
-  });
-};
-
-const renderMapMarkers = () => {
-  if (!map.value) return;
-  
-  // Clear existing markers
-  markers.value.forEach(marker => marker.setMap(null));
-  markers.value = [];
-  
-  // Clear existing intervals
-  pulseIntervals.forEach(id => clearInterval(id));
-  pulseIntervals.length = 0;
-
-  // Determine which cameras to display based on search and filter
-  const camerasToDisplay = filteredCameras.value;
-
-  // Add CCTV markers
-  camerasToDisplay.forEach(cctv => {
-    // Only add if has valid coordinates
-    if (cctv.lat && cctv.lng) {
-      addMarker(cctv);
-    }
-  });
-
-  // If searching/filtering and have results, adjust map view to show all filtered cameras
-  if ((searchQuery.value.trim() || selectedFilter.value !== 'all') && camerasToDisplay.length > 0) {
-    const bounds = new google.maps.LatLngBounds();
-    camerasToDisplay
-      .filter(c => c.lat && c.lng)
-      .forEach(c => bounds.extend({ lat: c.lat, lng: c.lng }));
-    
-    map.value.fitBounds(bounds);
-  }
-};
+let pollInterval = null;
 
 onMounted(() => {
-  // Check if we need to reload once (requested by user)
-  if (!sessionStorage.getItem('hasReloaded')) {
-    sessionStorage.setItem('hasReloaded', 'true');
-    window.location.reload();
-    return;
-  }
-
-  loadGoogleMapsScript();
-  // Make viewCamera available globally for popup buttons
-  window.viewCameraFromPopup = viewCamera;
-  window.closeInfoWindowFromPopup = closeInfoWindow;
-  
-  // Add click outside handler
-  document.addEventListener('click', handleClickOutside);
-  
-  // Fetch initial data
   fetchCameras();
-  
-  // Set up auto-refresh every 30 seconds
-  const refreshInterval = setInterval(fetchCameras, 30000);
-  
-  // Watch search query and filter changes and update markers
-  watch([searchQuery, selectedFilter], () => {
-    if (map.value) {
-      renderMapMarkers();
-    }
-  });
-  
-  onUnmounted(() => {
-    clearInterval(refreshInterval);
-    document.removeEventListener('click', handleClickOutside);
-  });
+  pollInterval = setInterval(fetchCameras, 30000);
+  window.addEventListener('resize', handleResize);
 });
 
-onUnmounted(() => {
-  // Clean up global function
-  delete window.viewCameraFromPopup;
-  delete window.closeInfoWindowFromPopup;
-  
-  // Remove click outside handler
-  document.removeEventListener('click', handleClickOutside);
-  
-  // Clear all pulsing intervals
-  pulseIntervals.forEach(id => clearInterval(id));
-  pulseIntervals.length = 0;
+onBeforeUnmount(() => {
+  if (pollInterval) clearInterval(pollInterval);
+  window.removeEventListener('resize', handleResize);
+});
 
-  // Destroy map instance to prevent memory leaks
-  // Destroy map instance to prevent memory leaks is handled by GMaps internally but we can clear refs
-  map.value = null;
+watch(isMobile, (mobile) => {
+  if (!mobile) {
+    mobileFiltersOpen.value = false;
+  }
+});
+
+watch(filteredCameras, (nextCameras) => {
+  if (!selectedCamera.value) return;
+  const stillVisible = nextCameras.some((camera) => camera.id === selectedCamera.value.id);
+  if (!stillVisible) {
+    selectedCamera.value = null;
+  }
 });
 </script>
 
 <template>
-  <div class="dashboard-container">
-    <!-- Toast Notification -->
-    <Toast 
+  <div class="dashboard-page">
+    <Toast
       :show="toast.show"
       :message="toast.message"
       :type="toast.type"
       @close="closeToast"
     />
 
-    <!-- Confirm Modal -->
     <ConfirmModal
       :show="confirmModal.show"
       :title="confirmModal.title"
@@ -614,1760 +289,415 @@ onUnmounted(() => {
       cancel-text="Cancel"
       type="danger"
       @confirm="confirmModal.onConfirm"
-      @cancel="() => confirmModal.show = false"
-      @close="() => confirmModal.show = false"
+      @cancel="handleConfirmCancel"
+      @close="handleConfirmCancel"
     />
 
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <div class="header-left">
-          <img :src="logoUrl" alt="MFU Logo" class="logo" @error="handleLogoError">
-          <div class="header-text">
-            <h1>CCTV Monitoring System</h1>
-            <p>Mae Fah Luang University - Real-time Surveillance</p>
-          </div>
-        </div>
+    <AppHeader
+      :logo-url="logoUrl"
+      :user-name="userName"
+      :user-role="userRole"
+      @camera-settings="goToCameraSettings"
+      @logout="logout"
+      @open-mobile-filters="openMobileFilters"
+    />
 
-        <!-- Profile Section -->
-        <div class="header-right">
-          <div class="profile-section" @click="toggleProfileMenu">
-            <div class="profile-avatar">{{ userInitials }}</div>
-            <div class="profile-info">
-              <div class="profile-name">{{ userName }}</div>
-              <div class="profile-role">{{ userRole }}</div>
-            </div>
-            <svg class="dropdown-arrow" :class="{ open: showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </div>
+    <section class="stats-strip">
+      <StatsCards
+        :total="totalCount"
+        :online="onlineCount"
+        :offline="offlineCount"
+        :no-signal="noSignalCount"
+        :blurry="blurryCount"
+        :selected-filter="selectedFilter"
+        :loading="loadingCameras"
+        @select-filter="selectFilterFromStats"
+      />
+    </section>
 
-          <!-- Dropdown Menu -->
-          <transition name="dropdown">
-            <div v-show="showDropdown" class="profile-dropdown">
-              <div class="dropdown-header">
-                <div class="dropdown-avatar">{{ userInitials }}</div>
-                <div class="dropdown-name">{{ userName }}</div>
-                <div class="dropdown-role">{{ userRole }}</div>
-              </div>
-              <div class="dropdown-menu">
-                <button class="dropdown-item" @click="goToCameraSettings">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                  </svg>
-                  Camera Settings
-                </button>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item logout" @click="logout">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                  </svg>
-                  Logout
-                </button>
-              </div>
-            </div>
-          </transition>
-
-          <div v-show="showDropdown" class="dropdown-overlay" @click="closeDropdown"></div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Status Panel -->
-    <div class="status-panel">
-      <div class="panel-left">
-        <div class="panel-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-          <h2>System Status</h2>
-        </div>
-        <div class="legend">
-          <div class="legend-item">
-            <span class="legend-dot up"></span>
-            <span>Online</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot no_signal"></span>
-            <span>No Signal</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot blur"></span>
-            <span>Blurry</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot down"></span>
-            <span>Offline</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel-center">
-        <div class="search-filter-group">
-          <div class="search-wrapper">
-            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Search cameras by name or IP..."
-              class="search-input"
-              aria-label="Search cameras"
-            >
-            <button 
-              v-if="searchQuery || selectedFilter !== 'all'" 
-              @click="clearSearch" 
-              class="clear-button"
-              aria-label="Clear search"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+    <section class="workspace" :class="{ 'workspace--collapsed': !sidebarExpanded || isMobile }">
+      <aside
+        v-if="!isMobile"
+        class="sidebar-panel"
+        :class="{ 'sidebar-panel--collapsed': !sidebarExpanded }"
+      >
+        <div class="sidebar-panel__header">
+          <div v-if="sidebarExpanded" class="sidebar-heading">
+            <h2>Camera Controls</h2>
+            <p>Search, filter, and focus map markers.</p>
           </div>
 
-          <div class="filter-button-container">
-            <button class="filter-button" @click="toggleFilterDropdown" :class="{ active: selectedFilter !== 'all' }">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-              </svg>
-              <span class="filter-text">{{ currentFilterLabel }}</span>
-              <svg class="filter-arrow" :class="{ open: showFilterDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-
-            <transition name="dropdown">
-              <div v-show="showFilterDropdown" class="filter-dropdown">
-                <button 
-                  v-for="option in filterOptions" 
-                  :key="option.value"
-                  class="filter-option"
-                  :class="{ active: selectedFilter === option.value }"
-                  @click="selectFilter(option.value)"
-                >
-                  <svg v-if="option.icon === 'all'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                  </svg>
-                  <svg v-else-if="option.icon === 'online'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <svg v-else-if="option.icon === 'blur'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                  <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span>{{ option.label }}</span>
-                  <svg v-if="selectedFilter === option.value" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </button>
-              </div>
-            </transition>
-          </div>
-        </div>
-
-        <div v-if="searchQuery || selectedFilter !== 'all'" class="search-results-info">
-          <span class="results-count">
-            {{ filteredCameras.length }} camera{{ filteredCameras.length !== 1 ? 's' : '' }} found
-          </span>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="stat-card stat-total">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">TOTAL CAMERAS</div>
-            <div class="stat-value">{{ totalCount }}</div>
-          </div>
-        </div>
-
-        <div class="stat-card stat-online">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">ONLINE</div>
-            <div class="stat-value">{{ onlineCount }}</div>
-          </div>
-        </div>
-        
-        <div class="stat-card stat-blur">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">BLURRY</div>
-            <div class="stat-value">{{ blurCount }}</div>
-          </div>
-        </div>
-
-          <div class="stat-card" style="border-bottom: 2px solid #3b82f6;">
-            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-              </svg>
-            </div>
-            <div>
-              <div class="stat-label">No Signal</div>
-              <div class="stat-value">{{ noSignalCount }}</div>
-            </div>
-          </div>
-
-        <div class="stat-card stat-offline">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">OFFLINE</div>
-            <div class="stat-value">{{ offlineCount }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Search Results Panel (only show when searching or filtering) -->
-    <transition name="slide-down">
-      <div v-if="(searchQuery || selectedFilter !== 'all') && filteredCameras.length > 0" class="search-results-panel">
-        <div class="results-header">
-          <h3>{{ selectedFilter !== 'all' ? currentFilterLabel : 'Search Results' }}</h3>
-          <button @click="clearSearch" class="close-results">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          <button
+            type="button"
+            class="icon-btn"
+            :aria-label="sidebarExpanded ? 'Collapse control panel' : 'Expand control panel'"
+            @click="toggleSidebar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         </div>
-        <div class="results-list">
-          <div 
-            v-for="camera in filteredCameras" 
-            :key="camera.id" 
-            class="result-item"
-            @click="focusOnCamera(camera, true)"
-          >
-            <div class="result-icon">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <div class="result-info">
-              <div class="result-name">{{ camera.name }}</div>
-              <div class="result-details">
-                <span class="result-ip">{{ camera.ipAddress }}</span>
-                <span class="result-separator">•</span>
-                <span class="result-location">{{ camera.location }}</span>
-              </div>
-            </div>
-            <span class="status-indicator" :class="camera.status"></span>
-          </div>
+
+        <FiltersBar
+          v-if="sidebarExpanded"
+          :search-query="searchQuery"
+          :selected-filter="selectedFilter"
+          :filter-options="filterOptions"
+          :cameras="filteredCameras"
+          :loading="loadingCameras"
+          :active-camera-id="activeCameraId"
+          @update:search-query="searchQuery = $event"
+          @update:selected-filter="selectFilter"
+          @clear-filters="clearFilters"
+          @focus-camera="focusCamera"
+        />
+
+        <div v-else class="collapsed-cta">
+          <button type="button" @click="sidebarExpanded = true">Open Filters</button>
         </div>
+      </aside>
+
+      <main class="map-shell">
+        <div class="map-shell__toolbar">
+          <button
+            v-if="!isMobile && !sidebarExpanded"
+            type="button"
+            class="toolbar-btn"
+            @click="sidebarExpanded = true"
+          >
+            Show Filters
+          </button>
+
+          <button
+            v-if="selectedCamera"
+            type="button"
+            class="toolbar-btn toolbar-btn--ghost"
+            @click="openCameraView(selectedCamera)"
+          >
+            View Stream
+          </button>
+        </div>
+
+        <MapView
+          ref="mapViewRef"
+          :cameras="filteredCameras"
+          :loading="loadingCameras"
+          :active-camera-id="activeCameraId"
+          @select-camera="handleMarkerSelect"
+        />
+
+        <div class="camera-info-wrap">
+          <CameraInfoPanel
+            class="camera-info-panel"
+            :camera="selectedCamera"
+            @view-stream="openCameraView"
+            @details="openCameraView"
+            @close="selectedCamera = null"
+          />
+        </div>
+      </main>
+    </section>
+
+    <transition name="drawer-fade">
+      <div
+        v-if="isMobile && mobileFiltersOpen"
+        class="mobile-drawer-backdrop"
+        @click.self="mobileFiltersOpen = false"
+      >
+        <aside class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Camera filters">
+          <header class="mobile-drawer__header">
+            <div>
+              <h2>Filters & Search</h2>
+              <p>{{ filteredCameras.length }} cameras visible</p>
+            </div>
+            <button type="button" class="icon-btn" aria-label="Close filters panel" @click="mobileFiltersOpen = false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </header>
+
+          <FiltersBar
+            :search-query="searchQuery"
+            :selected-filter="selectedFilter"
+            :filter-options="filterOptions"
+            :cameras="filteredCameras"
+            :loading="loadingCameras"
+            :active-camera-id="activeCameraId"
+            @update:search-query="searchQuery = $event"
+            @update:selected-filter="selectFilter"
+            @clear-filters="clearFilters"
+            @focus-camera="focusCamera"
+          />
+        </aside>
       </div>
     </transition>
-
-    <!-- No Results Message -->
-    <transition name="fade">
-      <div v-if="(searchQuery || selectedFilter !== 'all') && filteredCameras.length === 0" class="no-results">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3>No cameras found</h3>
-        <p>Try adjusting your search or filter criteria</p>
-        <button @click="clearSearch" class="clear-search-button">Clear All Filters</button>
-      </div>
-    </transition>
-
-    <!-- Map -->
-    <main class="map-container">
-      <div ref="mapContainer" id="map"></div>
-    </main>
   </div>
 </template>
 
 <style scoped>
-* {
+.dashboard-page {
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.14), transparent 36%),
+    radial-gradient(circle at 86% 0%, rgba(20, 184, 166, 0.12), transparent 38%),
+    #020617;
+  color: #e2e8f0;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+
+.stats-strip {
+  padding: 12px var(--space-3);
+}
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) 1fr;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.workspace--collapsed {
+  grid-template-columns: 88px 1fr;
+}
+
+.sidebar-panel {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.74);
+  border-radius: 16px;
+  padding: 12px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-panel--collapsed {
+  align-items: center;
+  padding: 12px 8px;
+}
+
+.sidebar-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sidebar-heading h2 {
   margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  color: #f8fafc;
+  font-size: 1.02rem;
 }
 
-/* Dashboard Container - Dark Theme */
-.dashboard-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  background: linear-gradient(135deg, rgba(26, 32, 44, 0.95) 0%, rgba(45, 55, 72, 0.98) 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  position: relative;
+.sidebar-heading p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  line-height: 1.3;
 }
 
-.dashboard-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Header Styles - Dark Theme */
-.header {
-  background: rgba(26, 32, 44, 0.95);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(102, 126, 234, 0.2);
-  position: sticky;
-  top: 0;
-  z-index: 1001;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-.header-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logo {
-  height: 60px;
-  width: auto;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
-}
-
-.header-text h1 {
-  font-size: 24px;
-  color: white;
-  font-weight: 700;
-  margin-bottom: 4px;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.header-text p {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 400;
-}
-
-.header-right {
-  position: relative;
-}
-
-/* Profile Section */
-.profile-section {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50px;
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #cbd5e1;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.profile-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.profile-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  color: #667eea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.profile-name {
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.profile-role {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.75rem;
-}
-
-.dropdown-arrow {
-  width: 20px;
-  height: 20px;
-  color: white;
-  transition: transform 0.3s ease;
-}
-
-.dropdown-arrow.open {
+.sidebar-panel--collapsed .icon-btn svg {
   transform: rotate(180deg);
 }
 
-/* Dropdown Menu - Dark Theme */
-.profile-dropdown {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  background: rgba(26, 32, 44, 0.98);
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  min-width: 280px;
-  overflow: hidden;
-  z-index: 1002;
+.icon-btn:focus-visible,
+.toolbar-btn:focus-visible,
+.collapsed-cta button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
 }
 
-.dropdown-header {
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  text-align: center;
+.collapsed-cta {
+  display: grid;
+  place-items: center;
+  flex: 1;
 }
 
-.dropdown-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: white;
-  color: #667eea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin: 0 auto 0.75rem;
-}
-
-.dropdown-name {
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.dropdown-role {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.875rem;
-}
-
-.dropdown-menu {
-  padding: 0.5rem;
-}
-
-.dropdown-item {
+.collapsed-cta button {
   width: 100%;
-  padding: 0.75rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: none;
-  border: none;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  padding: 10px 8px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
 }
 
-.dropdown-item:hover {
-  background: rgba(102, 126, 234, 0.2);
-  color: white;
+.map-shell {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 0;
+  background: rgba(15, 23, 42, 0.5);
 }
 
-.dropdown-item.logout:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+.map-shell__toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 9;
+  display: flex;
+  gap: 8px;
 }
 
-.dropdown-item svg {
-  width: 20px;
-  height: 20px;
+.toolbar-btn {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.dropdown-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0.5rem 0;
+.toolbar-btn--ghost {
+  background: rgba(2, 6, 23, 0.74);
 }
 
-.dropdown-overlay {
+.camera-info-wrap {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 9;
+  width: min(340px, calc(100% - 24px));
+  pointer-events: none;
+}
+
+.camera-info-panel {
+  pointer-events: auto;
+}
+
+.mobile-drawer-backdrop {
   position: fixed;
-  top: 0;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.64);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+}
+
+.mobile-drawer {
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
-}
-
-/* Transitions */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.3s ease;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-/* Status Panel - Dark Theme */
-.status-panel {
-  background: rgba(26, 32, 44, 0.9);
-  backdrop-filter: blur(20px);
-  padding: 20px 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  max-height: 82vh;
+  background: rgba(2, 6, 23, 0.97);
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  z-index: 1000;
-  position: relative;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-.panel-left {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  min-width: 250px;
-}
-
-.panel-center {
-  flex: 1;
-  max-width: 600px;
-  min-width: 280px;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
 }
 
-.panel-title svg {
-  width: 24px;
-  height: 24px;
-  color: rgba(102, 126, 234, 0.8);
-}
-
-.panel-title h2 {
-  font-size: 1.25rem;
-  color: white;
-  font-weight: 700;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.legend {
+.mobile-drawer__header {
   display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.legend-dot.up {
-  background-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  animation: pulse-green 2s ease-in-out infinite;
-}
-
-.legend-dot.down {
-  background-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-  animation: pulse-red 2s ease-in-out infinite;
-}
-
-.status-badge.up .status-dot {
-  background: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-.status-badge.down .status-dot {
-  background: #ef4444;
-}
-.status-badge.blur .status-dot {
-  background: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
-  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
-}
-
-@keyframes pulse-green {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1);
-  }
-}
-
-@keyframes pulse-red {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
-  }
-}
-
-@keyframes pulse-blue {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
-  }
-}
-
-.legend-dot.blur {
-  background-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-.legend-dot.no_signal {
-  background-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  animation: pulse-blue 2s ease-in-out infinite;
-}
-
-.status-badge.no_signal .status-dot {
-  background: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  animation: pulse-blue 2s ease-in-out infinite;
-}
-
-/* Stats Cards - Dark Theme */
-.stats {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  min-width: 180px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(102, 126, 234, 0.4);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-icon svg {
-  width: 24px;
-  height: 24px;
-  color: white;
-}
-
-.stat-total .stat-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.stat-online .stat-icon {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
-}
-
-.stat-offline .stat-icon {
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
-}
-
-.stat-no_signal .stat-icon {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Search & Filter Group */
-.search-filter-group {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-/* Search in Status Panel - Dark Theme */
-.search-wrapper {
-  position: relative;
-  flex: 1;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.75rem 3rem 0.75rem 3rem;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  font-size: 0.875rem;
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #667eea;
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-}
-
-.clear-button {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.clear-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.clear-button svg {
-  width: 16px;
-  height: 16px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Filter Button */
-.filter-button-container {
-  position: relative;
-}
-
-.filter-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.filter-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(102, 126, 234, 0.4);
-  color: white;
-}
-
-.filter-button.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-  border-color: rgba(102, 126, 234, 0.5);
-  color: #667eea;
-}
-
-.filter-button svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.filter-text {
-  display: inline-block;
-}
-
-.filter-arrow {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.3s ease;
-}
-
-.filter-arrow.open {
-  transform: rotate(180deg);
-}
-
-/* Filter Dropdown */
-.filter-dropdown {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  background: rgba(26, 32, 44, 0.98);
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  min-width: 220px;
-  overflow: hidden;
-  z-index: 1000;
-  padding: 0.5rem;
-}
-
-.filter-option {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.filter-option:hover {
-  background: rgba(102, 126, 234, 0.2);
-  color: white;
-}
-
-.filter-option.active {
-  background: rgba(102, 126, 234, 0.3);
-  color: white;
-}
-
-.filter-option svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.filter-option .check-icon {
-  margin-left: auto;
-  color: #10b981;
-}
-
-.search-results-info {
-  text-align: center;
-  margin-top: 8px;
-}
-
-.results-count {
-  display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-/* Search Results Panel - Dark Theme */
-.search-results-panel {
-  background: rgba(26, 32, 44, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  max-height: 185px;
-  overflow-y: auto;
-  z-index: 998;
-  position: relative;
-}
-
-/* Custom Scrollbar for Search Results Panel */
-.search-results-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.search-results-panel::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  margin: 4px 0;
-}
-
-.search-results-panel::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 10px;
-  box-shadow: 0 0 6px rgba(102, 126, 234, 0.5);
-}
-
-.search-results-panel::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #7c8ef7 0%, #8b5cb5 100%);
-  box-shadow: 0 0 8px rgba(102, 126, 234, 0.8);
-}
-
-/* Firefox scrollbar */
-.search-results-panel {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(102, 126, 234, 0.8) rgba(0, 0, 0, 0.2);
-}
-
-.results-header {
-  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  gap: 12px;
 }
 
-.results-header h3 {
+.mobile-drawer__header h2 {
+  margin: 0;
+  color: #f8fafc;
   font-size: 1rem;
-  color: white;
-  font-weight: 600;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.close-results {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+.mobile-drawer__header p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 0.8rem;
 }
 
-.close-results:hover {
-  background: rgba(255, 255, 255, 0.1);
+.drawer-fade-enter-active,
+.drawer-fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.close-results svg {
-  width: 18px;
-  height: 18px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.results-list {
-  padding: 8px 0;
-}
-
-.result-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 30px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.result-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.result-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.result-icon svg {
-  width: 20px;
-  height: 20px;
-  color: white;
-}
-
-.result-info {
-  flex: 1;
-}
-
-.result-name {
-  font-weight: 600;
-  color: white;
-  font-size: 0.9375rem;
-  margin-bottom: 4px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.result-details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.result-ip {
-  font-family: 'Courier New', monospace;
-  font-weight: 500;
-  color: rgba(102, 126, 234, 0.9);
-}
-
-.result-separator {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-indicator.up {
-  background: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  animation: pulse-green 2s ease-in-out infinite;
-}
-
-.status-indicator.down {
-  background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-}
-
-/* No Results - Dark Theme */
-.no-results {
-  background: rgba(26, 32, 44, 0.95);
-  backdrop-filter: blur(20px);
-  padding: 3rem 2rem;
-  text-align: center;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-.no-results svg {
-  width: 64px;
-  height: 64px;
-  color: rgba(102, 126, 234, 0.4);
-  margin: 0 auto 1rem;
-}
-
-.no-results h3 {
-  font-size: 1.25rem;
-  color: white;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.no-results p {
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 1.5rem;
-}
-
-.clear-search-button {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.clear-search-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-/* Transitions */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-down-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
+.drawer-fade-enter-from,
+.drawer-fade-leave-to {
   opacity: 0;
 }
 
-/* Map Container */
-.map-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  border-top: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-#map {
-  height: 100%;
-  width: 100%;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .status-panel {
-    flex-wrap: wrap;
+@media (max-width: 1199px) {
+  .workspace {
+    grid-template-columns: minmax(260px, 320px) 1fr;
+    padding: 0 var(--space-2) var(--space-2);
   }
 
-  .panel-left {
-    flex: 1 1 100%;
-    justify-content: space-between;
+  .workspace--collapsed {
+    grid-template-columns: 78px 1fr;
   }
 
-  .panel-center {
-    flex: 1 1 100%;
-    max-width: 100%;
-    order: 3;
-  }
-
-  .stats {
-    flex: 1 1 100%;
-    justify-content: center;
+  .stats-strip {
+    padding: 12px var(--space-2);
   }
 }
 
 @media (max-width: 1024px) {
-  .status-panel {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 16px;
-    height: auto;
-  }
-
-  .panel-left {
-    width: 100%;
-    flex: 0 0 auto;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-
-  .panel-center {
-    width: 100%;
-    flex: 0 0 auto;
-    max-width: none;
-    order: 0 !important;
-  }
-
-  .stats {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: visible;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  
-  .stat-card {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .search-results-panel {
-    max-height: 165px;
-  }
-
-  .results-header,
-  .result-item {
-    padding-left: 20px;
-    padding-right: 20px;
+  .camera-info-wrap {
+    top: auto;
+    bottom: 12px;
   }
 }
 
-@media (max-width: 768px) {
-  .header-content {
-    padding: 15px 20px;
+@media (max-width: 767px) {
+  .stats-strip {
+    padding: 10px 12px;
   }
 
-  .header-text h1 {
-    font-size: 18px;
+  .workspace {
+    display: block;
+    padding: 0 12px 12px;
   }
 
-  .header-text p {
-    font-size: 12px;
+  .map-shell {
+    min-height: calc(100vh - 248px);
   }
 
-  .logo {
-    height: 45px;
+  .map-shell__toolbar {
+    top: 10px;
+    left: 10px;
   }
 
-  .profile-info {
-    display: none;
+  .camera-info-wrap {
+    top: auto;
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
   }
-
-  .status-panel {
-    padding: 15px 20px;
-  }
-
-  .panel-title h2 {
-    font-size: 1rem;
-  }
-
-  .panel-left {
-    gap: 15px;
-  }
-
-  .legend {
-    flex-wrap: wrap;
-  }
-
-  .search-filter-group {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .search-wrapper {
-    width: 100%;
-  }
-
-  .filter-button-container {
-    width: 100%;
-  }
-
-  .filter-button {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .filter-dropdown {
-    left: 0;
-    right: 0;
-    width: 100%;
-  }
-
-  .stats {
-    gap: 6px;
-  }
-
-  .stat-card {
-    min-width: 0;
-    padding: 10px 8px;
-    gap: 8px;
-  }
-
-  .stat-icon {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-  }
-
-  .stat-icon svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .stat-label {
-    font-size: 0.65rem;
-  }
-
-  .stat-value {
-    font-size: 1.1rem;
-  }
-
-  .search-input {
-    font-size: 0.875rem;
-    padding: 0.75rem 2.75rem 0.75rem 2.75rem;
-  }
-
-  .result-name {
-    font-size: 0.875rem;
-  }
-
-  .result-details {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .panel-title svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .panel-title h2 {
-    font-size: 0.9rem;
-  }
-
-  .legend {
-    gap: 10px;
-  }
-
-  .legend-item {
-    font-size: 12px;
-  }
-
-  .search-results-panel {
-    max-height: 150px;
-  }
-
-  .result-item {
-    padding: 10px 15px;
-  }
-
-  .result-icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .result-details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .result-separator {
-    display: none;
-  }
-
-  .results-count {
-    font-size: 0.7rem;
-    padding: 3px 10px;
-  }
-}
-</style>
-
-<style>
-/* Global styles for Google Maps InfoWindow - FIXED ZOOM-RESPONSIVE VERSION */
-.gm-style-iw-chr {
-  display: none !important;
-}
-
-.gm-style-iw-c {
-  background: #1a202c !important;
-  border: none !important;
-  border-radius: 16px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(102, 126, 234, 0.2) !important;
-  padding: 0 !important;
-  max-width: 360px !important;
-  transform: none !important;
-  transform-origin: center center !important;
-  overflow: hidden !important; /* ADD THIS LINE */
-}
-
-.gm-style-iw-d {
-  overflow: visible !important; /* CHANGE from hidden */
-  max-height: none !important;
-  padding: 0 !important;
-  margin: 0 !important; /* ADD THIS */
-  transform: none !important;
-}
-
-.gm-style-iw-tc {
-  display: none !important; /* HIDE the tail/arrow */
-}
-
-.gm-style .gm-style-iw-t::after {
-  background: #1a202c !important;
-  box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.3);
-}
-
-/* Close button */
-.gm-ui-hover-effect {
-  top: 8px !important;  /* Changed from 12px - move it up more */
-  right: 8px !important;  /* Changed from 12px */
-  width: 28px !important;  /* Smaller */
-  height: 28px !important;  /* Smaller */
-  opacity: 0.9 !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 8px !important;
-  backdrop-filter: blur(10px) !important;
-}
-
-.gm-ui-hover-effect > span {
-  background-color: white !important;  /* Changed from rgba */
-  width: 18px !important;
-  height: 18px !important;
-  margin: 7px !important;
-}
-
-.gm-ui-hover-effect:hover {
-  opacity: 1 !important;
-  background: rgba(255, 255, 255, 0.3) !important;  /* Add this */
-}
-
-/* Custom Popup Container - FIXED ZOOM SCALING */
-.custom-popup {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 360px;
-  background: #1a202c;
-  /* CRITICAL: Force fixed dimensions regardless of map zoom */
-  transform: none !important;
-  transform-origin: center center !important;
-  zoom: 1 !important;
-}
-
-/* CRITICAL: Prevent all child elements from scaling */
-.custom-popup * {
-  transform: none !important;
-  zoom: 1 !important;
-}
-
-/* Header Section */
-.popup-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 14px 18px;
-  padding-top: 14px; /* CHANGE back to match sides */
-  padding-right: 45px;
-  border-top-left-radius: 16px; /* MATCH the container */
-  border-top-right-radius: 16px; /* MATCH the container */
-  margin: 0 !important; /* ADD THIS */
-}
-
-.popup-title-row {
-  display: flex;
-  align-items: flex-start; /* CHANGED from center */
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.popup-title {
-  flex: 0 0 auto; /* CHANGED from flex: 1 */
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: -0.5px;
-  line-height: 1.3;
-}
-
-.popup-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 13px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-/* Specific badge styles */
-.popup-status-badge.online {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.popup-status-badge.offline {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.popup-status-badge.blurry {
-  background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
-  border-color: rgba(249, 115, 22, 0.3);
-}
-
-.popup-status-badge.no_signal {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.popup-status-badge .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid currentColor; /* Add border to make it pop */
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-.popup-status-badge.online .status-dot {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
-}
-
-.popup-status-badge.offline .status-dot {
-  background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-}
-
-.popup-status-badge.blurry .status-dot {
-  background: #f97316;
-  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
-}
-
-.popup-status-badge.no_signal .status-dot {
-  background: #3b82f6;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-.popup-status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-}
-
-/* Body Section */
-.popup-body {
-  background: #1a202c;
-}
-
-/* Info Grid */
-.popup-info-grid {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.info-icon {
-  width: 16px;
-  height: 16px;
-  color: rgba(102, 126, 234, 0.7);
-  flex-shrink: 0;
-}
-
-.info-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: white;
-  padding-left: 24px;
-  line-height: 1.5;
-}
-
-.info-value.ip-value {
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-  font-size: 14px;
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.12);
-  padding: 8px 12px;
-  padding-left: 12px;
-  margin-left: 0;
-  border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  display: inline-block;
-  font-weight: 600;
-}
-
-.info-value.coords-value {
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Professional Compact Button - Next to Title */
-.view-camera-btn-compact {
-  padding: 10px 18px;
-  background: rgba(26, 32, 44, 0.9); /* Dark background */
-  color: white;
-  border: 2px solid rgba(102, 126, 234, 0.6); /* Purple border */
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-}
-
-.view-camera-btn-compact:hover {
-  background: rgba(102, 126, 234, 0.3);
-  border-color: rgba(102, 126, 234, 0.9);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-}
-
-.view-camera-btn-compact:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.view-camera-btn-compact .btn-icon {
-  width: 18px;
-  height: 18px;
-}
-
-/* Close Button - Compact Circle */
-.close-btn-compact {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: rgba(26, 32, 44, 0.9); /* Dark background */
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(239, 68, 68, 0.6); /* Red border */
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.close-btn-compact:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.9);
-  transform: rotate(90deg) scale(1.1);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
-}
-
-.close-btn-compact:active {
-  transform: rotate(90deg) scale(0.95);
-}
-
-.close-btn-compact svg {
-  width: 18px;
-  height: 18px;
-  color: white;
 }
 </style>
