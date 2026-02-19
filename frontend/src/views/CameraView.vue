@@ -64,6 +64,8 @@ const fetchCameraDetails = async () => {
       let mappedStatus = 'online'; // Default
       if (data.status === 'down') {
         mappedStatus = 'offline';
+      } else if (data.status === 'up' && data.image_status === 'no_signal') {
+        mappedStatus = 'no_signal';
       } else if (data.status === 'up' && data.image_status === 'blur') {
         mappedStatus = 'blurry';
       } else if (data.status === 'up') {

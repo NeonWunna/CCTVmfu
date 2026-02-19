@@ -29,14 +29,14 @@ class BlurWorker:
             # Open stream
             cap = cv2.VideoCapture(rtsp_url)
             if not cap.isOpened():
-                return 0.0
+                return -1.0
             
             # Read one frame
             ret, frame = cap.read()
             cap.release()
             
             if not ret or frame is None:
-                return 0.0
+                return -1.0
                 
             # Convert to grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -48,7 +48,7 @@ class BlurWorker:
             return variance
         except Exception as e:
             logger.error(f"Error checking blur for {rtsp_url}: {e}")
-            return 0.0
+            return -1.0
 
     async def run_once(self):
         """
@@ -77,7 +77,12 @@ class BlurWorker:
                 variance = await asyncio.to_thread(self.check_sharpness, cam.rtsp_url)
                 
                 # Determine status
-                new_image_status = "blur" if variance < self.threshold else "normal"
+                if variance < 0:
+                     new_image_status = "no_signal"
+                elif variance < self.threshold:
+                     new_image_status = "blur"
+                else:
+                     new_image_status = "normal"
                 
                 # Update DB
                 # Always update last_image_check

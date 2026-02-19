@@ -69,6 +69,8 @@ const fetchCameras = async () => {
       let mappedStatus = 'online'; // Default
       if (camera.status === 'down') {
         mappedStatus = 'offline';
+      } else if (camera.status === 'up' && camera.image_status === 'no_signal') {
+        mappedStatus = 'no_signal';
       } else if (camera.status === 'up' && camera.image_status === 'blur') {
         mappedStatus = 'blurry';
       } else if (camera.status === 'up') {
@@ -2163,6 +2165,12 @@ onUnmounted(() => {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+.popup-status-badge.no_signal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
 .popup-status-badge.blurry {
   background: rgba(249, 115, 22, 0.15);
   color: #f97316;
@@ -2185,6 +2193,11 @@ onUnmounted(() => {
 .popup-status-badge.offline .status-dot {
   background: #ef4444;
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.popup-status-badge.no_signal .status-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 .popup-status-badge.blurry .status-dot {
