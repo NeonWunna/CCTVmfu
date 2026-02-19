@@ -25,6 +25,7 @@ const markers = shallowRef([]);
 const markerCluster = shallowRef(null);
 const isInitializing = ref(true);
 const mapError = ref('');
+const visibleCameraCount = ref(0);
 const markerLookup = new Map();
 let resizeObserver = null;
 let resizeDebounceId = null;
@@ -106,58 +107,18 @@ const createMarkerIcon = (status, isActive = false) => {
   };
 };
 
-const buildClusterStyle = (size, fill) => ({
-  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${fill}" fill-opacity="0.35" />
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 5}" fill="${fill}" />
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 5}" fill="none" stroke="#ffffff" stroke-width="2" />
-    </svg>`
-  )}`,
-  width: size,
-  height: size,
-  textColor: '#f8fafc',
-  textSize: size < 52 ? 12 : 14,
-  fontWeight: '700'
-});
-
-const CLUSTER_STATUS_ORDER = ['online', 'offline', 'no_signal', 'blurry'];
-const CLUSTER_SIZES = [38, 46, 54];
-
-const buildClusterStyles = () => {
-  const styles = [];
-  CLUSTER_SIZES.forEach((size) => {
-    CLUSTER_STATUS_ORDER.forEach((status) => {
-      styles.push(buildClusterStyle(size, getStatusColor(status)));
-    });
-  });
-  return styles;
-};
-
-const getDominantClusterStatus = (clusterMarkers) => {
-  const counts = {
-    online: 0,
-    offline: 0,
-    no_signal: 0,
-    blurry: 0
-  };
-
-  clusterMarkers.forEach((marker) => {
-    if (counts[marker.cameraStatus] !== undefined) {
-      counts[marker.cameraStatus] += 1;
-    } else {
-      counts.online += 1;
-    }
-  });
-
-  return CLUSTER_STATUS_ORDER.reduce((dominant, current) =>
-    counts[current] > counts[dominant] ? current : dominant
-  );
-};
+const getClustererConstructor = () =>
+  window.MarkerClusterer ||
+  window.markerClusterer?.MarkerClusterer ||
+  null;
 
 const clearMarkers = () => {
   if (markerCluster.value) {
-    markerCluster.value.clearMarkers();
+    if (typeof markerCluster.value.clearMarkers === 'function') {
+      markerCluster.value.clearMarkers();
+    } else if (typeof markerCluster.value.setMap === 'function') {
+      markerCluster.value.setMap(null);
+    }
     markerCluster.value = null;
   }
 
@@ -237,6 +198,9 @@ const renderMarkers = (autoFit = true) => {
       camera.lat !== 0 &&
       camera.lng !== 0
   );
+  visibleCameraCount.value = visibleCameras.length;
+  const ClustererCtor = getClustererConstructor();
+  const shouldCluster = Boolean(ClustererCtor && visibleCameras.length > 1);
 
   const nextMarkers = visibleCameras.map((camera) => {
     const marker = new google.maps.Marker({
@@ -244,7 +208,7 @@ const renderMarkers = (autoFit = true) => {
       title: `${camera.name} - ${getStatusLabel(camera.status)}`,
       icon: createMarkerIcon(camera.status, camera.id === props.activeCameraId),
       label: getMarkerLabel(),
-      map: window.MarkerClusterer ? null : map.value
+      map: shouldCluster ? null : map.value
     });
 
     marker.cameraId = camera.id;
@@ -262,36 +226,34 @@ const renderMarkers = (autoFit = true) => {
 
   markers.value = nextMarkers;
 
-  if (window.MarkerClusterer && nextMarkers.length > 1) {
-    const clusterStyles = buildClusterStyles();
+  if (shouldCluster) {
+    try {
+      if (window.markerClusterer?.MarkerClusterer && ClustererCtor === window.markerClusterer.MarkerClusterer) {
+        markerCluster.value = new ClustererCtor({
+          map: map.value,
+          markers: nextMarkers
+        });
+      } else {
+        markerCluster.value = new ClustererCtor(map.value, nextMarkers, {
+          gridSize: 46,
+          maxZoom: 18,
+          minimumClusterSize: 2,
+          zoomOnClick: true
+        });
 
-    markerCluster.value = new window.MarkerClusterer(map.value, nextMarkers, {
-      gridSize: 46,
-      maxZoom: 18,
-      minimumClusterSize: 2,
-      zoomOnClick: false,
-      styles: clusterStyles,
-      calculator: (clusterMarkers) => {
-        const dominantStatus = getDominantClusterStatus(clusterMarkers);
-        const sizeTier = clusterMarkers.length >= 80 ? 2 : clusterMarkers.length >= 20 ? 1 : 0;
-        const statusIndex = CLUSTER_STATUS_ORDER.indexOf(dominantStatus);
-        const styleIndex = sizeTier * CLUSTER_STATUS_ORDER.length + statusIndex + 1;
-
-        return {
-          text: String(clusterMarkers.length),
-          index: styleIndex,
-          title: `${clusterMarkers.length} cameras (${getStatusLabel(dominantStatus)})`
-        };
+        google.maps.event.addListener(markerCluster.value, 'clusterclick', (cluster) => {
+          const bounds = cluster.getBounds?.();
+          if (bounds) {
+            map.value.fitBounds(bounds);
+          }
+          map.value.setZoom(Math.min((map.value.getZoom() || 10) + 2, 19));
+        });
       }
-    });
-
-    google.maps.event.addListener(markerCluster.value, 'clusterclick', (cluster) => {
-      const bounds = cluster.getBounds?.();
-      if (bounds) {
-        map.value.fitBounds(bounds);
-      }
-      map.value.setZoom(Math.min((map.value.getZoom() || 10) + 2, 19));
-    });
+    } catch (clusterError) {
+      console.warn('Marker clustering failed. Falling back to direct markers.', clusterError);
+      markerCluster.value = null;
+      nextMarkers.forEach((marker) => marker.setMap(map.value));
+    }
   } else {
     nextMarkers.forEach((marker) => marker.setMap(map.value));
   }
@@ -442,6 +404,10 @@ watch(
     <div v-if="!isInitializing && !loading && cameras.length === 0" class="empty-state">
       <h3>No Cameras Found</h3>
       <p>Try adjusting filters or search terms to display cameras on the map.</p>
+    </div>
+    <div v-else-if="!isInitializing && !loading && cameras.length > 0 && visibleCameraCount === 0" class="empty-state">
+      <h3>No Valid Coordinates</h3>
+      <p>Cameras loaded, but none have valid latitude/longitude to render on the map.</p>
     </div>
 
     <div v-if="mapError" class="map-error">
