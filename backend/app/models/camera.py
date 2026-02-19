@@ -19,18 +19,10 @@ class Camera(Base):
     ip_address = Column(String(45), unique=True, nullable=False)  # IPv6 max length
     coordinates = Column(String(100), nullable=True)
     brand = Column(String(100), nullable=True)
-    status = Column(String(20), default="online", nullable=False) # online, offline, blurry, no_signal
+    status = Column(String(20), default="up", nullable=False)
     version = Column(String(500), nullable=True)
     rtsp_url = Column(String(500), nullable=True)
     last_update = Column(String(50), nullable=True)
-    
-    # Blur Detection Fields (Deprecated/Secondary)
-    image_status = Column(String(20), default="normal", nullable=True)  # Legacy use
-    sharpness_value = Column(Integer, nullable=True)  # Using Integer for variance as it can be large, or Float
-    last_image_check = Column(DateTime(timezone=True), nullable=True)
-    blur_consistency_count = Column(Integer, default=0)
-    normal_consistency_count = Column(Integer, default=0)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
