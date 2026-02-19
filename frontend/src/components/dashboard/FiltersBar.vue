@@ -254,7 +254,7 @@ const updateFilter = (event) => {
 }
 
 .dot--blurry {
-  background: #ec4899;
+  background: #f97316;
 }
 
 .clear-btn {
@@ -412,9 +412,9 @@ const updateFilter = (event) => {
 }
 
 .status-pill--blurry {
-  color: #f9a8d4;
-  background: rgba(236, 72, 153, 0.16);
-  border-color: rgba(236, 72, 153, 0.36);
+  color: #fdba74;
+  background: rgba(249, 115, 22, 0.16);
+  border-color: rgba(249, 115, 22, 0.36);
 }
 
 @keyframes loading-shimmer {
