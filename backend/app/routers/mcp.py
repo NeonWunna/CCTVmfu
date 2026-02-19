@@ -22,27 +22,23 @@ async def event_generator(session_id: str, queue: asyncio.Queue):
     Generator for SSE. Yields messages from the queue.
     """
     try:
-        # Send padding to bypass proxy buffering (e.g. Nginx, Cloudflare)
-        # Some proxies wait for a certain amount of data before flushing the stream.
-        yield f": {' ' * 2048}\n\n"
-        
-        # Send initialized event immediately with the message endpoint URI
-        # Standard MCP: client uses this URI to POST messages
+        # เพิ่ม padding ให้ proxy flush ทันที
+        yield f": {' ' * 4096}\n\n"
+
         endpoint_uri = f"/mcp/message?sessionId={session_id}"
         yield f"event: endpoint\ndata: {endpoint_uri}\n\n"
         
         while True:
             try:
                 # Wait for message with timeout for keepalive
-                message = await asyncio.wait_for(queue.get(), timeout=30.0)
+                message = await asyncio.wait_for(queue.get(), timeout=15.0)
                 yield f"data: {message}\n\n"
             except asyncio.TimeoutError:
                 # Send keepalive ping
                 yield ": ping\n\n"
     except asyncio.CancelledError:
         logger.info(f"SSE Session {session_id} disconnected")
-        if session_id in sessions:
-            del sessions[session_id]
+        sessions.pop(session_id, None)
 
 @router.get("/sse")
 async def sse_endpoint(request: Request):
@@ -56,9 +52,11 @@ async def sse_endpoint(request: Request):
         event_generator(session_id, queue),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
+            "X-Accel-Buffering": "no",
+            "X-Content-Type-Options": "nosniff",
+            "Transfer-Encoding": "chunked",
         }
     )
 

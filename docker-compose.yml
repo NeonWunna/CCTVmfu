@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --timeout-keep-alive 120 --no-access-log
     container_name: cctv_backend
     deploy:
       resources:
@@ -14,6 +14,7 @@ services:
           memory: 512M
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/cctv_db
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     depends_on:
