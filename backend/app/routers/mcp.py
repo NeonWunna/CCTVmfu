@@ -79,11 +79,23 @@ async def handle_message(
     
     try:
         if request.method == "initialize":
-            return JSONRPCResponse(id=request.id, result={"serverInfo": {"name": "cctv-mcp", "version": "1.0"}})
+            return JSONRPCResponse(
+                id=request.id, 
+                result={
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "cctv-mcp",
+                        "version": "1.0.0"
+                    }
+                }
+            )
         
         elif request.method == "notifications/initialized":
             # Just acknowledgement
-            return JSONRPCResponse(id=request.id, result=True)
+            return JSONRPCResponse(id=request.id, result={})
             
         elif request.method == "tools/list":
             tools = [
