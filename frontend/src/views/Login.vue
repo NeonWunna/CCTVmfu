@@ -51,7 +51,7 @@ const loginWithSSO = async () => {
         </div>
 
         <!-- Login Title -->
-        <h2 class="login-title">Hello University</h2>
+        <h2 class="login-title">Mae Fah Luang University</h2>
         <p class="login-subtitle">CCTV Monitoring System</p>
         <p class="login-status">
           <span class="status-dot"></span>
