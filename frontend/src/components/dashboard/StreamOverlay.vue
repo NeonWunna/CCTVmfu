@@ -18,7 +18,37 @@ const streamFrame = ref(null);
 const streamFailed = ref(false);
 const isFullscreen = ref(false);
 const streamNonce = ref(Date.now());
-const fallbackTimestamp = ref(new Date().toLocaleString());
+const THAILAND_TIMEZONE = 'Asia/Bangkok';
+
+const formatThailandDateTime = (date = new Date()) => {
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: THAILAND_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+
+  const timeParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: THAILAND_TIMEZONE,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).formatToParts(date);
+
+  const getPart = (parts, type) => parts.find((part) => part.type === type)?.value || '';
+
+  const year = getPart(dateParts, 'year');
+  const month = getPart(dateParts, 'month');
+  const day = getPart(dateParts, 'day');
+  const hour = getPart(timeParts, 'hour');
+  const minute = getPart(timeParts, 'minute');
+  const second = getPart(timeParts, 'second');
+
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+};
+
+const thailandNow = ref(formatThailandDateTime());
 
 const getStatusLabel = (status) => {
   if (status === 'offline') return 'Offline';
@@ -35,7 +65,7 @@ const resolvedStreamUrl = computed(() => {
   const separator = props.streamUrl.includes('?') ? '&' : '?';
   return `${props.streamUrl}${separator}ts=${streamNonce.value}`;
 });
-const timestampText = computed(() => props.camera?.lastUpdate || fallbackTimestamp.value);
+const timestampText = computed(() => thailandNow.value);
 
 const handleImageError = () => {
   streamFailed.value = true;
@@ -68,6 +98,7 @@ const toggleFullscreen = () => {
 };
 
 let streamRefreshTimer = null;
+let thailandClockTimer = null;
 
 const startStreamRefreshLoop = () => {
   if (streamRefreshTimer) {
@@ -97,12 +128,14 @@ watch(
   () => props.camera?.id,
   () => {
     streamFailed.value = false;
-    fallbackTimestamp.value = new Date().toLocaleString();
   }
 );
 
 onMounted(() => {
   startStreamRefreshLoop();
+  thailandClockTimer = setInterval(() => {
+    thailandNow.value = formatThailandDateTime();
+  }, 1000);
   document.addEventListener('fullscreenchange', syncFullscreenState);
   document.addEventListener('webkitfullscreenchange', syncFullscreenState);
 });
@@ -111,6 +144,10 @@ onBeforeUnmount(() => {
   if (streamRefreshTimer) {
     clearInterval(streamRefreshTimer);
     streamRefreshTimer = null;
+  }
+  if (thailandClockTimer) {
+    clearInterval(thailandClockTimer);
+    thailandClockTimer = null;
   }
   document.removeEventListener('fullscreenchange', syncFullscreenState);
   document.removeEventListener('webkitfullscreenchange', syncFullscreenState);

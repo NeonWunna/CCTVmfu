@@ -55,6 +55,27 @@ const filterOptions = [
 const isMobile = computed(() => viewportWidth.value < 768);
 const activeCameraId = computed(() => selectedCamera.value?.id ?? null);
 
+const formatThailandDateTime = (date = new Date()) => {
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+
+  const timeParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Bangkok',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).formatToParts(date);
+
+  const getPart = (parts, type) => parts.find((part) => part.type === type)?.value || '';
+
+  return `${getPart(dateParts, 'year')}-${getPart(dateParts, 'month')}-${getPart(dateParts, 'day')} ${getPart(timeParts, 'hour')}:${getPart(timeParts, 'minute')}:${getPart(timeParts, 'second')}`;
+};
+
 const parseCoordinates = (coordString) => {
   if (!coordString) return { lat: 0, lng: 0 };
 
@@ -220,7 +241,7 @@ const openCameraDetails = (camera = selectedCamera.value) => {
       imageStatus: camera.imageStatus,
       coordinates: `${camera.lat}, ${camera.lng}`,
       brand: camera.brand || 'N/A',
-      lastUpdate: camera.lastUpdate || new Date().toLocaleString()
+      lastUpdate: camera.lastUpdate || formatThailandDateTime()
     }
   });
 };
