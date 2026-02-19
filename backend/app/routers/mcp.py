@@ -28,11 +28,16 @@ async def event_generator(session_id: str, queue: asyncio.Queue):
         endpoint_uri = f"/mcp/message?sessionId={session_id}"
         yield f"event: endpoint\ndata: {endpoint_uri}\n\n"
         
+        # padding ก้อนสอง — บังคับ flush หลัง endpoint
+        yield f": {' ' * 4096}\n\n"
+
         while True:
             try:
                 # Wait for message with timeout for keepalive
                 message = await asyncio.wait_for(queue.get(), timeout=15.0)
                 yield f"data: {message}\n\n"
+                # padding หลังทุก message
+                yield f": {' ' * 1024}\n\n"
             except asyncio.TimeoutError:
                 # Send keepalive ping
                 yield ": ping\n\n"
