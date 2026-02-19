@@ -139,7 +139,6 @@ async def handle_message(
     if sessionId not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    queue = sessions[sessionId]
     service = MCPService(db)
 
     try:
@@ -151,10 +150,14 @@ async def handle_message(
             error=JSONRPCError(code=-32000, message=str(exc))
         )
 
-    if response is not None:
-        await queue.put(response.model_dump_json())
+    if response is None:
+        return JSONResponse(status_code=202, content={"status": "accepted"})
 
-    return JSONResponse(status_code=202, content={"status": "accepted"})
+    # ส่งกลับทาง HTTP body โดยตรง (MCPClient รองรับ hybrid mode อยู่แล้ว)
+    return JSONResponse(
+        status_code=200,
+        content=response.model_dump()
+    )
 
 
 # ---------------------------------------------------------------------------
