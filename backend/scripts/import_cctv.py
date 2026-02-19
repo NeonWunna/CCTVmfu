@@ -61,9 +61,13 @@ def import_cctv_data():
                 # Extract generated RTSP or use specific field
                 rtsp_url = item.get('ANPR&PTZ RTSP')
                 
-                # If the specific field is empty, generate the default format
-                if not rtsp_url and ip_address:
+                # Check if rtsp_url is None or empty string
+                if not rtsp_url or str(rtsp_url).strip() == "":
+                   # Generate default RTSP URL if missing
+                   # Default format: rtsp://<ip>:554/LiveMedia/ch1/Media1/trackID=1
                    rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+                else:
+                   rtsp_url = str(rtsp_url).strip()
 
                 # Map JSON fields to model fields
                 camera_data = {
