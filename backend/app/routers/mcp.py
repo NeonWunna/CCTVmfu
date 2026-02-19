@@ -76,10 +76,13 @@ async def handle_message(
     
     # Initialize service
     service = MCPService(db)
+    queue = sessions[sessionId]
     
     try:
+        response = None
+        
         if request.method == "initialize":
-            return JSONRPCResponse(
+            response = JSONRPCResponse(
                 id=request.id, 
                 result={
                     "protocolVersion": "2024-11-05",
@@ -94,8 +97,10 @@ async def handle_message(
             )
         
         elif request.method == "notifications/initialized":
-            # Just acknowledgement
-            return JSONRPCResponse(id=request.id, result={})
+            # Notifications do not require a response in JSON-RPC
+            # But we can log it
+            logger.info(f"Session {sessionId} initialized")
+            return JSONResponse(status_code=202, content={"status": "accepted"})
             
         elif request.method == "tools/list":
             tools = [
@@ -122,38 +127,46 @@ async def handle_message(
                     }
                 }
             ]
-            return JSONRPCResponse(id=request.id, result={"tools": tools})
+            response = JSONRPCResponse(id=request.id, result={"tools": tools})
             
         elif request.method == "tools/call":
             params = request.params
             if not params:
-                 return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Invalid params"))
-            
-            tool_name = params.get("name")
-            tool_args = params.get("arguments", {})
-            
-            if tool_name == "check_camera_status":
-                location = tool_args.get("location")
-                if not location:
-                     return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
-                
-                result = await service.check_camera_status(location) # Note: function was defined with search_term
-                return JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
-                
-            elif tool_name == "find_cameras_by_location":
-                location = tool_args.get("location")
-                if not location:
-                     return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
-                
-                result = service.find_cameras_by_location(location)
-                return JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
-            
+                 response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Invalid params"))
             else:
-                return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
+                tool_name = params.get("name")
+                tool_args = params.get("arguments", {})
+                
+                if tool_name == "check_camera_status":
+                    location = tool_args.get("location")
+                    if not location:
+                         response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
+                    else:
+                        result = await service.check_camera_status(location)
+                        response = JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
+                    
+                elif tool_name == "find_cameras_by_location":
+                    location = tool_args.get("location")
+                    if not location:
+                         response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
+                    else:
+                        result = service.find_cameras_by_location(location)
+                        response = JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
+                else:
+                    response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
         
         else:
-            return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
+            response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
 
+        if response:
+            # Send response through SSE stream
+            await queue.put(response.model_dump_json())
+            return JSONResponse(status_code=202, content={"status": "accepted"})
+            
     except Exception as e:
         logger.error(f"Error handling message: {e}")
-        return JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32000, message=str(e)))
+        error_response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32000, message=str(e)))
+        await queue.put(error_response.model_dump_json())
+        return JSONResponse(status_code=202, content={"status": "accepted"})
+
+    return JSONResponse(status_code=202, content={"status": "accepted"})
