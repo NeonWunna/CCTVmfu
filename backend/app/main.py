@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 import asyncio
 import logging
@@ -25,7 +27,7 @@ async def lifespan(app: FastAPI):
     worker = PingWorker(concurrent_limit=200)
     worker_task = asyncio.create_task(worker.start_loop())
     
-    # Store worker reference in app state if we want to access it later (e.g. to trigger manual check)
+    # Store worker reference in app state
     app.state.ping_worker = worker
     
     # Startup: Start background blur worker (4 hours interval)
@@ -55,10 +57,21 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_details = exc.errors()
+    body = await request.body()
+    logger.error(f"🛑 Validation Error: {error_details}")
+    logger.error(f"🛑 Request Body: {body.decode()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": error_details, "body": body.decode()},
+    )
+
 # CORS Middleware Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Configure specific origins for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
