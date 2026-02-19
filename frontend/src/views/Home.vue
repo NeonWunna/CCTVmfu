@@ -535,11 +535,6 @@ const initMap = () => {
     fullscreenControl: false,
     streetViewControl: false
   });
-
-  // Render markers immediately if data is already available
-  if (cctvs.value.length > 0) {
-    renderMapMarkers();
-  }
 };
 
 const renderMapMarkers = () => {
@@ -587,36 +582,8 @@ onMounted(() => {
   // Fetch initial data
   fetchCameras();
   
-  // Set up auto-refresh
-  let refreshInterval = null;
-
-  const startPolling = () => {
-    if (!refreshInterval) {
-      fetchCameras(); // Fetch immediate when starting
-      refreshInterval = setInterval(fetchCameras, 30000);
-    }
-  };
-
-  const stopPolling = () => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval);
-      refreshInterval = null;
-    }
-  };
-
-  // Start polling initially
-  startPolling();
-
-  // Handle visibility change to save server resources
-  const handleVisibilityChange = () => {
-    if (document.hidden) {
-      stopPolling();
-    } else {
-      startPolling();
-    }
-  };
-
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+  // Set up auto-refresh every 30 seconds
+  const refreshInterval = setInterval(fetchCameras, 30000);
   
   // Watch search query and filter changes and update markers
   watch([searchQuery, selectedFilter], () => {
@@ -626,8 +593,7 @@ onMounted(() => {
   });
   
   onUnmounted(() => {
-    stopPolling();
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    clearInterval(refreshInterval);
     document.removeEventListener('click', handleClickOutside);
   });
 });
@@ -637,7 +603,7 @@ onUnmounted(() => {
   delete window.viewCameraFromPopup;
   delete window.closeInfoWindowFromPopup;
   
-  // Remove click outside handler (already handled in onMounted's onUnmounted, but keeping for safety/redundancy if needed, though strictly duplicate)
+  // Remove click outside handler
   document.removeEventListener('click', handleClickOutside);
   
   // Clear all pulsing intervals
@@ -645,6 +611,7 @@ onUnmounted(() => {
   pulseIntervals.length = 0;
 
   // Destroy map instance to prevent memory leaks
+  // Destroy map instance to prevent memory leaks is handled by GMaps internally but we can clear refs
   map.value = null;
 });
 </script>
