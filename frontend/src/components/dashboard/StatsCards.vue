@@ -205,8 +205,8 @@ const selectFilter = (filterValue) => {
 }
 
 .stats-card--blurry .stats-icon {
-  color: #fbcfe8;
-  background: rgba(190, 24, 93, 0.24);
+  color: #fed7aa;
+  background: rgba(249, 115, 22, 0.24);
 }
 
 .stats-copy {
