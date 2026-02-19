@@ -441,9 +441,12 @@ watch(filteredCameras, (nextCameras) => {
   --space-1: 8px;
   --space-2: 16px;
   --space-3: 24px;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.14), transparent 36%),
     radial-gradient(circle at 86% 0%, rgba(20, 184, 166, 0.12), transparent 38%),
@@ -459,10 +462,13 @@ watch(filteredCameras, (nextCameras) => {
 .workspace {
   flex: 1;
   min-height: 0;
+  height: 100%;
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(300px, 360px) 1fr;
   gap: var(--space-2);
   padding: 0 var(--space-3) var(--space-3);
+  overflow: hidden;
 }
 
 .workspace--collapsed {
@@ -474,6 +480,7 @@ watch(filteredCameras, (nextCameras) => {
   background: rgba(15, 23, 42, 0.74);
   border-radius: 16px;
   padding: 12px;
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -554,6 +561,7 @@ watch(filteredCameras, (nextCameras) => {
 
 .map-shell {
   position: relative;
+  height: 100%;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 16px;
   overflow: hidden;
@@ -674,6 +682,13 @@ watch(filteredCameras, (nextCameras) => {
 }
 
 @media (max-width: 767px) {
+  .dashboard-page {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
   .stats-strip {
     padding: 10px 12px;
   }

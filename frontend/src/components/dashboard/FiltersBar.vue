@@ -156,6 +156,7 @@ const updateFilter = (event) => {
   gap: 14px;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .controls-group {
@@ -335,6 +336,7 @@ const updateFilter = (event) => {
   padding: 0;
   display: grid;
   gap: 8px;
+  min-height: 0;
   overflow: auto;
 }
 
