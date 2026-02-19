@@ -27,7 +27,7 @@ class CameraBase(BaseModel):
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status is one of allowed values."""
-        allowed = ["up", "down", "maintenance", "unknown"]
+        allowed = ["up", "down", "maintenance", "unknown", "online", "offline", "no_signal", "no_rtsp", "blurry"]
         if v and v.lower() not in allowed:
             raise ValueError(f"Status must be one of: {', '.join(allowed)}")
         return v.lower() if v else "up"
@@ -49,7 +49,7 @@ class CameraCreate(BaseModel):
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status is one of allowed values."""
-        allowed = ["up", "down", "maintenance", "unknown"]
+        allowed = ["up", "down", "maintenance", "unknown", "online", "offline", "no_signal", "no_rtsp", "blurry"]
         if v and v.lower() not in allowed:
             raise ValueError(f"Status must be one of: {', '.join(allowed)}")
         return v.lower() if v else "up"
@@ -73,7 +73,7 @@ class CameraUpdate(BaseModel):
     def validate_status(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        allowed = ["up", "down", "maintenance", "unknown"]
+        allowed = ["up", "down", "maintenance", "unknown", "online", "offline", "no_signal", "no_rtsp", "blurry"]
         if v.lower() not in allowed:
             raise ValueError(f"Status must be one of: {', '.join(allowed)}")
         return v.lower()
