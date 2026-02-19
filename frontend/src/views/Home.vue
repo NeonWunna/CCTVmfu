@@ -10,6 +10,7 @@ import StatsCards from '../components/dashboard/StatsCards.vue';
 import FiltersBar from '../components/dashboard/FiltersBar.vue';
 import MapView from '../components/dashboard/MapView.vue';
 import CameraInfoPanel from '../components/dashboard/CameraInfoPanel.vue';
+import StreamOverlay from '../components/dashboard/StreamOverlay.vue';
 
 const router = useRouter();
 const mapViewRef = ref(null);
@@ -21,6 +22,8 @@ const cctvs = ref([]);
 const searchQuery = ref('');
 const selectedFilter = ref('all');
 const selectedCamera = ref(null);
+const isStreamOpen = ref(false);
+const streamUrl = ref('');
 const loadingCameras = ref(true);
 
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
@@ -184,7 +187,26 @@ const handleMarkerSelect = (camera) => {
   selectedCamera.value = camera;
 };
 
-const openCameraView = (camera = selectedCamera.value) => {
+const buildStreamUrl = (cameraId) =>
+  cameraId !== null && cameraId !== undefined ? `/api/cameras/${cameraId}/stream` : '';
+
+const openStreamOverlay = (camera = selectedCamera.value) => {
+  if (!camera) return;
+
+  selectedCamera.value = camera;
+  streamUrl.value = buildStreamUrl(camera.id);
+  isStreamOpen.value = true;
+
+  if (isMobile.value) {
+    mobileFiltersOpen.value = false;
+  }
+};
+
+const closeStreamOverlay = () => {
+  isStreamOpen.value = false;
+};
+
+const openCameraDetails = (camera = selectedCamera.value) => {
   if (!camera) return;
 
   router.push({
@@ -267,6 +289,18 @@ watch(filteredCameras, (nextCameras) => {
   const stillVisible = nextCameras.some((camera) => camera.id === selectedCamera.value.id);
   if (!stillVisible) {
     selectedCamera.value = null;
+  }
+});
+
+watch(selectedCamera, (camera) => {
+  if (!camera) {
+    isStreamOpen.value = false;
+    streamUrl.value = '';
+    return;
+  }
+
+  if (isStreamOpen.value) {
+    streamUrl.value = buildStreamUrl(camera.id);
   }
 });
 </script>
@@ -370,10 +404,10 @@ watch(filteredCameras, (nextCameras) => {
           </button>
 
           <button
-            v-if="selectedCamera"
+            v-if="selectedCamera && !isStreamOpen"
             type="button"
             class="toolbar-btn toolbar-btn--ghost"
-            @click="openCameraView(selectedCamera)"
+            @click="openStreamOverlay(selectedCamera)"
           >
             View Stream
           </button>
@@ -387,12 +421,21 @@ watch(filteredCameras, (nextCameras) => {
           @select-camera="handleMarkerSelect"
         />
 
-        <div class="camera-info-wrap">
+        <transition name="stream-fade">
+          <StreamOverlay
+            v-if="isStreamOpen && selectedCamera"
+            :camera="selectedCamera"
+            :stream-url="streamUrl"
+            @close="closeStreamOverlay"
+          />
+        </transition>
+
+        <div v-if="!isStreamOpen" class="camera-info-wrap">
           <CameraInfoPanel
             class="camera-info-panel"
             :camera="selectedCamera"
-            @view-stream="openCameraView"
-            @details="openCameraView"
+            @view-stream="openStreamOverlay"
+            @details="openCameraDetails"
             @close="selectedCamera = null"
           />
         </div>
@@ -604,6 +647,16 @@ watch(filteredCameras, (nextCameras) => {
 
 .camera-info-panel {
   pointer-events: auto;
+}
+
+.stream-fade-enter-active,
+.stream-fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+
+.stream-fade-enter-from,
+.stream-fade-leave-to {
+  opacity: 0;
 }
 
 .mobile-drawer-backdrop {
