@@ -33,8 +33,8 @@ class PingWorker:
             
             # 2. Web is UP. Now check RTSP configuration.
             if not rtsp_url or str(rtsp_url).strip() == "":
-                # Old camera, no RTSP -> NO_RTSP
-                return camera_id, "no_rtsp"
+                # Old camera, no RTSP -> NO_SIGNAL (Merged as per request)
+                return camera_id, "no_signal"
             
             # 3. Has RTSP. Check Port 554 (RTSP Stream)
             # Default to 554, or parse from URL if strictly needed (but standard is 554)
