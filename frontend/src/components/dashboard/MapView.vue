@@ -110,25 +110,76 @@ const getStatusGlyph = (status) => {
 const createMarkerLabel = (status, isActive = false) => ({
   text: getStatusGlyph(status),
   color: '#ffffff',
-  fontSize: isActive ? '10px' : '9px',
+  fontSize: isActive ? '13px' : '12px',
   fontWeight: '700'
 });
 
 const createMarkerIcon = (status, options = {}) => {
   const { isActive = false, pulsing = false } = options;
   const baseColor = getStatusColor(status);
-  const baseScale = isActive ? 10 : 8.5;
-  const pulseBoost = pulsing ? 1.2 : 0;
+  const zoom = map.value?.getZoom?.() || 16;
+  const zoomBoost = zoom <= 13 ? 3.5 : zoom <= 15 ? 2.2 : zoom <= 17 ? 1 : 0;
+  const baseScale = isActive ? 14 : 12.5;
+  const pulseBoost = pulsing ? 1.6 : 0;
 
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    scale: baseScale + pulseBoost,
+    scale: baseScale + zoomBoost + pulseBoost,
     fillColor: baseColor,
     fillOpacity: 1,
     strokeColor: '#ffffff',
-    strokeWeight: isActive ? 2.8 : 2.2
+    strokeWeight: isActive ? 3.8 : 3
   };
 };
+
+const buildClusterStyle = (size, fillColor) => ({
+  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${fillColor}" fill-opacity="0.28" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="${fillColor}" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="none" stroke="#ffffff" stroke-width="2.8" />
+    </svg>`
+  )}`,
+  width: size,
+  height: size,
+  textColor: '#ffffff',
+  textSize: size >= 72 ? 16 : 14,
+  fontWeight: '700'
+});
+
+const clusterStyles = [
+  buildClusterStyle(54, '#0ea5e9'),
+  buildClusterStyle(66, '#0284c7'),
+  buildClusterStyle(78, '#0369a1')
+];
+
+const buildClusterRenderer = () => ({
+  render: ({ count, position }) => {
+    const size = count < 20 ? 54 : count < 60 ? 66 : 78;
+    const color = count < 20 ? '#0ea5e9' : count < 60 ? '#0284c7' : '#0369a1';
+    return new google.maps.Marker({
+      position,
+      zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+      icon: {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${color}" fill-opacity="0.3" />
+            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="${color}" />
+            <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 7}" fill="none" stroke="#ffffff" stroke-width="2.8" />
+          </svg>`
+        )}`,
+        scaledSize: new google.maps.Size(size, size),
+        anchor: new google.maps.Point(size / 2, size / 2)
+      },
+      label: {
+        text: String(count),
+        color: '#ffffff',
+        fontSize: size >= 72 ? '16px' : '14px',
+        fontWeight: '700'
+      }
+    });
+  }
+});
 
 const getClustererConstructor = () =>
   window.MarkerClusterer ||
@@ -279,14 +330,16 @@ const renderMarkers = (autoFit = true) => {
       if (window.markerClusterer?.MarkerClusterer && ClustererCtor === window.markerClusterer.MarkerClusterer) {
         markerCluster.value = new ClustererCtor({
           map: map.value,
-          markers: nextMarkers
+          markers: nextMarkers,
+          renderer: buildClusterRenderer()
         });
       } else {
         markerCluster.value = new ClustererCtor(map.value, nextMarkers, {
-          gridSize: 46,
+          gridSize: 30,
           maxZoom: 18,
           minimumClusterSize: 2,
-          zoomOnClick: true
+          zoomOnClick: true,
+          styles: clusterStyles
         });
 
         google.maps.event.addListener(markerCluster.value, 'clusterclick', (cluster) => {
