@@ -2150,21 +2150,46 @@ onUnmounted(() => {
   color: white;
 }
 
+/* Specific badge styles */
+.popup-status-badge.online {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.popup-status-badge.offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.popup-status-badge.blurry {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
 .popup-status-badge .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  border: 1px solid currentColor; /* Add border to make it pop */
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-.popup-status-badge.up .status-dot {
+.popup-status-badge.online .status-dot {
   background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
-.popup-status-badge.down .status-dot {
+.popup-status-badge.offline .status-dot {
   background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.popup-status-badge.blurry .status-dot {
+  background: #f97316;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
 }
 .popup-status-row {
   display: flex;
