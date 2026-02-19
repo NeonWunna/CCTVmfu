@@ -65,6 +65,16 @@ const fetchCameras = async () => {
     const response = await api.getCameras();
     cctvs.value = response.data.map(camera => {
       const coords = parseCoordinates(camera.coordinates);
+      // Map backend status to frontend status
+      let mappedStatus = 'online'; // Default
+      if (camera.status === 'down') {
+        mappedStatus = 'offline';
+      } else if (camera.status === 'up' && camera.image_status === 'blur') {
+        mappedStatus = 'blurry';
+      } else if (camera.status === 'up') {
+        mappedStatus = 'online';
+      }
+      
       return {
         ...camera,
         lat: coords.lat,
@@ -72,7 +82,8 @@ const fetchCameras = async () => {
         // Map backend snake_case to frontend camelCase
         ipAddress: camera.ip_address,
         lastUpdate: camera.last_update,
-        status: camera.status // online, offline, blurry, no_signal (already updated in backend)
+        status: mappedStatus,
+        imageStatus: camera.image_status
       };
     });
     
@@ -453,51 +464,6 @@ if (!infoWindow.value) {
   });
 
   markers.value.push(marker);
-
-  // Add pulsing animation for abnormal statuses
-  if (cctv.status !== "online") {
-    let isPulsing = true;
-    const intervalId = setInterval(() => {
-      if (marker.getMap()) { // Check if marker is still on map
-        const svgMarkerPulse = {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-              <defs>
-                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                  <feOffset dx="0" dy="2" result="offsetblur"/>
-                  <feComponentTransfer>
-                    <feFuncA type="linear" slope="0.3"/>
-                  </feComponentTransfer>
-                  <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <!-- Outer glow circle -->
-              <circle cx="24" cy="24" r="20" fill="${color}" opacity="0.2"/>
-              <!-- Main circle with pulsing opacity -->
-              <circle cx="24" cy="24" r="16" fill="${color}" opacity="${isPulsing ? '0.4' : '1'}" filter="url(#shadow)"/>
-              <!-- White border -->
-              <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2" opacity="${isPulsing ? '0.5' : '1'}"/>
-              <!-- Camera icon -->
-              <g transform="translate(24, 24)" opacity="${isPulsing ? '0.5' : '1'}">
-                <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" 
-                      fill="white" stroke="none"/>
-                <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
-              </g>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(48, 48),
-          anchor: new google.maps.Point(24, 24),
-        };
-        marker.setIcon(svgMarkerPulse);
-        isPulsing = !isPulsing;
-      }
-    }, 1000);
-    pulseIntervals.push(intervalId);
-  }
 };
 
 const loadGoogleMapsScript = () => {
