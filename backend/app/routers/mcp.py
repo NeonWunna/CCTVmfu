@@ -23,13 +23,13 @@ async def event_generator(session_id: str, queue: asyncio.Queue):
     """
     try:
         # เพิ่ม padding ให้ proxy flush ทันที
-        yield f": {' ' * 4096}\n\n"
+        yield f": {' ' * 8192}\n\n"
 
         endpoint_uri = f"/mcp/message?sessionId={session_id}"
         yield f"event: endpoint\ndata: {endpoint_uri}\n\n"
         
         # padding ก้อนสอง — บังคับ flush หลัง endpoint
-        yield f": {' ' * 4096}\n\n"
+        yield f": {' ' * 8192}\n\n"
 
         while True:
             try:
