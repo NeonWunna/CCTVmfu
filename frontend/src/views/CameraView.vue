@@ -62,12 +62,16 @@ const fetchCameraDetails = async () => {
     const { data } = await api.getCamera(cameraId);
       // Map backend status to frontend status
       let mappedStatus = 'online'; // Default
-      if (data.status === 'down') {
+      if (data.status === 'offline') {
         mappedStatus = 'offline';
-      } else if (data.status === 'up' && data.image_status === 'blur') {
+      } else if (data.status === 'no_signal') {
+        mappedStatus = 'no_signal';
+      } else if (data.status === 'no_rtsp') {
+        mappedStatus = 'no_rtsp';
+      } else if (data.status === 'online' && data.image_status === 'blur') {
         mappedStatus = 'blurry';
-      } else if (data.status === 'up') {
-        mappedStatus = 'online';
+      } else {
+        mappedStatus = data.status;
       }
 
       cameraData.value = {
@@ -266,7 +270,8 @@ onBeforeUnmount(() => {
                 {{ 
                   cameraData.status === 'offline' ? 'Offline' : 
                   (cameraData.status === 'blurry' ? 'Blurry' : 
-                  (cameraData.status === 'no_signal' ? 'No Signal' : 'Online')) 
+                  (cameraData.status === 'no_signal' ? 'No Signal' : 
+                  (cameraData.status === 'no_rtsp' ? 'No RTSP' : 'Online'))) 
                 }}
               </span>
             </div>
@@ -712,6 +717,11 @@ onBeforeUnmount(() => {
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.3);
 }
+.status-badge.no_rtsp {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.3);
+}
 
 .status-badge.online .status-dot {
   background: #10b981;
@@ -730,6 +740,10 @@ onBeforeUnmount(() => {
   background: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   animation: pulse-blue 2s ease-in-out infinite;
+}
+.status-badge.no_rtsp .status-dot {
+  background: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
 }
 
 /* Info rows */

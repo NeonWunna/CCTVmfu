@@ -66,13 +66,20 @@ const fetchCameras = async () => {
     cctvs.value = response.data.map(camera => {
       const coords = parseCoordinates(camera.coordinates);
       // Map backend status to frontend status
+      // Backend Statuses: online, offline, no_signal, no_rtsp
       let mappedStatus = 'online'; // Default
-      if (camera.status === 'down') {
+
+      if (camera.status === 'offline') {
         mappedStatus = 'offline';
-      } else if (camera.status === 'up' && camera.image_status === 'blur') {
+      } else if (camera.status === 'no_signal') {
+        mappedStatus = 'no_signal';
+      } else if (camera.status === 'no_rtsp') {
+        mappedStatus = 'no_rtsp';
+      } else if (camera.status === 'online' && camera.image_status === 'blur') {
         mappedStatus = 'blurry';
-      } else if (camera.status === 'up') {
-        mappedStatus = 'online';
+      } else {
+        // Default to what the backend says if it's online or anything else unknown
+        mappedStatus = camera.status;
       }
       
       return {
@@ -108,6 +115,7 @@ const onlineCount = computed(() => cctvs.value.filter(c => c.status === "online"
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "offline").length);
 const blurCount = computed(() => cctvs.value.filter(c => c.status === "blurry").length);
 const noSignalCount = computed(() => cctvs.value.filter(c => c.status === "no_signal").length);
+const noRtspCount = computed(() => cctvs.value.filter(c => c.status === "no_rtsp").length);
 const totalCount = computed(() => cctvs.value.length);
 
 const filteredCameras = computed(() => {
@@ -135,6 +143,7 @@ const filterOptions = [
   { value: "online", label: "Online Only", icon: "online" },
   { value: "blurry", label: "Blurry Only", icon: "blur" },
   { value: "no_signal", label: "No Signal", icon: "no_signal" },
+  { value: "no_rtsp", label: "No RTSP", icon: "no_rtsp" },
   { value: "offline", label: "Offline Only", icon: "offline" }
 ];
 
@@ -305,9 +314,12 @@ const addMarker = (cctv) => {
   } else if (cctv.status === "blurry") {
     color = "#f97316"; // Orange (Blurry)
     statusText = "Blurry";
-  } else if (cctv.status === "no_signal") {
-    color = "#3b82f6"; // Blue (No Signal)
+  } else if (cctv.status === 'no_signal') {
+    color = "#3b82f6"; // Blue
     statusText = "No Signal";
+  } else if (cctv.status === 'no_rtsp') {
+    color = "#06b6d4"; // Cyan
+    statusText = "No RTSP";
   }
 
   // Create professional custom SVG marker with camera icon
@@ -803,16 +815,30 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="stat-card stat-no_signal">
-          <div class="stat-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 011.414 0l4.242 4.242a1 1 0 01-1.414 1.414L15.536 12.7a1 1 0 010-1.414z"></path>            </svg>
+        <div class="stat-card" style="border-bottom: 2px solid #3b82f6;">
+            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">No Signal</div>
+              <div class="stat-value">{{ noSignalCount }}</div>
+            </div>
           </div>
-          <div class="stat-info">
-            <div class="stat-label">NO SIGNAL</div>
-            <div class="stat-value">{{ noSignalCount }}</div>
+
+          <div class="stat-card" style="border-bottom: 2px solid #06b6d4;">
+            <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">No RTSP</div>
+              <div class="stat-value">{{ noRtspCount }}</div>
+            </div>
           </div>
-        </div>
 
         <div class="stat-card stat-offline">
           <div class="stat-icon">
@@ -2169,6 +2195,18 @@ onUnmounted(() => {
   border-color: rgba(249, 115, 22, 0.3);
 }
 
+.popup-status-badge.no_signal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.popup-status-badge.no_rtsp {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
 .popup-status-badge .status-dot {
   width: 8px;
   height: 8px;
@@ -2190,6 +2228,16 @@ onUnmounted(() => {
 .popup-status-badge.blurry .status-dot {
   background: #f97316;
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+
+.popup-status-badge.no_signal .status-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.popup-status-badge.no_rtsp .status-dot {
+  background: #06b6d4;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
 }
 .popup-status-row {
   display: flex;

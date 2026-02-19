@@ -60,8 +60,8 @@ class BlurWorker:
         
         db = SessionLocal()
         try:
-            # Filter for cameras that are UP
-            cameras = db.query(models.Camera).filter(models.Camera.status == "up").all()
+            # Filter for cameras that are ONLINE (formerly UP)
+            cameras = db.query(models.Camera).filter(models.Camera.status == "online").all()
             
             updates_count = 0
             

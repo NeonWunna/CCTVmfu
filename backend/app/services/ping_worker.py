@@ -23,32 +23,29 @@ class PingWorker:
         Returns (camera_id, is_up)
         """
         async with self.semaphore:
-            # Determine port: 554 if RTSP is present, else default (80)
-            port = self.default_port
-            if rtsp_url:
-                # Naive check for port in URL
-                # rtsp://user:pass@ip:port/path
-                try:
-                    # Very basic parsing, can be improved
-                    if ":554" in rtsp_url:
-                        port = 554
-                except:
-                    pass
+            # Granular Status Logic
+            # 1. Check Port 80 (Management/Web Interface)
+            is_web_up = await check_port_async(ip_address, 80, timeout=1.0)
             
-            # Prioritize 554 for CCTV if we suspect it's a stream
-            # But the requirement said 554 or 80.
-            # Let's try 554 first if rtsp, else 80.
-            # Actually, let's keep it simple: try 80, if fail try 554? 
-            # Or just strictly 80 for web interface availability?
-            # The prompt said "Check port: 554 (RTSP) OR 80". 
-            # Let's try 80 first (management), then 554 (stream). 
-            # If either is open, it's UP.
+            if not is_web_up:
+                # If web is down, we consider it OFFLINE immediately
+                return camera_id, "offline"
             
-            is_up = await check_port_async(ip_address, 80, timeout=1.0)
-            if not is_up:
-                is_up = await check_port_async(ip_address, 554, timeout=1.0)
+            # 2. Web is UP. Now check RTSP configuration.
+            if not rtsp_url or str(rtsp_url).strip() == "":
+                # Old camera, no RTSP -> NO_RTSP
+                return camera_id, "no_rtsp"
+            
+            # 3. Has RTSP. Check Port 554 (RTSP Stream)
+            # Default to 554, or parse from URL if strictly needed (but standard is 554)
+            is_rtsp_up = await check_port_async(ip_address, 554, timeout=1.0)
+            
+            if not is_rtsp_up:
+                # Web UP but RTSP DOWN -> NO_SIGNAL
+                return camera_id, "no_signal"
                 
-            return camera_id, is_up
+            # 4. Web UP + RTSP UP -> ONLINE
+            return camera_id, "online"
 
     async def run_once(self):
         """
@@ -79,8 +76,8 @@ class PingWorker:
             # Updating one by one in a single transaction might be safer for concurrency 
             # or just simple enough.
             
-            for cam_id, is_up in results:
-                new_status = "up" if is_up else "down"
+            for cam_id, new_status in results:
+                # new_status is now the string status directly
                 
                 # Find the camera object in our current session list
                 # optimization: map id to camera object

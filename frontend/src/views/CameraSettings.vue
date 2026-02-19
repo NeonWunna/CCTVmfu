@@ -50,7 +50,7 @@ const newCamera = ref({
   longitude: "",
   brand: "",
   version: "",
-  status: "up"
+  status: "offline"
 });
 
 const cameras = ref([]);
@@ -62,12 +62,16 @@ const fetchCameras = async () => {
       cameras.value = response.data.map(camera => {
         // Map backend status to frontend status
         let mappedStatus = 'online'; // Default
-        if (camera.status === 'down') {
+        if (camera.status === 'offline') {
           mappedStatus = 'offline';
-        } else if (camera.status === 'up' && camera.image_status === 'blur') {
+        } else if (camera.status === 'no_signal') {
+          mappedStatus = 'no_signal';
+        } else if (camera.status === 'no_rtsp') {
+          mappedStatus = 'no_rtsp';
+        } else if (camera.status === 'online' && camera.image_status === 'blur') {
           mappedStatus = 'blurry';
-        } else if (camera.status === 'up') {
-          mappedStatus = 'online';
+        } else {
+          mappedStatus = camera.status;
         }
         
         return {
@@ -129,6 +133,8 @@ const userInitials = computed(() =>
 
 const onlineCount = computed(() => cameras.value.filter(c => c.status === "online" || c.status === "blurry").length);
 const offlineCount = computed(() => cameras.value.filter(c => c.status === "offline").length);
+const noSignalCount = computed(() => cameras.value.filter(c => c.status === "no_signal").length);
+const noRtspCount = computed(() => cameras.value.filter(c => c.status === "no_rtsp").length);
 const totalCount = computed(() => cameras.value.length);
 
 const filteredCameras = computed(() => {
@@ -149,6 +155,10 @@ const filteredCameras = computed(() => {
     filtered = filtered.filter(c => c.status === "online" || c.status === "blurry");
   } else if (selectedFilter.value === "offline") {
     filtered = filtered.filter(c => c.status === "offline");
+  } else if (selectedFilter.value === "no_signal") {
+    filtered = filtered.filter(c => c.status === "no_signal");
+  } else if (selectedFilter.value === "no_rtsp") {
+    filtered = filtered.filter(c => c.status === "no_rtsp");
   }
 
   return filtered.sort((a, b) => {
@@ -162,6 +172,8 @@ const filteredCameras = computed(() => {
 const filterOptions = [
   { value: "all", label: "All Cameras", icon: "all" },
   { value: "online", label: "Online Only", icon: "online" },
+  { value: "no_signal", label: "No Signal", icon: "no_signal" },
+  { value: "no_rtsp", label: "No RTSP", icon: "no_rtsp" },
   { value: "offline", label: "Offline Only", icon: "offline" }
 ];
 
@@ -331,7 +343,7 @@ const EMPTY_CAMERA = {
   longitude: "",
   brand: "",
   version: "",
-  status: "up"
+  status: "offline"
 };
 
 const resetForm = () => {
@@ -563,6 +575,31 @@ const handleSearch = () => {
                 <div class="stat-value">{{ offlineCount }}</div>
               </div>
             </div>
+
+            <div class="stat-card stat-no_signal" style="border-bottom: 2px solid #3b82f6;">
+              <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">NO SIGNAL</div>
+                <div class="stat-value">{{ noSignalCount }}</div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-no_rtsp" style="border-bottom: 2px solid #06b6d4;">
+              <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12"></path>
+                 </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">NO RTSP</div>
+                <div class="stat-value">{{ noRtspCount }}</div>
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -618,6 +655,13 @@ const handleSearch = () => {
                         </svg>
                         <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <svg v-else-if="option.icon === 'no_signal'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                        </svg>
+                        <svg v-else-if="option.icon === 'no_rtsp'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12"></path>
                         </svg>
                         <span>{{ option.label }}</span>
                         <svg v-if="selectedFilter === option.value" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -678,7 +722,9 @@ const handleSearch = () => {
                       <span class="status-dot"></span>
                       {{ 
                         camera.status === 'offline' ? 'Offline' : 
-                        (camera.status === 'blurry' ? 'Blurry' : 'Online') 
+                        (camera.status === 'blurry' ? 'Blurry' : 
+                        (camera.status === 'no_signal' ? 'No Signal' : 
+                        (camera.status === 'no_rtsp' ? 'No RTSP' : 'Online'))) 
                       }}
                     </span>
                   </td>
@@ -1565,6 +1611,16 @@ const handleSearch = () => {
   color: #f97316;
   border-color: rgba(249, 115, 22, 0.3);
 }
+.status-badge.no_signal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.status-badge.no_rtsp {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.3);
+}
 .status-dot {
   width: 8px;
   height: 8px;
@@ -1583,6 +1639,24 @@ const handleSearch = () => {
   background: #f97316;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
   animation: pulse-dot 2s ease-in-out infinite;
+}
+.status-badge.no_signal .status-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+.status-badge.no_rtsp .status-dot {
+  background: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+  }
 }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
