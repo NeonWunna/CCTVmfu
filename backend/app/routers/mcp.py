@@ -50,7 +50,12 @@ async def sse_endpoint(request: Request):
     
     return StreamingResponse(
         event_generator(session_id, queue),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
     )
 
 @router.post("/message")
