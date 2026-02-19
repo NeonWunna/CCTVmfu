@@ -35,7 +35,7 @@ const cameraData = ref({
   name: '',
   location: '',
   ipAddress: '',
-  status: 'up',
+  status: 'online',
   imageStatus: 'normal',
   coordinates: '',
   brand: '',
@@ -251,9 +251,13 @@ onBeforeUnmount(() => {
                 <div class="scan-line"></div>
               </div>
               <h3>{{ cameraData.name }}</h3>
-              <span class="status-badge" :class="cameraData.status === 'down' ? 'down' : (cameraData.imageStatus === 'blur' ? 'blur' : 'up')">
+              <span class="status-badge" :class="cameraData.status">
                 <span class="status-dot"></span>
-                {{ cameraData.status === 'down' ? 'Offline' : (cameraData.imageStatus === 'blur' ? 'Blurry' : 'Online') }}
+                {{ 
+                  cameraData.status === 'offline' ? 'Offline' : 
+                  (cameraData.status === 'blurry' ? 'Blurry' : 
+                  (cameraData.status === 'no_signal' ? 'No Signal' : 'Online')) 
+                }}
               </span>
             </div>
 
@@ -663,42 +667,59 @@ onBeforeUnmount(() => {
   font-weight: 600;
   border: 1px solid;
 }
-.status-badge.up {
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.status-badge.online {
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
   border-color: rgba(16, 185, 129, 0.3);
 }
-.status-badge.down {
+.status-badge.offline {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
 }
-.status-badge.blur {
+.status-badge.blurry {
   background: rgba(249, 115, 22, 0.15);
   color: #f97316;
   border-color: rgba(249, 115, 22, 0.3);
 }
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.status-badge.no_signal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
 }
-.status-badge.up .status-dot {
+
+.status-badge.online .status-dot {
   background: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
   animation: pulse-dot 2s ease-in-out infinite;
 }
-.status-badge.down .status-dot {
+.status-badge.offline .status-dot {
   background: #ef4444;
 }
-.status-badge.blur .status-dot {
+.status-badge.blurry .status-dot {
   background: #f97316;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
   animation: pulse-dot 2s ease-in-out infinite;
 }
-@keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
-  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.1); }
+.status-badge.no_signal .status-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  animation: pulse-blue 2s ease-in-out infinite;
 }
 
 /* Info rows */

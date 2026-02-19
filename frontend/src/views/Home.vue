@@ -72,7 +72,7 @@ const fetchCameras = async () => {
         // Map backend snake_case to frontend camelCase
         ipAddress: camera.ip_address,
         lastUpdate: camera.last_update,
-        imageStatus: camera.image_status // 'normal' or 'blur'
+        status: camera.status // online, offline, blurry, no_signal (already updated in backend)
       };
     });
     
@@ -93,9 +93,10 @@ const pulseIntervals = [];
 const markers = shallowRef([]); // Array to store Google Maps markers
 const infoWindow = shallowRef(null); // Single InfoWindow instance
 
-const onlineCount = computed(() => cctvs.value.filter(c => c.status === "up" && c.imageStatus !== 'blur').length);
-const offlineCount = computed(() => cctvs.value.filter(c => c.status === "down").length);
-const blurCount = computed(() => cctvs.value.filter(c => c.status === "up" && c.imageStatus === 'blur').length);
+const onlineCount = computed(() => cctvs.value.filter(c => c.status === "online").length);
+const offlineCount = computed(() => cctvs.value.filter(c => c.status === "offline").length);
+const blurCount = computed(() => cctvs.value.filter(c => c.status === "blurry").length);
+const noSignalCount = computed(() => cctvs.value.filter(c => c.status === "no_signal").length);
 const totalCount = computed(() => cctvs.value.length);
 
 const filteredCameras = computed(() => {
@@ -111,12 +112,8 @@ const filteredCameras = computed(() => {
   }
 
   // Apply status filter
-  if (selectedFilter.value === "online") {
-    filtered = filtered.filter(c => c.status === "up" && c.imageStatus !== 'blur');
-  } else if (selectedFilter.value === "offline") {
-    filtered = filtered.filter(c => c.status === "down");
-  } else if (selectedFilter.value === "blur") {
-    filtered = filtered.filter(c => c.status === "up" && c.imageStatus === 'blur');
+  if (selectedFilter.value !== "all") {
+    filtered = filtered.filter(c => c.status === selectedFilter.value);
   }
 
   return filtered;
@@ -125,7 +122,8 @@ const filteredCameras = computed(() => {
 const filterOptions = [
   { value: "all", label: "All Cameras", icon: "all" },
   { value: "online", label: "Online Only", icon: "online" },
-  { value: "blur", label: "Blurry Only", icon: "blur" },
+  { value: "blurry", label: "Blurry Only", icon: "blur" },
+  { value: "no_signal", label: "No Signal", icon: "no_signal" },
   { value: "offline", label: "Offline Only", icon: "offline" }
 ];
 
@@ -290,12 +288,15 @@ const addMarker = (cctv) => {
   let color = "#10b981"; // Green (Online)
   let statusText = "Online";
   
-  if (cctv.status === "down") {
+  if (cctv.status === "offline") {
     color = "#ef4444"; // Red (Offline)
     statusText = "Offline";
-  } else if (cctv.imageStatus === "blur") {
+  } else if (cctv.status === "blurry") {
     color = "#f97316"; // Orange (Blurry)
     statusText = "Blurry";
+  } else if (cctv.status === "no_signal") {
+    color = "#3b82f6"; // Blue (No Signal)
+    statusText = "No Signal";
   }
 
   // Create professional custom SVG marker with camera icon
@@ -362,7 +363,7 @@ const contentString = `
   </button>
 </div>
 <div class="popup-status-row">
-  <div class="popup-status-badge ${cctv.status === 'down' ? 'down' : (cctv.imageStatus === 'blur' ? 'blur' : 'up')}">
+  <div class="popup-status-badge ${cctv.status}">
     <span class="status-dot"></span>
     ${statusText}
   </div>
@@ -453,8 +454,8 @@ if (!infoWindow.value) {
 
   markers.value.push(marker);
 
-  // Add pulsing animation for offline cameras
-  if (cctv.status === "down") {
+  // Add pulsing animation for abnormal statuses
+  if (cctv.status !== "online") {
     let isPulsing = true;
     const intervalId = setInterval(() => {
       if (marker.getMap()) { // Check if marker is still on map
@@ -742,6 +743,14 @@ onUnmounted(() => {
             <span>Online</span>
           </div>
           <div class="legend-item">
+            <span class="legend-dot no_signal"></span>
+            <span>No Signal</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot blur"></span>
+            <span>Blurry</span>
+          </div>
+          <div class="legend-item">
             <span class="legend-dot down"></span>
             <span>Offline</span>
           </div>
@@ -858,6 +867,17 @@ onUnmounted(() => {
           <div class="stat-info">
             <div class="stat-label">BLURRY</div>
             <div class="stat-value">{{ blurCount }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card stat-no_signal">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 011.414 0l4.242 4.242a1 1 0 01-1.414 1.414L15.536 12.7a1 1 0 010-1.414z"></path>            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-label">NO SIGNAL</div>
+            <div class="stat-value">{{ noSignalCount }}</div>
           </div>
         </div>
 
@@ -1299,6 +1319,33 @@ onUnmounted(() => {
   }
 }
 
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.legend-dot.blur {
+  background-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.legend-dot.no_signal {
+  background-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+
+.status-badge.no_signal .status-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+
 /* Stats Cards - Dark Theme */
 .stats {
   display: flex;
@@ -1356,6 +1403,11 @@ onUnmounted(() => {
 .stat-offline .stat-icon {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
   box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+}
+
+.stat-no_signal .stat-icon {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .stat-info {
