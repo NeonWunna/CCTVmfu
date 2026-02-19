@@ -298,69 +298,129 @@ const clearSearch = () => {
   }
 };
 
-const addMarker = (cctv) => {
-  if (!map.value) return;
-  
-  let color = "#10b981"; // Green (Online)
-  let statusText = "Online";
-  
-  if (cctv.status === "offline") {
-    color = "#ef4444"; // Red (Offline)
-    statusText = "Offline";
-  } else if (cctv.status === "blurry") {
-    color = "#f97316"; // Orange (Blurry)
-    statusText = "Blurry";
-  } else if (cctv.status === 'no_signal') {
-    color = "#3b82f6"; // Blue
-    statusText = "No Signal";
-  }
-
-  // Create professional custom SVG marker with camera icon
-  const svgMarker = {
+// Cached marker icons to prevent re-generation for every camera
+const markerIcons = {
+  online: {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
         <defs>
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
             <feOffset dx="0" dy="2" result="offsetblur"/>
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.3"/>
-            </feComponentTransfer>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
+            <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
-        <!-- Outer glow circle -->
-        <circle cx="24" cy="24" r="20" fill="${color}" opacity="0.2"/>
-        <!-- Main circle -->
-        <circle cx="24" cy="24" r="16" fill="${color}" filter="url(#shadow)"/>
-        <!-- White border -->
+        <circle cx="24" cy="24" r="20" fill="#10b981" opacity="0.2"/>
+        <circle cx="24" cy="24" r="16" fill="#10b981" filter="url(#shadow)"/>
         <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
-        <!-- Camera icon -->
         <g transform="translate(24, 24)">
-          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" 
-                fill="white" stroke="none"/>
+          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" fill="white" stroke="none"/>
           <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
         </g>
-      </svg>
-    `),
+      </svg>`),
     scaledSize: new google.maps.Size(48, 48),
     anchor: new google.maps.Point(24, 24),
-  };
+  },
+  offline: {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="24" cy="24" r="20" fill="#ef4444" opacity="0.2"/>
+        <circle cx="24" cy="24" r="16" fill="#ef4444" filter="url(#shadow)"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
+        <g transform="translate(24, 24)">
+          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" fill="white" stroke="none"/>
+          <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
+        </g>
+      </svg>`),
+    scaledSize: new google.maps.Size(48, 48),
+    anchor: new google.maps.Point(24, 24),
+  },
+  blurry: {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="24" cy="24" r="20" fill="#f97316" opacity="0.2"/>
+        <circle cx="24" cy="24" r="16" fill="#f97316" filter="url(#shadow)"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
+        <g transform="translate(24, 24)">
+          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" fill="white" stroke="none"/>
+          <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
+        </g>
+      </svg>`),
+    scaledSize: new google.maps.Size(48, 48),
+    anchor: new google.maps.Point(24, 24),
+  },
+  no_signal: {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="24" cy="24" r="20" fill="#3b82f6" opacity="0.2"/>
+        <circle cx="24" cy="24" r="16" fill="#3b82f6" filter="url(#shadow)"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="white" stroke-width="2"/>
+        <g transform="translate(24, 24)">
+          <path d="M-6,-4 L-6,4 L6,4 L6,-4 Z M6,-1 L8,-2 L10,-1 L10,3 L8,4 L6,3 Z" fill="white" stroke="none"/>
+          <circle cx="-1" cy="0" r="2.5" fill="none" stroke="white" stroke-width="1"/>
+        </g>
+      </svg>`),
+    scaledSize: new google.maps.Size(48, 48),
+    anchor: new google.maps.Point(24, 24),
+  }
+};
+
+const addMarker = (cctv) => {
+  if (!map.value) return;
+  
+  let markerType = 'online';
+  let statusText = "Online";
+  
+  if (cctv.status === "offline") {
+    markerType = 'offline';
+    statusText = "Offline";
+  } else if (cctv.status === "blurry") {
+    markerType = 'blurry';
+    statusText = "Blurry";
+  } else if (cctv.status === 'no_signal') {
+    markerType = 'no_signal';
+    statusText = "No Signal";
+  }
+
+  // Use cached marker icon
+  const icon = markerIcons[markerType] || markerIcons.online;
 
   const marker = new google.maps.Marker({
     position: { lat: cctv.lat, lng: cctv.lng },
     map: map.value,
     title: cctv.name,
-    icon: svgMarker,
-    animation: google.maps.Animation.DROP,
-    optimized: false, // Required for SVG to render properly
+    icon: icon,
+    // Remove animation to speed up rendering of many markers
+     optimized: true, // Re-enable optimization for standard rendering (though SVG sometimes needs false, standard use of `url` usually works)
   });
 
-  // store original icon for animations
-  marker.originalIcon = svgMarker;
+  // store original icon
+  marker.originalIcon = icon;
 
   // Create InfoWindow content - PROFESSIONAL VERSION
 const contentString = `
