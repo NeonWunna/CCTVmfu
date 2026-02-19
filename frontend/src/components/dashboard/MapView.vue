@@ -28,6 +28,7 @@ const mapError = ref('');
 const markerLookup = new Map();
 let resizeObserver = null;
 let resizeDebounceId = null;
+let authFailureHandler = null;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
 const GOOGLE_MAPS_KEY = 'AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM';
@@ -89,32 +90,19 @@ const getStatusLabel = (status) => {
 const getStatusColor = (status) => {
   if (status === 'offline') return '#ef4444';
   if (status === 'no_signal') return '#3b82f6';
-  if (status === 'blurry') return '#f59e0b';
+  if (status === 'blurry') return '#a855f7';
   return '#22c55e';
 };
 
 const createMarkerIcon = (status, isActive = false) => {
   const baseColor = getStatusColor(status);
-  const canvasSize = 28;
-  const dotRadius = isActive ? 7 : 6;
-  const ringRadius = isActive ? 10 : 9;
-
   return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 28 28">
-        <defs>
-          <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="1.25" result="blurred" />
-          </filter>
-        </defs>
-        <circle cx="14" cy="14" r="${ringRadius}" fill="${baseColor}" fill-opacity="${isActive ? '0.34' : '0.2'}" />
-        <circle cx="14" cy="14" r="${dotRadius + 1.2}" fill="${baseColor}" fill-opacity="0.3" filter="url(#glow)" />
-        <circle cx="14" cy="14" r="${dotRadius}" fill="${baseColor}" stroke="#ffffff" stroke-width="2" />
-        <rect x="10.4" y="13.2" width="7.2" height="1.7" rx="0.85" fill="#ffffff" />
-      </svg>`
-    )}`,
-    scaledSize: new google.maps.Size(canvasSize, canvasSize),
-    anchor: new google.maps.Point(canvasSize / 2, canvasSize / 2)
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: isActive ? 8 : 7,
+    fillColor: baseColor,
+    fillOpacity: 1,
+    strokeColor: '#ffffff',
+    strokeWeight: 2
   };
 };
 
@@ -202,6 +190,13 @@ const scheduleMapResize = () => {
   }, 90);
 };
 
+const getMarkerLabel = () => ({
+  text: '\u2212',
+  color: '#ffffff',
+  fontSize: '12px',
+  fontWeight: '700'
+});
+
 const fitToVisibleMarkers = () => {
   if (!map.value || markers.value.length === 0) return;
 
@@ -248,6 +243,7 @@ const renderMarkers = (autoFit = true) => {
       position: { lat: camera.lat, lng: camera.lng },
       title: `${camera.name} - ${getStatusLabel(camera.status)}`,
       icon: createMarkerIcon(camera.status, camera.id === props.activeCameraId),
+      label: getMarkerLabel(),
       map: window.MarkerClusterer ? null : map.value
     });
 
@@ -341,7 +337,7 @@ const initMap = async () => {
   try {
     await ensureMapLibraries();
 
-    if (!mapContainer.value) return;
+    if (!mapContainer.value || !(window.google && window.google.maps)) return;
 
     map.value = new google.maps.Map(mapContainer.value, {
       center: DEFAULT_CENTER,
@@ -354,6 +350,7 @@ const initMap = async () => {
       clickableIcons: false
     });
 
+    scheduleMapResize();
     renderMarkers(true);
   } catch (error) {
     console.error('Map initialization failed:', error);
@@ -364,6 +361,12 @@ const initMap = async () => {
 };
 
 onMounted(() => {
+  authFailureHandler = () => {
+    mapError.value = 'Google Maps authentication failed. Please check API key and allowed origins.';
+    isInitializing.value = false;
+  };
+  window.gm_authFailure = authFailureHandler;
+
   initMap();
 
   window.addEventListener('resize', scheduleMapResize);
@@ -391,6 +394,11 @@ onBeforeUnmount(() => {
     clearTimeout(resizeDebounceId);
     resizeDebounceId = null;
   }
+
+  if (window.gm_authFailure === authFailureHandler) {
+    delete window.gm_authFailure;
+  }
+  authFailureHandler = null;
 
   if (map.value) {
     google.maps.event.clearInstanceListeners(map.value);
