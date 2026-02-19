@@ -17,7 +17,8 @@ const emit = defineEmits(['close']);
 const streamFrame = ref(null);
 const streamFailed = ref(false);
 const isFullscreen = ref(false);
-const now = ref(new Date());
+const streamNonce = ref(Date.now());
+const fallbackTimestamp = ref(new Date().toLocaleString());
 
 const getStatusLabel = (status) => {
   if (status === 'offline') return 'Offline';
@@ -29,7 +30,12 @@ const getStatusLabel = (status) => {
 const statusLabel = computed(() => getStatusLabel(props.camera?.status));
 const statusClass = computed(() => props.camera?.status || 'online');
 const hasStreamUrl = computed(() => Boolean(props.streamUrl));
-const timestampText = computed(() => props.camera?.lastUpdate || now.value.toLocaleString());
+const resolvedStreamUrl = computed(() => {
+  if (!props.streamUrl) return '';
+  const separator = props.streamUrl.includes('?') ? '&' : '?';
+  return `${props.streamUrl}${separator}ts=${streamNonce.value}`;
+});
+const timestampText = computed(() => props.camera?.lastUpdate || fallbackTimestamp.value);
 
 const handleImageError = () => {
   streamFailed.value = true;
@@ -61,10 +67,28 @@ const toggleFullscreen = () => {
   enterFullscreen(streamFrame.value);
 };
 
+let streamRefreshTimer = null;
+
+const startStreamRefreshLoop = () => {
+  if (streamRefreshTimer) {
+    clearInterval(streamRefreshTimer);
+    streamRefreshTimer = null;
+  }
+
+  if (!props.streamUrl) return;
+
+  // Reconnect periodically to prevent MJPEG stream latency buildup.
+  streamRefreshTimer = setInterval(() => {
+    streamNonce.value = Date.now();
+  }, 20000);
+};
+
 watch(
   () => props.streamUrl,
   () => {
     streamFailed.value = false;
+    streamNonce.value = Date.now();
+    startStreamRefreshLoop();
   },
   { immediate: true }
 );
@@ -73,24 +97,20 @@ watch(
   () => props.camera?.id,
   () => {
     streamFailed.value = false;
+    fallbackTimestamp.value = new Date().toLocaleString();
   }
 );
 
-let clockTimer = null;
-
 onMounted(() => {
-  clockTimer = setInterval(() => {
-    now.value = new Date();
-  }, 1000);
-
+  startStreamRefreshLoop();
   document.addEventListener('fullscreenchange', syncFullscreenState);
   document.addEventListener('webkitfullscreenchange', syncFullscreenState);
 });
 
 onBeforeUnmount(() => {
-  if (clockTimer) {
-    clearInterval(clockTimer);
-    clockTimer = null;
+  if (streamRefreshTimer) {
+    clearInterval(streamRefreshTimer);
+    streamRefreshTimer = null;
   }
   document.removeEventListener('fullscreenchange', syncFullscreenState);
   document.removeEventListener('webkitfullscreenchange', syncFullscreenState);
@@ -136,9 +156,13 @@ onBeforeUnmount(() => {
 
       <img
         v-else
-        :src="streamUrl"
+        :src="resolvedStreamUrl"
         class="stream-image"
         alt="Live camera feed"
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+        draggable="false"
         @error="handleImageError"
         @load="handleImageLoad"
       />
@@ -294,16 +318,21 @@ onBeforeUnmount(() => {
   position: relative;
   flex: 1;
   min-height: 0;
+  display: grid;
+  place-items: center;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(2, 6, 23, 0.9);
+  background: #000000;
+  contain: paint;
 }
 
 .stream-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: #000000;
 }
 
 .stream-placeholder {

@@ -14,6 +14,10 @@ const props = defineProps({
   activeCameraId: {
     type: [String, Number],
     default: null
+  },
+  suspendEffects: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -31,6 +35,7 @@ let resizeObserver = null;
 let resizeDebounceId = null;
 let authFailureHandler = null;
 let markerPulseIntervalId = null;
+let pendingMarkerRender = false;
 let pulseFrame = false;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
@@ -248,11 +253,15 @@ const getClustererConstructor = () =>
   window.markerClusterer?.MarkerClusterer ||
   null;
 
-const clearMarkers = () => {
+const stopMarkerPulseAnimation = () => {
   if (markerPulseIntervalId) {
     clearInterval(markerPulseIntervalId);
     markerPulseIntervalId = null;
   }
+};
+
+const clearMarkers = () => {
+  stopMarkerPulseAnimation();
 
   if (markerCluster.value) {
     if (typeof markerCluster.value.clearMarkers === 'function') {
@@ -293,9 +302,15 @@ const scheduleMapResize = () => {
 };
 
 const startMarkerPulseAnimation = () => {
-  if (markerPulseIntervalId) {
-    clearInterval(markerPulseIntervalId);
-    markerPulseIntervalId = null;
+  stopMarkerPulseAnimation();
+
+  if (props.suspendEffects) {
+    pulseFrame = false;
+    markers.value.forEach((marker) => {
+      const isActive = marker.cameraId === props.activeCameraId;
+      marker.setIcon(createMarkerIcon(marker.cameraStatus, { isActive, pulsing: false }));
+    });
+    return;
   }
 
   const hasPulsingMarker = markers.value.some((marker) => shouldPulseStatus(marker.cameraStatus));
@@ -336,7 +351,11 @@ const fitToVisibleMarkers = () => {
 const highlightActiveMarker = (cameraId) => {
   markers.value.forEach((marker) => {
     const isActive = marker.cameraId === cameraId;
-    const pulsing = !isActive && shouldPulseStatus(marker.cameraStatus) && pulseFrame;
+    const pulsing =
+      !props.suspendEffects &&
+      !isActive &&
+      shouldPulseStatus(marker.cameraStatus) &&
+      pulseFrame;
 
     marker.setIcon(createMarkerIcon(marker.cameraStatus, { isActive, pulsing }));
     marker.setLabel(createMarkerLabel(marker.cameraStatus, isActive));
@@ -362,7 +381,11 @@ const renderMarkers = (autoFit = true) => {
 
   const nextMarkers = visibleCameras.map((camera) => {
     const isActive = camera.id === props.activeCameraId;
-    const pulsing = !isActive && shouldPulseStatus(camera.status) && pulseFrame;
+    const pulsing =
+      !props.suspendEffects &&
+      !isActive &&
+      shouldPulseStatus(camera.status) &&
+      pulseFrame;
 
     const marker = new google.maps.Marker({
       position: { lat: camera.lat, lng: camera.lng },
@@ -522,10 +545,7 @@ onBeforeUnmount(() => {
     resizeDebounceId = null;
   }
 
-  if (markerPulseIntervalId) {
-    clearInterval(markerPulseIntervalId);
-    markerPulseIntervalId = null;
-  }
+  stopMarkerPulseAnimation();
 
   if (window.gm_authFailure === authFailureHandler) {
     delete window.gm_authFailure;
@@ -543,10 +563,36 @@ watch(
   () => props.cameras,
   () => {
     if (map.value) {
-      renderMarkers(true);
+      if (props.suspendEffects) {
+        pendingMarkerRender = true;
+        return;
+      }
+      renderMarkers(false);
     }
   },
   { deep: true }
+);
+
+watch(
+  () => props.suspendEffects,
+  (isSuspended) => {
+    if (!map.value) return;
+
+    if (isSuspended) {
+      pulseFrame = false;
+      stopMarkerPulseAnimation();
+      highlightActiveMarker(props.activeCameraId);
+      return;
+    }
+
+    if (pendingMarkerRender) {
+      pendingMarkerRender = false;
+      renderMarkers(false);
+      return;
+    }
+
+    startMarkerPulseAnimation();
+  }
 );
 
 watch(

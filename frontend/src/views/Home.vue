@@ -418,6 +418,7 @@ watch(selectedCamera, (camera) => {
           :cameras="filteredCameras"
           :loading="loadingCameras"
           :active-camera-id="activeCameraId"
+          :suspend-effects="isStreamOpen"
           @select-camera="handleMarkerSelect"
         />
 
