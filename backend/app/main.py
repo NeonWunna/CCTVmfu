@@ -10,6 +10,7 @@ from app.db.session import engine, SessionLocal
 from app.routers import cameras, health
 from app.services import CameraService
 from app.services.ping_worker import PingWorker
+from app.services.blur_worker import BlurWorker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,13 +28,23 @@ async def lifespan(app: FastAPI):
     # Store worker reference in app state if we want to access it later (e.g. to trigger manual check)
     app.state.ping_worker = worker
     
+    # Startup: Start background blur worker (5 min interval)
+    blur_worker = BlurWorker(check_interval=300, threshold=100.0)
+    blur_worker_task = asyncio.create_task(blur_worker.start_loop())
+    app.state.blur_worker = blur_worker
+
     yield
     
-    # Shutdown: Stop worker
+    # Shutdown: Stop workers
     worker.stop()
     worker_task.cancel()
+    
+    blur_worker.stop()
+    blur_worker_task.cancel()
+    
     try:
         await worker_task
+        await blur_worker_task
     except asyncio.CancelledError:
         pass
 
