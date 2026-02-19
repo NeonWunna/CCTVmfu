@@ -26,6 +26,8 @@ const markerCluster = shallowRef(null);
 const isInitializing = ref(true);
 const mapError = ref('');
 const markerLookup = new Map();
+let resizeObserver = null;
+let resizeDebounceId = null;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
 const GOOGLE_MAPS_KEY = 'AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM';
@@ -86,28 +88,29 @@ const getStatusLabel = (status) => {
 
 const getStatusColor = (status) => {
   if (status === 'offline') return '#ef4444';
-  if (status === 'no_signal') return '#9ca3af';
-  if (status === 'blurry') return '#a855f7';
+  if (status === 'no_signal') return '#3b82f6';
+  if (status === 'blurry') return '#f59e0b';
   return '#22c55e';
 };
 
 const createMarkerIcon = (status, isActive = false) => {
   const baseColor = getStatusColor(status);
-  const canvasSize = 24;
-  const dotRadius = isActive ? 6 : 5;
-  const ringRadius = isActive ? 9 : 8;
+  const canvasSize = 28;
+  const dotRadius = isActive ? 7 : 6;
+  const ringRadius = isActive ? 10 : 9;
 
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 24 24">
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 28 28">
         <defs>
           <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="1.3" result="blurred" />
+            <feGaussianBlur stdDeviation="1.25" result="blurred" />
           </filter>
         </defs>
-        <circle cx="12" cy="12" r="${ringRadius}" fill="${baseColor}" fill-opacity="${isActive ? '0.34' : '0.24'}" />
-        <circle cx="12" cy="12" r="${dotRadius + 1.4}" fill="${baseColor}" fill-opacity="0.34" filter="url(#glow)" />
-        <circle cx="12" cy="12" r="${dotRadius}" fill="${baseColor}" stroke="#ffffff" stroke-width="2" />
+        <circle cx="14" cy="14" r="${ringRadius}" fill="${baseColor}" fill-opacity="${isActive ? '0.34' : '0.2'}" />
+        <circle cx="14" cy="14" r="${dotRadius + 1.2}" fill="${baseColor}" fill-opacity="0.3" filter="url(#glow)" />
+        <circle cx="14" cy="14" r="${dotRadius}" fill="${baseColor}" stroke="#ffffff" stroke-width="2" />
+        <rect x="10.4" y="13.2" width="7.2" height="1.7" rx="0.85" fill="#ffffff" />
       </svg>`
     )}`,
     scaledSize: new google.maps.Size(canvasSize, canvasSize),
@@ -179,6 +182,26 @@ const clearMarkers = () => {
   markerLookup.clear();
 };
 
+const handleMapResize = () => {
+  if (!map.value) return;
+
+  const center = map.value.getCenter();
+  google.maps.event.trigger(map.value, 'resize');
+  if (center) {
+    map.value.setCenter(center);
+  }
+};
+
+const scheduleMapResize = () => {
+  if (resizeDebounceId) {
+    clearTimeout(resizeDebounceId);
+  }
+
+  resizeDebounceId = setTimeout(() => {
+    handleMapResize();
+  }, 90);
+};
+
 const fitToVisibleMarkers = () => {
   if (!map.value || markers.value.length === 0) return;
 
@@ -247,7 +270,7 @@ const renderMarkers = (autoFit = true) => {
     const clusterStyles = buildClusterStyles();
 
     markerCluster.value = new window.MarkerClusterer(map.value, nextMarkers, {
-      gridSize: 52,
+      gridSize: 46,
       maxZoom: 18,
       minimumClusterSize: 2,
       zoomOnClick: false,
@@ -323,7 +346,7 @@ const initMap = async () => {
     map.value = new google.maps.Map(mapContainer.value, {
       center: DEFAULT_CENTER,
       zoom: 16,
-      mapTypeId: 'roadmap',
+      mapTypeId: 'hybrid',
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
@@ -342,9 +365,33 @@ const initMap = async () => {
 
 onMounted(() => {
   initMap();
+
+  window.addEventListener('resize', scheduleMapResize);
+
+  if (window.ResizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      scheduleMapResize();
+    });
+
+    if (mapContainer.value) {
+      resizeObserver.observe(mapContainer.value);
+    }
+  }
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', scheduleMapResize);
+
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+
+  if (resizeDebounceId) {
+    clearTimeout(resizeDebounceId);
+    resizeDebounceId = null;
+  }
+
   if (map.value) {
     google.maps.event.clearInstanceListeners(map.value);
   }
@@ -400,7 +447,7 @@ watch(
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 480px;
+  min-height: 360px;
 }
 
 .map-canvas {
@@ -465,7 +512,7 @@ watch(
 
 @media (max-width: 768px) {
   .map-view {
-    min-height: 62vh;
+    min-height: 56vh;
   }
 }
 </style>
