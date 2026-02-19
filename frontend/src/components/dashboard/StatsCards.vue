@@ -200,8 +200,8 @@ const selectFilter = (filterValue) => {
 }
 
 .stats-card--no_signal .stats-icon {
-  color: #fef3c7;
-  background: rgba(217, 119, 6, 0.24);
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.24);
 }
 
 .stats-card--blurry .stats-icon {

@@ -110,7 +110,7 @@ const getStatusGlyph = (status) => {
 const createMarkerLabel = (status, isActive = false) => ({
   text: getStatusGlyph(status),
   color: '#ffffff',
-  fontSize: isActive ? '13px' : '12px',
+  fontSize: isActive ? '11px' : '10px',
   fontWeight: '700'
 });
 
@@ -118,9 +118,9 @@ const createMarkerIcon = (status, options = {}) => {
   const { isActive = false, pulsing = false } = options;
   const baseColor = getStatusColor(status);
   const zoom = map.value?.getZoom?.() || 16;
-  const zoomBoost = zoom <= 13 ? 3.5 : zoom <= 15 ? 2.2 : zoom <= 17 ? 1 : 0;
-  const baseScale = isActive ? 14 : 12.5;
-  const pulseBoost = pulsing ? 1.6 : 0;
+  const zoomBoost = zoom <= 12 ? 2.2 : zoom <= 14 ? 1.5 : zoom <= 16 ? 0.8 : 0.2;
+  const baseScale = isActive ? 11.5 : 10.5;
+  const pulseBoost = pulsing ? 1.1 : 0;
 
   return {
     path: google.maps.SymbolPath.CIRCLE,
@@ -128,7 +128,7 @@ const createMarkerIcon = (status, options = {}) => {
     fillColor: baseColor,
     fillOpacity: 1,
     strokeColor: '#ffffff',
-    strokeWeight: isActive ? 3.8 : 3
+    strokeWeight: isActive ? 3 : 2.4
   };
 };
 
@@ -143,19 +143,19 @@ const buildClusterStyle = (size, fillColor) => ({
   width: size,
   height: size,
   textColor: '#ffffff',
-  textSize: size >= 72 ? 16 : 14,
+  textSize: size >= 52 ? 13 : 11,
   fontWeight: '700'
 });
 
 const clusterStyles = [
-  buildClusterStyle(54, '#0ea5e9'),
-  buildClusterStyle(66, '#0284c7'),
-  buildClusterStyle(78, '#0369a1')
+  buildClusterStyle(36, '#0ea5e9'),
+  buildClusterStyle(44, '#0284c7'),
+  buildClusterStyle(52, '#0369a1')
 ];
 
 const buildClusterRenderer = () => ({
   render: ({ count, position }) => {
-    const size = count < 20 ? 54 : count < 60 ? 66 : 78;
+    const size = count < 20 ? 36 : count < 60 ? 44 : 52;
     const color = count < 20 ? '#0ea5e9' : count < 60 ? '#0284c7' : '#0369a1';
     return new google.maps.Marker({
       position,
@@ -174,7 +174,7 @@ const buildClusterRenderer = () => ({
       label: {
         text: String(count),
         color: '#ffffff',
-        fontSize: size >= 72 ? '16px' : '14px',
+        fontSize: size >= 52 ? '13px' : '11px',
         fontWeight: '700'
       }
     });
@@ -335,9 +335,9 @@ const renderMarkers = (autoFit = true) => {
         });
       } else {
         markerCluster.value = new ClustererCtor(map.value, nextMarkers, {
-          gridSize: 30,
-          maxZoom: 18,
-          minimumClusterSize: 2,
+          gridSize: 36,
+          maxZoom: 17,
+          minimumClusterSize: 4,
           zoomOnClick: true,
           styles: clusterStyles
         });

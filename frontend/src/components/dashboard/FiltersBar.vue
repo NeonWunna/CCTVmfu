@@ -250,7 +250,7 @@ const updateFilter = (event) => {
 }
 
 .dot--no-signal {
-  background: #f59e0b;
+  background: #3b82f6;
 }
 
 .dot--blurry {
@@ -406,9 +406,9 @@ const updateFilter = (event) => {
 }
 
 .status-pill--no_signal {
-  color: #fcd34d;
-  background: rgba(245, 158, 11, 0.16);
-  border-color: rgba(245, 158, 11, 0.36);
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.36);
 }
 
 .status-pill--blurry {
