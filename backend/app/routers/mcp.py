@@ -1,60 +1,124 @@
-
 import asyncio
 import uuid
 import logging
-from typing import Dict
-from fastapi import APIRouter, Request, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse, JSONResponse
-from app.db.session import get_db
+from typing import Any, Dict, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.schemas.mcp import JSONRPCError, JSONRPCResponse
 from app.services.mcp_service import MCPService
-from app.schemas.mcp import JSONRPCRequest, JSONRPCResponse, JSONRPCError
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Session Management
-# Map: sessionId -> asyncio.Queue
+# ---------------------------------------------------------------------------
+# Schemas
+# ---------------------------------------------------------------------------
+
+class JSONRPCRequest(BaseModel):
+    jsonrpc: str = "2.0"
+    method: str
+    params: Optional[Dict[str, Any]] = None
+    id: Optional[Any] = None          # Optional — notifications มี id เป็น None
+
+# ---------------------------------------------------------------------------
+# Tool definitions (static — ย้ายมาไว้นอก handler เพื่อ reuse)
+# ---------------------------------------------------------------------------
+
+TOOL_DEFINITIONS = [
+    {
+        "name": "check_camera_status",
+        "description": (
+            "Check real-time online/offline status of CCTV cameras "
+            "by searching name, id, or location. Pings the camera IP."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "Camera name, id, or location keyword (e.g. 'E1', 'ประตูหน้า')"
+                }
+            },
+            "required": ["location"]
+        }
+    },
+    {
+        "name": "find_cameras_by_location",
+        "description": (
+            "Find cameras by location from the database. "
+            "Returns stored status without pinging."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "Location keyword to search (e.g. 'อาคาร E')"
+                }
+            },
+            "required": ["location"]
+        }
+    }
+]
+
+# ---------------------------------------------------------------------------
+# Session store
+# ---------------------------------------------------------------------------
+
 sessions: Dict[str, asyncio.Queue] = {}
 
-async def event_generator(session_id: str, queue: asyncio.Queue):
-    """
-    Generator for SSE. Yields messages from the queue.
-    """
-    try:
-        # เพิ่ม padding ให้ proxy flush ทันที
-        yield f": {' ' * 8192}\n\n"
+# ---------------------------------------------------------------------------
+# SSE helpers
+# ---------------------------------------------------------------------------
 
-        endpoint_uri = f"/mcp/message?sessionId={session_id}"
-        yield f"event: endpoint\ndata: {endpoint_uri}\n\n"
-        
-        # padding ก้อนสอง — บังคับ flush หลัง endpoint
-        yield f": {' ' * 8192}\n\n"
+PROXY_FLUSH_PADDING = " " * 8192
+
+async def event_generator(session_id: str, queue: asyncio.Queue, request: Request):
+    try:
+        # Force proxy flush
+        yield f": {PROXY_FLUSH_PADDING}\n\n"
+
+        # Announce message endpoint
+        yield f"event: endpoint\ndata: /mcp/message?sessionId={session_id}\n\n"
+
+        # Second flush to ensure endpoint line is delivered
+        yield f": {PROXY_FLUSH_PADDING}\n\n"
 
         while True:
+            if await request.is_disconnected():
+                break
             try:
-                # Wait for message with timeout for keepalive
                 message = await asyncio.wait_for(queue.get(), timeout=15.0)
                 yield f"data: {message}\n\n"
-                # padding หลังทุก message
-                yield f": {' ' * 1024}\n\n"
+                yield f": {' ' * 1024}\n\n"   # flush after each message
             except asyncio.TimeoutError:
-                # Send keepalive ping
-                yield ": ping\n\n"
+                yield ": ping\n\n"             # keepalive
+
     except asyncio.CancelledError:
-        logger.info(f"SSE Session {session_id} disconnected")
+        pass
+    finally:
         sessions.pop(session_id, None)
+        logger.info(f"SSE session closed: {session_id}")
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 
 @router.get("/sse")
 async def sse_endpoint(request: Request):
     session_id = str(uuid.uuid4())
-    queue = asyncio.Queue()
-    sessions[session_id] = queue
-    
-    logger.info(f"New MCP session created: {session_id}")
-    
+    sessions[session_id] = asyncio.Queue()
+    logger.info(f"SSE session created: {session_id}")
+
     return StreamingResponse(
-        event_generator(session_id, queue),
+        event_generator(session_id, sessions[session_id], request),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache, no-transform",
@@ -65,108 +129,118 @@ async def sse_endpoint(request: Request):
         }
     )
 
+
 @router.post("/message")
 async def handle_message(
-    request: JSONRPCRequest, 
-    sessionId: str = Query(...), 
+    rpc: JSONRPCRequest,
+    sessionId: str = Query(...),
     db: Session = Depends(get_db)
 ):
     if sessionId not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
-    
-    # Initialize service
-    service = MCPService(db)
-    queue = sessions[sessionId]
-    
-    try:
-        response = None
-        
-        if request.method == "initialize":
-            response = JSONRPCResponse(
-                id=request.id, 
-                result={
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "cctv-mcp",
-                        "version": "1.0.0"
-                    }
-                }
-            )
-        
-        elif request.method == "notifications/initialized":
-            # Notifications do not require a response in JSON-RPC
-            # But we can log it
-            logger.info(f"Session {sessionId} initialized")
-            return JSONResponse(status_code=202, content={"status": "accepted"})
-            
-        elif request.method == "tools/list":
-            tools = [
-                {
-                    "name": "check_camera_status",
-                    "description": "Check real-time status of cameras by location search (pings IP)",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "location": {"type": "string", "description": "Location name or search term"}
-                        },
-                        "required": ["location"]
-                    }
-                },
-                {
-                    "name": "find_cameras_by_location",
-                    "description": "Find cameras by location from DB (no ping)",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "location": {"type": "string", "description": "Location name"}
-                        },
-                        "required": ["location"]
-                    }
-                }
-            ]
-            response = JSONRPCResponse(id=request.id, result={"tools": tools})
-            
-        elif request.method == "tools/call":
-            params = request.params
-            if not params:
-                 response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Invalid params"))
-            else:
-                tool_name = params.get("name")
-                tool_args = params.get("arguments", {})
-                
-                if tool_name == "check_camera_status":
-                    location = tool_args.get("location")
-                    if not location:
-                         response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
-                    else:
-                        result = await service.check_camera_status(location)
-                        response = JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
-                    
-                elif tool_name == "find_cameras_by_location":
-                    location = tool_args.get("location")
-                    if not location:
-                         response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32602, message="Missing location"))
-                    else:
-                        result = service.find_cameras_by_location(location)
-                        response = JSONRPCResponse(id=request.id, result={"content": [{"type": "text", "text": str(result)}]})
-                else:
-                    response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
-        
-        else:
-            response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32601, message="Method not found"))
 
-        if response:
-            # Send response through SSE stream
-            await queue.put(response.model_dump_json())
-            return JSONResponse(status_code=202, content={"status": "accepted"})
-            
-    except Exception as e:
-        logger.error(f"Error handling message: {e}")
-        error_response = JSONRPCResponse(id=request.id, error=JSONRPCError(code=-32000, message=str(e)))
-        await queue.put(error_response.model_dump_json())
-        return JSONResponse(status_code=202, content={"status": "accepted"})
+    queue = sessions[sessionId]
+    service = MCPService(db)
+
+    try:
+        response = await _dispatch(rpc, service, sessionId)
+    except Exception as exc:
+        logger.exception(f"Unhandled error in session {sessionId}")
+        response = JSONRPCResponse(
+            id=rpc.id,
+            error=JSONRPCError(code=-32000, message=str(exc))
+        )
+
+    if response is not None:
+        await queue.put(response.model_dump_json())
 
     return JSONResponse(status_code=202, content={"status": "accepted"})
+
+
+# ---------------------------------------------------------------------------
+# Dispatcher
+# ---------------------------------------------------------------------------
+
+async def _dispatch(
+    rpc: JSONRPCRequest,
+    service: MCPService,
+    session_id: str
+) -> Optional[JSONRPCResponse]:
+    """Route JSON-RPC method to the correct handler. Returns None for notifications."""
+
+    method = rpc.method
+
+    if method == "initialize":
+        return JSONRPCResponse(
+            id=rpc.id,
+            result={
+                "protocolVersion": "2024-11-05",
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": "cctv-mcp", "version": "1.0.0"}
+            }
+        )
+
+    if method == "notifications/initialized":
+        logger.info(f"Session initialized: {session_id}")
+        return None  # notifications ไม่ต้องตอบกลับ
+
+    if method == "tools/list":
+        return JSONRPCResponse(id=rpc.id, result={"tools": TOOL_DEFINITIONS})
+
+    if method == "tools/call":
+        return await _handle_tool_call(rpc, service)
+
+    return JSONRPCResponse(
+        id=rpc.id,
+        error=JSONRPCError(code=-32601, message=f"Method not found: {method}")
+    )
+
+
+async def _handle_tool_call(
+    rpc: JSONRPCRequest,
+    service: MCPService
+) -> JSONRPCResponse:
+    params = rpc.params or {}
+    tool_name: str = params.get("name", "")
+    tool_args: dict = params.get("arguments", {})
+
+    if not tool_name:
+        return JSONRPCResponse(
+            id=rpc.id,
+            error=JSONRPCError(code=-32602, message="Missing tool name")
+        )
+
+    if tool_name == "check_camera_status":
+        location = tool_args.get("location", "").strip()
+        if not location:
+            return JSONRPCResponse(
+                id=rpc.id,
+                error=JSONRPCError(code=-32602, message="Missing required argument: location")
+            )
+        result = await service.check_camera_status(location)
+        return _text_response(rpc.id, result)
+
+    if tool_name == "find_cameras_by_location":
+        location = tool_args.get("location", "").strip()
+        if not location:
+            return JSONRPCResponse(
+                id=rpc.id,
+                error=JSONRPCError(code=-32602, message="Missing required argument: location")
+            )
+        result = service.find_cameras_by_location(location)
+        return _text_response(rpc.id, result)
+
+    return JSONRPCResponse(
+        id=rpc.id,
+        error=JSONRPCError(code=-32601, message=f"Unknown tool: {tool_name}")
+    )
+
+
+def _text_response(rpc_id: Any, data: Any) -> JSONRPCResponse:
+    """Wrap tool result as MCP text content block."""
+    import json
+    text = json.dumps(data, ensure_ascii=False, indent=2) if not isinstance(data, str) else data
+    return JSONRPCResponse(
+        id=rpc_id,
+        result={"content": [{"type": "text", "text": text}]}
+    )
