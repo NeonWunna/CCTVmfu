@@ -168,7 +168,17 @@ def generate_frames(rtsp_url: str):
     WARNING: This simple implementation is blocking and may consume significant resources.
     For production, consider using a dedicated streaming server or async-compatible library.
     """
-    cap = cv2.VideoCapture(rtsp_url)
+    # Prefer FFmpeg backend for RTSP handling when available.
+    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+
+    # Fallback to default backend if FFmpeg backend is unavailable on this build.
+    if not cap.isOpened():
+        cap.release()
+        cap = cv2.VideoCapture(rtsp_url)
+
+    # Reduce decoder queue to keep frames as fresh as possible.
+    # Not all backends honor this; it's safe to attempt.
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     
     # Try to open the stream
     if not cap.isOpened():
@@ -178,12 +188,24 @@ def generate_frames(rtsp_url: str):
 
     try:
         while True:
-            success, frame = cap.read()
-            if not success:
+            # Grab first available frame packet.
+            if not cap.grab():
                 break
+
+            # Drop a few queued packets so we retrieve a newer frame.
+            # This trades frame continuity for lower latency.
+            for _ in range(2):
+                if not cap.grab():
+                    break
+
+            success, frame = cap.retrieve()
+            if not success or frame is None:
+                continue
             
             # Encode frame as JPEG
             ret, buffer = cv2.imencode('.jpg', frame)
+            if not ret:
+                continue
             frame = buffer.tobytes()
             
             # Yield frame in MJPEG format
