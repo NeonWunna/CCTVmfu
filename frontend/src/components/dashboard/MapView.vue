@@ -30,6 +30,8 @@ const markerLookup = new Map();
 let resizeObserver = null;
 let resizeDebounceId = null;
 let authFailureHandler = null;
+let markerPulseIntervalId = null;
+let pulseFrame = false;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
 const GOOGLE_MAPS_KEY = 'AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM';
@@ -95,15 +97,36 @@ const getStatusColor = (status) => {
   return '#22c55e';
 };
 
-const createMarkerIcon = (status, isActive = false) => {
+const shouldPulseStatus = (status) =>
+  status === 'online' || status === 'no_signal' || status === 'blurry';
+
+const getStatusGlyph = (status) => {
+  if (status === 'offline') return 'X';
+  if (status === 'no_signal') return '!';
+  if (status === 'blurry') return 'B';
+  return 'O';
+};
+
+const createMarkerLabel = (status, isActive = false) => ({
+  text: getStatusGlyph(status),
+  color: '#ffffff',
+  fontSize: isActive ? '10px' : '9px',
+  fontWeight: '700'
+});
+
+const createMarkerIcon = (status, options = {}) => {
+  const { isActive = false, pulsing = false } = options;
   const baseColor = getStatusColor(status);
+  const baseScale = isActive ? 10 : 8.5;
+  const pulseBoost = pulsing ? 1.2 : 0;
+
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    scale: isActive ? 8 : 7,
+    scale: baseScale + pulseBoost,
     fillColor: baseColor,
     fillOpacity: 1,
     strokeColor: '#ffffff',
-    strokeWeight: 2
+    strokeWeight: isActive ? 2.8 : 2.2
   };
 };
 
@@ -113,6 +136,11 @@ const getClustererConstructor = () =>
   null;
 
 const clearMarkers = () => {
+  if (markerPulseIntervalId) {
+    clearInterval(markerPulseIntervalId);
+    markerPulseIntervalId = null;
+  }
+
   if (markerCluster.value) {
     if (typeof markerCluster.value.clearMarkers === 'function') {
       markerCluster.value.clearMarkers();
@@ -151,12 +179,26 @@ const scheduleMapResize = () => {
   }, 90);
 };
 
-const getMarkerLabel = () => ({
-  text: '\u2212',
-  color: '#ffffff',
-  fontSize: '12px',
-  fontWeight: '700'
-});
+const startMarkerPulseAnimation = () => {
+  if (markerPulseIntervalId) {
+    clearInterval(markerPulseIntervalId);
+    markerPulseIntervalId = null;
+  }
+
+  const hasPulsingMarker = markers.value.some((marker) => shouldPulseStatus(marker.cameraStatus));
+  if (!hasPulsingMarker) return;
+
+  markerPulseIntervalId = setInterval(() => {
+    pulseFrame = !pulseFrame;
+
+    markers.value.forEach((marker) => {
+      const isActive = marker.cameraId === props.activeCameraId;
+      const pulsing = !isActive && shouldPulseStatus(marker.cameraStatus) && pulseFrame;
+
+      marker.setIcon(createMarkerIcon(marker.cameraStatus, { isActive, pulsing }));
+    });
+  }, 850);
+};
 
 const fitToVisibleMarkers = () => {
   if (!map.value || markers.value.length === 0) return;
@@ -181,7 +223,10 @@ const fitToVisibleMarkers = () => {
 const highlightActiveMarker = (cameraId) => {
   markers.value.forEach((marker) => {
     const isActive = marker.cameraId === cameraId;
-    marker.setIcon(createMarkerIcon(marker.cameraStatus, isActive));
+    const pulsing = !isActive && shouldPulseStatus(marker.cameraStatus) && pulseFrame;
+
+    marker.setIcon(createMarkerIcon(marker.cameraStatus, { isActive, pulsing }));
+    marker.setLabel(createMarkerLabel(marker.cameraStatus, isActive));
     marker.setZIndex(isActive ? 999 : 1);
   });
 };
@@ -203,11 +248,14 @@ const renderMarkers = (autoFit = true) => {
   const shouldCluster = Boolean(ClustererCtor && visibleCameras.length > 1);
 
   const nextMarkers = visibleCameras.map((camera) => {
+    const isActive = camera.id === props.activeCameraId;
+    const pulsing = !isActive && shouldPulseStatus(camera.status) && pulseFrame;
+
     const marker = new google.maps.Marker({
       position: { lat: camera.lat, lng: camera.lng },
       title: `${camera.name} - ${getStatusLabel(camera.status)}`,
-      icon: createMarkerIcon(camera.status, camera.id === props.activeCameraId),
-      label: getMarkerLabel(),
+      icon: createMarkerIcon(camera.status, { isActive, pulsing }),
+      label: createMarkerLabel(camera.status, isActive),
       map: shouldCluster ? null : map.value
     });
 
@@ -263,6 +311,7 @@ const renderMarkers = (autoFit = true) => {
   }
 
   highlightActiveMarker(props.activeCameraId);
+  startMarkerPulseAnimation();
 };
 
 const focusCamera = (camera, shouldZoom = true) => {
@@ -355,6 +404,11 @@ onBeforeUnmount(() => {
   if (resizeDebounceId) {
     clearTimeout(resizeDebounceId);
     resizeDebounceId = null;
+  }
+
+  if (markerPulseIntervalId) {
+    clearInterval(markerPulseIntervalId);
+    markerPulseIntervalId = null;
   }
 
   if (window.gm_authFailure === authFailureHandler) {
