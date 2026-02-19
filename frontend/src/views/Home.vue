@@ -111,8 +111,6 @@ const infoWindow = shallowRef(null); // Single InfoWindow instance
 
 const onlineCount = computed(() => cctvs.value.filter(c => c.status === "online").length);
 const offlineCount = computed(() => cctvs.value.filter(c => c.status === "offline").length);
-const onlineCount = computed(() => cctvs.value.filter(c => c.status === "online").length);
-const offlineCount = computed(() => cctvs.value.filter(c => c.status === "offline").length);
 const blurCount = computed(() => cctvs.value.filter(c => c.status === "blurry").length);
 const noSignalCount = computed(() => cctvs.value.filter(c => c.status === "no_signal").length);
 const totalCount = computed(() => cctvs.value.length);
