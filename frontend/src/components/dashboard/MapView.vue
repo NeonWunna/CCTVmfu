@@ -77,37 +77,50 @@ const ensureMapLibraries = async () => {
   }
 };
 
+const getStatusLabel = (status) => {
+  if (status === 'offline') return 'Offline';
+  if (status === 'no_signal') return 'No Signal';
+  if (status === 'blurry') return 'Blurry';
+  return 'Online';
+};
+
 const getStatusColor = (status) => {
   if (status === 'offline') return '#ef4444';
-  if (status === 'no_signal') return '#f59e0b';
-  if (status === 'blurry') return '#ec4899';
+  if (status === 'no_signal') return '#9ca3af';
+  if (status === 'blurry') return '#a855f7';
   return '#22c55e';
 };
 
 const createMarkerIcon = (status, isActive = false) => {
   const baseColor = getStatusColor(status);
-  const borderColor = isActive ? '#f8fafc' : '#0f172a';
-  const size = isActive ? 40 : 34;
+  const canvasSize = 24;
+  const dotRadius = isActive ? 6 : 5;
+  const ringRadius = isActive ? 9 : 8;
 
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-        <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1}" fill="${baseColor}" stroke="${borderColor}" stroke-width="2" />
-        <path d="M${size * 0.32} ${size * 0.38}h${size * 0.26}v${size * 0.24}h-${size * 0.26}z" fill="white"/>
-        <path d="M${size * 0.58} ${size * 0.43}l${size * 0.13}-${size * 0.07}v${size * 0.24}l-${size * 0.13}-${size * 0.07}z" fill="white"/>
-        <circle cx="${size * 0.46}" cy="${size * 0.5}" r="${size * 0.08}" fill="${baseColor}" stroke="white" stroke-width="1.6"/>
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 24 24">
+        <defs>
+          <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="1.3" result="blurred" />
+          </filter>
+        </defs>
+        <circle cx="12" cy="12" r="${ringRadius}" fill="${baseColor}" fill-opacity="${isActive ? '0.34' : '0.24'}" />
+        <circle cx="12" cy="12" r="${dotRadius + 1.4}" fill="${baseColor}" fill-opacity="0.34" filter="url(#glow)" />
+        <circle cx="12" cy="12" r="${dotRadius}" fill="${baseColor}" stroke="#ffffff" stroke-width="2" />
       </svg>`
     )}`,
-    scaledSize: new google.maps.Size(size, size),
-    anchor: new google.maps.Point(size / 2, size / 2)
+    scaledSize: new google.maps.Size(canvasSize, canvasSize),
+    anchor: new google.maps.Point(canvasSize / 2, canvasSize / 2)
   };
 };
 
-const buildClusterStyle = (size, fill, ring) => ({
+const buildClusterStyle = (size, fill) => ({
   url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="${fill}" />
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 4}" fill="none" stroke="${ring}" stroke-width="2" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${fill}" fill-opacity="0.35" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 5}" fill="${fill}" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 5}" fill="none" stroke="#ffffff" stroke-width="2" />
     </svg>`
   )}`,
   width: size,
@@ -116,6 +129,40 @@ const buildClusterStyle = (size, fill, ring) => ({
   textSize: size < 52 ? 12 : 14,
   fontWeight: '700'
 });
+
+const CLUSTER_STATUS_ORDER = ['online', 'offline', 'no_signal', 'blurry'];
+const CLUSTER_SIZES = [38, 46, 54];
+
+const buildClusterStyles = () => {
+  const styles = [];
+  CLUSTER_SIZES.forEach((size) => {
+    CLUSTER_STATUS_ORDER.forEach((status) => {
+      styles.push(buildClusterStyle(size, getStatusColor(status)));
+    });
+  });
+  return styles;
+};
+
+const getDominantClusterStatus = (clusterMarkers) => {
+  const counts = {
+    online: 0,
+    offline: 0,
+    no_signal: 0,
+    blurry: 0
+  };
+
+  clusterMarkers.forEach((marker) => {
+    if (counts[marker.cameraStatus] !== undefined) {
+      counts[marker.cameraStatus] += 1;
+    } else {
+      counts.online += 1;
+    }
+  });
+
+  return CLUSTER_STATUS_ORDER.reduce((dominant, current) =>
+    counts[current] > counts[dominant] ? current : dominant
+  );
+};
 
 const clearMarkers = () => {
   if (markerCluster.value) {
@@ -176,7 +223,7 @@ const renderMarkers = (autoFit = true) => {
   const nextMarkers = visibleCameras.map((camera) => {
     const marker = new google.maps.Marker({
       position: { lat: camera.lat, lng: camera.lng },
-      title: camera.name,
+      title: `${camera.name} - ${getStatusLabel(camera.status)}`,
       icon: createMarkerIcon(camera.status, camera.id === props.activeCameraId),
       map: window.MarkerClusterer ? null : map.value
     });
@@ -197,16 +244,26 @@ const renderMarkers = (autoFit = true) => {
   markers.value = nextMarkers;
 
   if (window.MarkerClusterer && nextMarkers.length > 1) {
+    const clusterStyles = buildClusterStyles();
+
     markerCluster.value = new window.MarkerClusterer(map.value, nextMarkers, {
-      gridSize: 56,
+      gridSize: 52,
       maxZoom: 18,
       minimumClusterSize: 2,
       zoomOnClick: false,
-      styles: [
-        buildClusterStyle(44, '#0369a1', '#7dd3fc'),
-        buildClusterStyle(52, '#0e7490', '#5eead4'),
-        buildClusterStyle(60, '#155e75', '#67e8f9')
-      ]
+      styles: clusterStyles,
+      calculator: (clusterMarkers) => {
+        const dominantStatus = getDominantClusterStatus(clusterMarkers);
+        const sizeTier = clusterMarkers.length >= 80 ? 2 : clusterMarkers.length >= 20 ? 1 : 0;
+        const statusIndex = CLUSTER_STATUS_ORDER.indexOf(dominantStatus);
+        const styleIndex = sizeTier * CLUSTER_STATUS_ORDER.length + statusIndex + 1;
+
+        return {
+          text: String(clusterMarkers.length),
+          index: styleIndex,
+          title: `${clusterMarkers.length} cameras (${getStatusLabel(dominantStatus)})`
+        };
+      }
     });
 
     google.maps.event.addListener(markerCluster.value, 'clusterclick', (cluster) => {
@@ -266,7 +323,7 @@ const initMap = async () => {
     map.value = new google.maps.Map(mapContainer.value, {
       center: DEFAULT_CENTER,
       zoom: 16,
-      mapTypeId: 'hybrid',
+      mapTypeId: 'roadmap',
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
