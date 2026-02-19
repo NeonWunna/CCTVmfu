@@ -64,8 +64,6 @@ const fetchCameras = async () => {
         let mappedStatus = 'online'; // Default
         if (camera.status === 'down') {
           mappedStatus = 'offline';
-        } else if (camera.status === 'up' && camera.image_status === 'no_signal') {
-          mappedStatus = 'no_signal';
         } else if (camera.status === 'up' && camera.image_status === 'blur') {
           mappedStatus = 'blurry';
         } else if (camera.status === 'up') {
@@ -129,7 +127,7 @@ const userInitials = computed(() =>
     .slice(0, 2)
 );
 
-const onlineCount = computed(() => cameras.value.filter(c => c.status === "online" || c.status === "blurry" || c.status === "no_signal").length);
+const onlineCount = computed(() => cameras.value.filter(c => c.status === "online" || c.status === "blurry").length);
 const offlineCount = computed(() => cameras.value.filter(c => c.status === "offline").length);
 const totalCount = computed(() => cameras.value.length);
 
@@ -148,9 +146,7 @@ const filteredCameras = computed(() => {
 
   // Apply status filter
   if (selectedFilter.value === "online") {
-    filtered = filtered.filter(c => c.status === "online" || c.status === "blurry" || c.status === "no_signal");
-  } else if (selectedFilter.value === "no_signal") {
-      filtered = filtered.filter(c => c.status === "no_signal");
+    filtered = filtered.filter(c => c.status === "online" || c.status === "blurry");
   } else if (selectedFilter.value === "offline") {
     filtered = filtered.filter(c => c.status === "offline");
   }
@@ -166,7 +162,6 @@ const filteredCameras = computed(() => {
 const filterOptions = [
   { value: "all", label: "All Cameras", icon: "all" },
   { value: "online", label: "Online Only", icon: "online" },
-  { value: "no_signal", label: "No Signal", icon: "no_signal" },
   { value: "offline", label: "Offline Only", icon: "offline" }
 ];
 
@@ -621,9 +616,6 @@ const handleSearch = () => {
                         <svg v-else-if="option.icon === 'online'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <svg v-else-if="option.icon === 'no_signal'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"></path>
-                        </svg>
                         <svg v-else-if="option.icon === 'offline'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
@@ -686,8 +678,7 @@ const handleSearch = () => {
                       <span class="status-dot"></span>
                       {{ 
                         camera.status === 'offline' ? 'Offline' : 
-                        (camera.status === 'blurry' ? 'Blurry' : 
-                        (camera.status === 'no_signal' ? 'No Signal' : 'Online')) 
+                        (camera.status === 'blurry' ? 'Blurry' : 'Online') 
                       }}
                     </span>
                   </td>
@@ -1569,11 +1560,6 @@ const handleSearch = () => {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
 }
-.status-badge.no_signal {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.3);
-}
 .status-badge.blurry {
   background: rgba(249, 115, 22, 0.15);
   color: #f97316;
@@ -1592,10 +1578,6 @@ const handleSearch = () => {
 .status-badge.offline .status-dot {
   background: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-}
-.status-badge.no_signal .status-dot {
-  background: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 .status-badge.blurry .status-dot {
   background: #f97316;
