@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, String, cast
 
 from app.models.camera import Camera
-from app.utils.network import check_port_async
+from app.utils.network import check_port_async, async_ping_ip
 
 logger = logging.getLogger(__name__)
 
@@ -16,34 +16,36 @@ class MCPService:
 
     async def _check_single_camera_status(self, camera: Camera) -> Dict[str, Any]:
         """
-        Checks real-time status of a camera by attempting to connect to port 80 and 554.
-        Returns the camera details with 'status' field updated.
+        Checks real-time status of a camera using ICMP Ping and Port Checks (80/554).
         """
+        # 1. Try ICMP Ping (fastest)
+        is_pingable = await async_ping_ip(camera.ip_address, timeout=1)
+        
+        # 2. Check Ports
         is_web_up = await check_port_async(camera.ip_address, 80, timeout=1.0)
-        
-        status = "offline"
-        if is_web_up:
-            # If web is up, check RTSP if available (optional but better)
-            # For now, if web is up, we consider it online or at least reachable.
-            # But let's follow PingWorker logic: 
-            # If web is up, it's at least 'no_signal' (alive but maybe no video).
-            # To be 'online' fully, maybe we check 554?
-            # User simply asked for "online/offline". 
-            # I will return "online" if port 80 is up, to keep it simple and fast.
-            # If port 80 is down, check 554 just in case it's a stream-only device.
+        is_rtsp_up = await check_port_async(camera.ip_address, 554, timeout=1.0)
+
+        # Logic for status
+        if is_web_up and is_rtsp_up:
             status = "online"
+        elif is_web_up or is_rtsp_up:
+            status = "no_signal" # Alive but potentially misconfigured or only partially accessible
+        elif is_pingable:
+            status = "reachable" # Responds to ping but services are down
         else:
-            # Check 554 as fallback
-            is_rtsp_up = await check_port_async(camera.ip_address, 554, timeout=1.0)
-            if is_rtsp_up:
-                status = "online"
-        
+            status = "offline"
+
         return {
             "id": camera.id,
             "name": camera.name,
             "location": camera.location,
             "ip_address": camera.ip_address,
-            "status": status
+            "status": status,
+            "details": {
+                "ping": is_pingable,
+                "web_port_80": is_web_up,
+                "rtsp_port_554": is_rtsp_up
+            }
         }
 
     async def check_camera_status(self, search_term: str) -> List[Dict[str, Any]]:

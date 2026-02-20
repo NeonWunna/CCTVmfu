@@ -1,11 +1,10 @@
 import asyncio
 import uuid
 import logging
+import json
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.requests import Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -24,10 +23,10 @@ class JSONRPCRequest(BaseModel):
     jsonrpc: str = "2.0"
     method: str
     params: Optional[Dict[str, Any]] = None
-    id: Optional[Any] = None          # Optional — notifications มี id เป็น None
+    id: Optional[Any] = None
 
 # ---------------------------------------------------------------------------
-# Tool definitions (static — ย้ายมาไว้นอก handler เพื่อ reuse)
+# Tool definitions
 # ---------------------------------------------------------------------------
 
 TOOL_DEFINITIONS = [
@@ -68,96 +67,60 @@ TOOL_DEFINITIONS = [
 ]
 
 # ---------------------------------------------------------------------------
-# Session store
+# WebSocket Handler
 # ---------------------------------------------------------------------------
 
-sessions: Dict[str, asyncio.Queue] = {}
-
-# ---------------------------------------------------------------------------
-# SSE helpers
-# ---------------------------------------------------------------------------
-
-PROXY_FLUSH_PADDING = " " * 8192
-
-async def event_generator(session_id: str, queue: asyncio.Queue, request: Request):
-    try:
-        # Force proxy flush
-        yield f": {PROXY_FLUSH_PADDING}\n\n"
-
-        # Announce message endpoint
-        yield f"event: endpoint\ndata: /mcp/message?sessionId={session_id}\n\n"
-
-        # Second flush to ensure endpoint line is delivered
-        yield f": {PROXY_FLUSH_PADDING}\n\n"
-
-        while True:
-            if await request.is_disconnected():
-                break
-            try:
-                message = await asyncio.wait_for(queue.get(), timeout=15.0)
-                yield f"data: {message}\n\n"
-                yield f": {' ' * 1024}\n\n"   # flush after each message
-            except asyncio.TimeoutError:
-                yield ": ping\n\n"             # keepalive
-
-    except asyncio.CancelledError:
-        pass
-    finally:
-        sessions.pop(session_id, None)
-        logger.info(f"SSE session closed: {session_id}")
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-
-@router.get("/sse")
-async def sse_endpoint(request: Request):
+@router.websocket("/ws")
+async def mcp_websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+    """
+    WebSocket endpoint for MCP.
+    Handles JSON-RPC over persistent connection.
+    """
+    await websocket.accept()
     session_id = str(uuid.uuid4())
-    sessions[session_id] = asyncio.Queue()
-    logger.info(f"SSE session created: {session_id}")
-
-    return StreamingResponse(
-        event_generator(session_id, sessions[session_id], request),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache, no-transform",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-            "X-Content-Type-Options": "nosniff",
-            "Transfer-Encoding": "chunked",
-        }
-    )
-
-
-@router.post("/message")
-async def handle_message(
-    rpc: JSONRPCRequest,
-    sessionId: str = Query(...),
-    db: Session = Depends(get_db)
-):
-    if sessionId not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
-
+    logger.info(f"MCP WebSocket session started: {session_id}")
+    
     service = MCPService(db)
 
     try:
-        response = await _dispatch(rpc, service, sessionId)
-    except Exception as exc:
-        logger.exception(f"Unhandled error in session {sessionId}")
-        response = JSONRPCResponse(
-            id=rpc.id,
-            error=JSONRPCError(code=-32000, message=str(exc))
-        )
+        while True:
+            # 1. Receive JSON-RPC Request
+            data = await websocket.receive_text()
+            try:
+                rpc_data = json.loads(data)
+                rpc = JSONRPCRequest(**rpc_data)
+            except Exception as e:
+                logger.warning(f"Invalid JSON-RPC received: {data}")
+                error_res = JSONRPCResponse(
+                    id=None,
+                    error=JSONRPCError(code=-32700, message=f"Parse error: {str(e)}")
+                )
+                await websocket.send_text(error_res.model_dump_json())
+                continue
 
-    if response is None:
-        return JSONResponse(status_code=202, content={"status": "accepted"})
+            # 2. Dispatch call
+            try:
+                response = await _dispatch(rpc, service, session_id)
+                
+                # 3. Send Response (if not a notification)
+                if response:
+                    await websocket.send_text(response.model_dump_json())
+            
+            except Exception as exc:
+                logger.exception(f"Error processing MCP request in session {session_id}")
+                error_res = JSONRPCResponse(
+                    id=rpc.id,
+                    error=JSONRPCError(code=-32000, message=str(exc))
+                )
+                await websocket.send_text(error_res.model_dump_json())
 
-    # ส่งกลับทาง HTTP body โดยตรง (MCPClient รองรับ hybrid mode อยู่แล้ว)
-    return JSONResponse(
-        status_code=200,
-        content=response.model_dump()
-    )
+    except WebSocketDisconnect:
+        logger.info(f"MCP WebSocket session closed: {session_id}")
+    except Exception as e:
+        logger.error(f"Unexpected WebSocket error: {str(e)}")
+    finally:
+        # Cleanup if needed
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +132,7 @@ async def _dispatch(
     service: MCPService,
     session_id: str
 ) -> Optional[JSONRPCResponse]:
-    """Route JSON-RPC method to the correct handler. Returns None for notifications."""
+    """Route JSON-RPC method to the correct handler."""
 
     method = rpc.method
 
@@ -179,13 +142,13 @@ async def _dispatch(
             result={
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "cctv-mcp", "version": "1.0.0"}
+                "serverInfo": {"name": "cctv-mcp-websocket", "version": "1.1.0"}
             }
         )
 
     if method == "notifications/initialized":
-        logger.info(f"Session initialized: {session_id}")
-        return None  # notifications ไม่ต้องตอบกลับ
+        logger.info(f"Session fully initialized via WS: {session_id}")
+        return None
 
     if method == "tools/list":
         return JSONRPCResponse(id=rpc.id, result={"tools": TOOL_DEFINITIONS})
@@ -213,25 +176,33 @@ async def _handle_tool_call(
             error=JSONRPCError(code=-32602, message="Missing tool name")
         )
 
-    if tool_name == "check_camera_status":
-        location = tool_args.get("location", "").strip()
-        if not location:
-            return JSONRPCResponse(
-                id=rpc.id,
-                error=JSONRPCError(code=-32602, message="Missing required argument: location")
-            )
-        result = await service.check_camera_status(location)
-        return _text_response(rpc.id, result)
+    try:
+        if tool_name == "check_camera_status":
+            location = tool_args.get("location", "").strip()
+            if not location:
+                return JSONRPCResponse(
+                    id=rpc.id,
+                    error=JSONRPCError(code=-32602, message="Missing required argument: location")
+                )
+            result = await service.check_camera_status(location)
+            return _text_response(rpc.id, result)
 
-    if tool_name == "find_cameras_by_location":
-        location = tool_args.get("location", "").strip()
-        if not location:
-            return JSONRPCResponse(
-                id=rpc.id,
-                error=JSONRPCError(code=-32602, message="Missing required argument: location")
-            )
-        result = service.find_cameras_by_location(location)
-        return _text_response(rpc.id, result)
+        if tool_name == "find_cameras_by_location":
+            location = tool_args.get("location", "").strip()
+            if not location:
+                return JSONRPCResponse(
+                    id=rpc.id,
+                    error=JSONRPCError(code=-32602, message="Missing required argument: location")
+                )
+            result = service.find_cameras_by_location(location)
+            return _text_response(rpc.id, result)
+
+    except Exception as e:
+        logger.error(f"Tool {tool_name} failed: {str(e)}")
+        return JSONRPCResponse(
+            id=rpc.id,
+            error=JSONRPCError(code=-32603, message=f"Internal tool error: {str(e)}")
+        )
 
     return JSONRPCResponse(
         id=rpc.id,
@@ -241,7 +212,6 @@ async def _handle_tool_call(
 
 def _text_response(rpc_id: Any, data: Any) -> JSONRPCResponse:
     """Wrap tool result as MCP text content block."""
-    import json
     text = json.dumps(data, ensure_ascii=False, indent=2) if not isinstance(data, str) else data
     return JSONRPCResponse(
         id=rpc_id,

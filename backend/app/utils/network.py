@@ -36,6 +36,28 @@ def ping_ip(ip_address: str, timeout: int = 2) -> bool:
         logging.error(f"Error pinging {ip_address}: {e}")
         return False
 
+async def async_ping_ip(ip_address: str, timeout: int = 1) -> bool:
+    """
+    Ping an IP address asynchronously.
+    """
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+    timeout_param = '-w' if platform.system().lower() == 'windows' else '-W'
+    timeout_val = str(timeout * 1000) if platform.system().lower() == 'windows' else str(timeout)
+
+    command = ['ping', param, '1', timeout_param, timeout_val, ip_address]
+    
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL
+        )
+        await process.wait()
+        return process.returncode == 0
+    except Exception as e:
+        logging.error(f"Error async pinging {ip_address}: {e}")
+        return False
+
 async def check_port_async(ip_address: str, port: int = 80, timeout: float = 1.0) -> bool:
     """
     Check if a TCP port is open asynchronously.
