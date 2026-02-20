@@ -153,29 +153,32 @@ class CameraService:
 
     def check_camera_status(self, camera_id: int) -> Optional[models.Camera]:
         """
-        Check camera status by pinging its IP and update DB.
-        
-        Args:
-            camera_id: ID of the camera to check
-            
-        Returns:
-            Updated camera model
+        Check camera status by pinging its IP and checking services (80/554).
         """
         db_camera = self.get_camera(camera_id)
         if db_camera and db_camera.ip_address:
-            # Check port 80 first, then 554
-            from app.utils.network import check_port
-            is_reachable = check_port(db_camera.ip_address, 80)
-            if not is_reachable:
-                is_reachable = check_port(db_camera.ip_address, 554)
+            from app.utils.network import check_port, ping_ip
+            
+            # 1. ICMP Ping
+            is_pingable = ping_ip(db_camera.ip_address, timeout=1)
+            
+            # 2. Port Checks
+            is_web_up = check_port(db_camera.ip_address, 80, timeout=1)
+            is_rtsp_up = check_port(db_camera.ip_address, 554, timeout=1)
                 
-            new_status = "up" if is_reachable else "down"
+            # Logic similar to MCPService but synchronous
+            if is_web_up and is_rtsp_up:
+                new_status = "online"
+            elif is_web_up or is_rtsp_up:
+                new_status = "no_signal"
+            elif is_pingable:
+                new_status = "reachable"
+            else:
+                new_status = "offline"
             
             # Update if status changed
-            # We also update active timestamp if it's reachable or status changes
-            if db_camera.status != new_status or (db_camera.status == "up" and is_reachable):
-                if db_camera.status != new_status:
-                    logger.info(f"Camera {camera_id} ({db_camera.name}) status changed: {db_camera.status} -> {new_status}")
+            if db_camera.status != new_status:
+                logger.info(f"Camera {camera_id} ({db_camera.name}) status changed: {db_camera.status} -> {new_status}")
                 db_camera.status = new_status
                 db_camera.last_update = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
                 self.db.commit()

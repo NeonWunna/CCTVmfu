@@ -57,6 +57,15 @@ def create_camera(
     return service.create_camera(camera=camera)
 
 
+@router.api_route("/events", methods=["GET", "POST"])
+def get_camera_events():
+    """
+    Placeholder for camera-related events (SSE or similar).
+    Added to prevent route conflict with /{camera_id}.
+    """
+    return {"events": []}
+
+
 @router.get("/{camera_id}", response_model=schemas.Camera)
 def get_camera(
     camera_id: int, 
