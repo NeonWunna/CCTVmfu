@@ -34,6 +34,10 @@ class BlurWorker:
             cameras = db.query(models.Camera).filter(models.Camera.status == "online").all()
             total_cameras = len(cameras)
             
+            # Report Initial Progress (0 / Total)
+            if self.progress_callback:
+                await self.progress_callback(0, total_cameras)
+            
             updates_count = 0
             
             for index, cam in enumerate(cameras):

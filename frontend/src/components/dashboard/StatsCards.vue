@@ -146,7 +146,12 @@ const selectFilter = (filterValue) => {
                 <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
             </svg>
             <span class="progress-text">
-                {{ blurProgress.total > 0 ? `Scanning ${blurProgress.current} / ${blurProgress.total}` : 'Starting...' }}
+                <template v-if="blurProgress.total > 0">
+                    Scanning {{ blurProgress.current }} / {{ blurProgress.total }}
+                </template>
+                <template v-else>
+                    Searching...
+                </template>
             </span>
         </div>
         <button

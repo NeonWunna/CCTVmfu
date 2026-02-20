@@ -322,11 +322,11 @@ const setupSSE = () => {
                     total: data.total
                 };
                 
-                // Auto-hide when done
-                if (data.current >= data.total && data.total > 0) {
+                // Auto-hide when done or if no cameras found
+                if (data.current >= data.total) {
                      setTimeout(() => {
                         blurProgress.value.active = false;
-                        fetchCameras(); // Refresh data to show new statuses
+                        if (data.total > 0) fetchCameras(); 
                      }, 2000);
                 }
             }
