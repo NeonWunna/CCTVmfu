@@ -72,6 +72,16 @@ async def mcp_status_debug(request: Request):
     logger.info(f"MCP Status Debug called. Headers: {headers}")
     return {"status": "ok", "headers": headers}
 
+@router.get("/ws")
+async def mcp_ws_debug_get(request: Request):
+    headers = dict(request.headers)
+    logger.info(f"GET /mcp/ws called (Handshake failed or was a simple GET). Headers: {headers}")
+    return {
+        "status": "mcp_ws_get_reachable",
+        "message": "This path is working but this request is not a WebSocket upgrade.",
+        "headers": headers
+    }
+
 # ---------------------------------------------------------------------------
 # WebSocket Handler
 # ---------------------------------------------------------------------------
