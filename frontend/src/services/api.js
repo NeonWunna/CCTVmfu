@@ -31,5 +31,8 @@ export default {
     },
     checkCameraStatus(id) {
         return api.post(`/cameras/${id}/check`);
+    },
+    triggerBlurCheck() {
+        return api.post('/cameras/check-blur');
     }
 };

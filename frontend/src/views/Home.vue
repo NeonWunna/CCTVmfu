@@ -197,10 +197,14 @@ const selectFilterFromStats = (filterValue) => {
 };
 
 const handleCheckBlur = async () => {
-  showToast('Initializing manual blur check... This may take a few moments.', 'info');
-  // Trigger backend check here if API exists
-  // await api.triggerBlurCheck();
-  // For now, just a placeholder UI feedback as requested.
+  try {
+    showToast('Initiating blur check...', 'info');
+    await api.triggerBlurCheck();
+    showToast('Blur check started in background.', 'success');
+  } catch (error) {
+    console.error('Failed to trigger blur check:', error);
+    showToast('Failed to start blur check.', 'error');
+  }
 };
 
 const focusCamera = (camera) => {

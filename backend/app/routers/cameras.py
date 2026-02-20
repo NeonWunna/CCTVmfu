@@ -2,7 +2,7 @@
 Camera Router
 API endpoints for camera CRUD operations.
 """
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -135,6 +135,24 @@ def check_camera_status(
     if db_camera is None:
         raise CameraNotFoundException(camera_id)
     return db_camera
+
+
+@router.post("/check-blur", response_model=schemas.MessageResponse)
+def check_blur_status(
+    request: Request,
+    background_tasks: BackgroundTasks
+):
+    """
+    Trigger a manual blur check for all online cameras.
+    This runs in the background.
+    """
+    if not hasattr(request.app.state, "blur_worker") or not request.app.state.blur_worker:
+         return schemas.MessageResponse(message="Blur worker is not active.")
+    
+    worker = request.app.state.blur_worker
+    background_tasks.add_task(worker.run_once)
+    
+    return schemas.MessageResponse(message="Blur check started in background.")
 
 
 @router.delete("/{camera_id}", response_model=schemas.MessageResponse)
