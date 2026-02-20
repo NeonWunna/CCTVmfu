@@ -157,6 +157,7 @@ const selectFilter = (filterValue) => {
 }
 
 .stats-card {
+  position: relative;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.72);
@@ -170,6 +171,8 @@ const selectFilter = (filterValue) => {
   min-height: 86px;
   transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
+
+/* ... existing hover/focus styles ... */
 
 .stats-card:hover {
   transform: translateY(-1px);
@@ -186,6 +189,7 @@ const selectFilter = (filterValue) => {
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.25);
 }
 
+/* ... icons ... */
 .stats-icon {
   width: 36px;
   height: 36px;
@@ -245,23 +249,23 @@ const selectFilter = (filterValue) => {
 }
 
 .stats-card-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
+  display: contents; /* Restore flex behavior from parent, ignoring this wrapper */
 }
 
 .check-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   background: rgba(249, 115, 22, 0.2);
   border: 1px solid rgba(249, 115, 22, 0.4);
   color: #fdba74;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: 4px;
+  z-index: 2;
 }
 
 .check-btn:hover {
