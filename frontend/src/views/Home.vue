@@ -198,12 +198,16 @@ const selectFilterFromStats = (filterValue) => {
 
 const handleCheckBlur = async () => {
   try {
+    // Immediate feedback
+    blurProgress.value = { active: true, current: 0, total: 0 };
     showToast('Initiating blur check...', 'info');
     await api.triggerBlurCheck();
     showToast('Blur check started in background.', 'success');
   } catch (error) {
     console.error('Failed to trigger blur check:', error);
     showToast('Failed to start blur check.', 'error');
+    // Reset on error
+    blurProgress.value = { active: false, current: 0, total: 0 };
   }
 };
 

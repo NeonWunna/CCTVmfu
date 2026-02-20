@@ -141,9 +141,14 @@ const selectFilter = (filterValue) => {
 
       <!-- Check Button or Progress for Blurry Card -->
       <div v-if="card.key === 'blurry'" class="blurry-action">
-        <span v-if="blurProgress.active" class="progress-text">
-            Scanning {{ blurProgress.current }} / {{ blurProgress.total }}
-        </span>
+        <div v-if="blurProgress.active" class="progress-wrapper">
+             <svg class="spinner" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+            <span class="progress-text">
+                {{ blurProgress.total > 0 ? `Scanning ${blurProgress.current} / ${blurProgress.total}` : 'Starting...' }}
+            </span>
+        </div>
         <button
             v-else
             type="button"
@@ -316,16 +321,50 @@ const selectFilter = (filterValue) => {
   transform: scale(0.96);
 }
 
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  width: 16px;
+  height: 16px;
+}
+
+.path {
+  stroke: #fbbf24;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
 .progress-text {
   font-size: 0.7rem;
   color: #fbbf24;
   font-weight: 600;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  white-space: nowrap;
 }
 
 .stats-card--skeleton {
