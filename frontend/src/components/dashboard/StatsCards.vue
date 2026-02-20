@@ -99,11 +99,12 @@ const selectFilter = (filterValue) => {
       </article>
     </template>
 
-    <button
+    <div
       v-for="card in cards"
       v-else
       :key="card.key"
-      type="button"
+      role="button"
+      tabindex="0"
       class="stats-card"
       :class="[
         `stats-card--${card.key}`,
@@ -111,25 +112,40 @@ const selectFilter = (filterValue) => {
       ]"
       :title="card.tooltip"
       @click="selectFilter(card.filterValue)"
+      @keydown.enter.prevent="selectFilter(card.filterValue)"
+      @keydown.space.prevent="selectFilter(card.filterValue)"
     >
-      <span class="stats-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path
-            v-for="(path, pathIndex) in getIconPaths(card.key)"
-            :key="`${card.key}-${pathIndex}`"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            :d="path"
-          />
-        </svg>
-      </span>
+      <div class="stats-card-main">
+        <span class="stats-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path
+              v-for="(path, pathIndex) in getIconPaths(card.key)"
+              :key="`${card.key}-${pathIndex}`"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              :d="path"
+            />
+          </svg>
+        </span>
 
-      <span class="stats-copy">
-        <span class="stats-label">{{ card.label }}</span>
-        <strong class="stats-value">{{ card.value }}</strong>
-      </span>
-    </button>
+        <span class="stats-copy">
+          <span class="stats-label">{{ card.label }}</span>
+          <strong class="stats-value">{{ card.value }}</strong>
+        </span>
+      </div>
+
+      <!-- Check Button for Blurry Card -->
+      <button
+        v-if="card.key === 'blurry'"
+        type="button"
+        class="check-btn"
+        @click.stop="$emit('check-blur')"
+        title="Run Blur Check"
+      >
+        Check
+      </button>
+    </div>
   </section>
 </template>
 
@@ -226,6 +242,36 @@ const selectFilter = (filterValue) => {
   font-size: 1.45rem;
   line-height: 1.15;
   letter-spacing: -0.02em;
+}
+
+.stats-card-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.check-btn {
+  background: rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #fdba74;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.check-btn:hover {
+  background: rgba(249, 115, 22, 0.35);
+  border-color: rgba(249, 115, 22, 0.6);
+  color: #fff7ed;
+}
+
+.check-btn:active {
+  transform: scale(0.96);
 }
 
 .stats-card--skeleton {

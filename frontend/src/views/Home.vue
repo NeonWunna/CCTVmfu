@@ -196,6 +196,13 @@ const selectFilterFromStats = (filterValue) => {
   }
 };
 
+const handleCheckBlur = async () => {
+  showToast('Initializing manual blur check... This may take a few moments.', 'info');
+  // Trigger backend check here if API exists
+  // await api.triggerBlurCheck();
+  // For now, just a placeholder UI feedback as requested.
+};
+
 const focusCamera = (camera) => {
   selectedCamera.value = camera;
   mapViewRef.value?.focusCamera(camera, true);
@@ -367,6 +374,7 @@ watch(selectedCamera, (camera) => {
         :selected-filter="selectedFilter"
         :loading="loadingCameras"
         @select-filter="selectFilterFromStats"
+        @check-blur="handleCheckBlur"
       />
     </section>
 
