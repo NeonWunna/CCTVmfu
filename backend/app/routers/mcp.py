@@ -213,25 +213,33 @@ async def _handle_tool_call(
             error=JSONRPCError(code=-32602, message="Missing tool name")
         )
 
-    if tool_name == "check_camera_status":
-        location = tool_args.get("location", "").strip()
-        if not location:
-            return JSONRPCResponse(
-                id=rpc.id,
-                error=JSONRPCError(code=-32602, message="Missing required argument: location")
-            )
-        result = await service.check_camera_status(location)
-        return _text_response(rpc.id, result)
+    try:
+        if tool_name == "check_camera_status":
+            location = tool_args.get("location", "").strip()
+            if not location:
+                return JSONRPCResponse(
+                    id=rpc.id,
+                    error=JSONRPCError(code=-32602, message="Missing required argument: location")
+                )
+            result = await service.check_camera_status(location)
+            return _text_response(rpc.id, result)
 
-    if tool_name == "find_cameras_by_location":
-        location = tool_args.get("location", "").strip()
-        if not location:
-            return JSONRPCResponse(
-                id=rpc.id,
-                error=JSONRPCError(code=-32602, message="Missing required argument: location")
-            )
-        result = service.find_cameras_by_location(location)
-        return _text_response(rpc.id, result)
+        if tool_name == "find_cameras_by_location":
+            location = tool_args.get("location", "").strip()
+            if not location:
+                return JSONRPCResponse(
+                    id=rpc.id,
+                    error=JSONRPCError(code=-32602, message="Missing required argument: location")
+                )
+            result = service.find_cameras_by_location(location)
+            return _text_response(rpc.id, result)
+            
+    except Exception as e:
+        logger.exception(f"Error executing tool {tool_name}: {e}")
+        return JSONRPCResponse(
+            id=rpc.id,
+            error=JSONRPCError(code=-32000, message=f"Internal Error: {str(e)}")
+        )
 
     return JSONRPCResponse(
         id=rpc.id,

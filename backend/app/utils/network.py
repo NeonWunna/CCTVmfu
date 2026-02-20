@@ -54,7 +54,8 @@ async def check_port_async(ip_address: str, port: int = 80, timeout: float = 1.0
         writer.close()
         await writer.wait_closed()
         return True
-    except:
+    except Exception as e:
+        # logging.debug(f"Port check failed for {ip_address}:{port} - {e}")
         return False
 
 def check_port(ip_address: str, port: int = 80, timeout: int = 1) -> bool:
