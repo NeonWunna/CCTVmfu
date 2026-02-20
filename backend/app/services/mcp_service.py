@@ -43,10 +43,7 @@ class MCPService:
             "name": camera.name,
             "location": camera.location,
             "ip_address": camera.ip_address,
-            "status": status,
-            "image_status": camera.image_status,
-            "sharpness_value": camera.sharpness_value,
-            "last_image_check": camera.last_image_check
+            "status": status
         }
 
     async def check_camera_status(self, search_term: str) -> List[Dict[str, Any]]:
@@ -62,16 +59,12 @@ class MCPService:
             )
         )
         cameras = query.all()
-        logger.info(f"MCP: Found {len(cameras)} cameras for search term '{search_term}'")
         
         # Check status concurrently
-        try:
-            tasks = [self._check_single_camera_status(cam) for cam in cameras]
-            results = await asyncio.gather(*tasks)
-            return list(results)
-        except Exception as e:
-            logger.error(f"MCP: Error checking camera status: {e}")
-            raise e
+        tasks = [self._check_single_camera_status(cam) for cam in cameras]
+        results = await asyncio.gather(*tasks)
+        
+        return list(results)
 
     def find_cameras_by_location(self, location: str) -> List[Dict[str, Any]]:
         """
@@ -89,10 +82,7 @@ class MCPService:
                 "name": cam.name,
                 "location": cam.location,
                 "ip_address": cam.ip_address,
-                "status": cam.status, # Return stored status
-                "image_status": cam.image_status,
-                "sharpness_value": cam.sharpness_value,
-                "last_image_check": cam.last_image_check
+                "status": cam.status # Return stored status
             }
             for cam in cameras
         ]
