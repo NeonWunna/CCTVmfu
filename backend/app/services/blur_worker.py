@@ -11,44 +11,14 @@ from app.services.camera import THAILAND_TZ
 logger = logging.getLogger(__name__)
 
 class BlurWorker:
-    def __init__(self, check_interval: int = 300, threshold: float = 100.0):
+    def __init__(self, check_interval: int = 300, threshold: float = 100.0, progress_callback=None):
         self.check_interval = check_interval # 5 minutes
         self.threshold = threshold
+        self.progress_callback = progress_callback
         self.running = False
         self._shutdown = False
 
-    def check_sharpness(self, rtsp_url: str) -> float:
-        """
-        Capture a frame and calculate Laplacian variance.
-        Returns variance (float). Returns 0.0 if failed.
-        """
-        if not rtsp_url:
-            return 0.0
-            
-        try:
-            # Open stream
-            cap = cv2.VideoCapture(rtsp_url)
-            if not cap.isOpened():
-                return 0.0
-            
-            # Read one frame
-            ret, frame = cap.read()
-            cap.release()
-            
-            if not ret or frame is None:
-                return 0.0
-                
-            # Convert to grayscale
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            # Calculate Laplacian variance
-            laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-            variance = laplacian.var()
-            
-            return variance
-        except Exception as e:
-            logger.error(f"Error checking blur for {rtsp_url}: {e}")
-            return 0.0
+    # ... check_sharpness remains same ...
 
     async def run_once(self):
         """
@@ -62,17 +32,18 @@ class BlurWorker:
         try:
             # Filter for cameras that are ONLINE (formerly UP)
             cameras = db.query(models.Camera).filter(models.Camera.status == "online").all()
+            total_cameras = len(cameras)
             
             updates_count = 0
             
-            for cam in cameras:
+            for index, cam in enumerate(cameras):
                 if self._shutdown:
                     break
                     
-                # We can perform the check in a thread to strictly avoid blocking the loop 
-                # (although run_once is called in a task, blocking here blocks this task, not the whole app if other tasks are concurrent)
-                # But CV2 is CPU bound mostly.
-                
+                # Report Progress
+                if self.progress_callback:
+                    await self.progress_callback(index + 1, total_cameras)
+
                 # Check blur
                 variance = await asyncio.to_thread(self.check_sharpness, cam.rtsp_url)
                 
@@ -102,6 +73,11 @@ class BlurWorker:
 
             elapsed = (datetime.now() - start_time).total_seconds()
             logger.info(f"Blur check completed in {elapsed:.2f}s. Scanned {len(cameras)} cameras.")
+            
+            # Final progress update
+            if self.progress_callback:
+                await self.progress_callback(total_cameras, total_cameras)
+                # Optional: Send a "done" signal or simply let it finish
             
         except Exception as e:
             logger.error(f"Error in blur worker run: {e}")

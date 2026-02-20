@@ -297,16 +297,59 @@ const handleResize = () => {
   }
 };
 
+const blurProgress = ref({
+  active: false,
+  current: 0,
+  total: 0
+});
+
+let eventSource = null;
+
+const setupSSE = () => {
+    eventSource = api.getEventsSource();
+    
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'progress') {
+                blurProgress.value = {
+                    active: true,
+                    current: data.current,
+                    total: data.total
+                };
+                
+                // Auto-hide when done
+                if (data.current >= data.total && data.total > 0) {
+                     setTimeout(() => {
+                        blurProgress.value.active = false;
+                        fetchCameras(); // Refresh data to show new statuses
+                     }, 2000);
+                }
+            }
+        } catch (e) {
+            console.error('SSE Error:', e);
+        }
+    };
+
+    eventSource.onerror = () => {
+        console.warn('SSE Connection lost. Retrying...');
+        eventSource.close();
+        setTimeout(setupSSE, 5000);
+    };
+};
+
 let pollInterval = null;
 
 onMounted(() => {
   fetchCameras();
+  setupSSE();
   pollInterval = setInterval(fetchCameras, 30000);
   window.addEventListener('resize', handleResize);
 });
 
 onBeforeUnmount(() => {
   if (pollInterval) clearInterval(pollInterval);
+  if (eventSource) eventSource.close();
   window.removeEventListener('resize', handleResize);
 });
 
@@ -377,6 +420,7 @@ watch(selectedCamera, (camera) => {
         :blurry="blurryCount"
         :selected-filter="selectedFilter"
         :loading="loadingCameras"
+        :blur-progress="blurProgress"
         @select-filter="selectFilterFromStats"
         @check-blur="handleCheckBlur"
       />

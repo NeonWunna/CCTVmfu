@@ -29,6 +29,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  blurProgress: {
+    type: Object,
+    default: () => ({ active: false, current: 0, total: 0 })
   }
 });
 
@@ -135,16 +139,21 @@ const selectFilter = (filterValue) => {
         </span>
       </div>
 
-      <!-- Check Button for Blurry Card -->
-      <button
-        v-if="card.key === 'blurry'"
-        type="button"
-        class="check-btn"
-        @click.stop="$emit('check-blur')"
-        title="Run Blur Check"
-      >
-        Check
-      </button>
+      <!-- Check Button or Progress for Blurry Card -->
+      <div v-if="card.key === 'blurry'" class="blurry-action">
+        <span v-if="blurProgress.active" class="progress-text">
+            Scanning {{ blurProgress.current }} / {{ blurProgress.total }}
+        </span>
+        <button
+            v-else
+            type="button"
+            class="check-btn"
+            @click.stop="$emit('check-blur')"
+            title="Run Blur Check"
+        >
+            Check
+        </button>
+      </div>
     </div>
   </section>
 </template>
@@ -278,6 +287,45 @@ const selectFilter = (filterValue) => {
 
 .check-btn:active {
   transform: translateY(-50%) scale(0.96);
+}
+
+.blurry-action {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Override check-btn position since it's now inside blurry-action */
+.check-btn {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
+  margin: 0;
+}
+
+.check-btn:hover {
+  transform: scale(1.05);
+}
+
+.check-btn:active {
+  transform: scale(0.96);
+}
+
+.progress-text {
+  font-size: 0.7rem;
+  color: #fbbf24;
+  font-weight: 600;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .stats-card--skeleton {

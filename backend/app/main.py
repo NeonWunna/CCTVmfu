@@ -30,8 +30,24 @@ async def lifespan(app: FastAPI):
     # Store worker reference in app state
     app.state.ping_worker = worker
     
+    # SSE Broadcasting
+    app.state.sse_queues = set()
+
+    async def broadcast_progress(current: int, total: int):
+        """
+        Broadcast progress to all connected SSE clients.
+        """
+        message = f'{{"type": "progress", "current": {current}, "total": {total}}}'
+        for queue in list(app.state.sse_queues):
+            try:
+                await queue.put(message)
+            except Exception as e:
+                logger.error(f"Error putting to SSE queue: {e}")
+                app.state.sse_queues.discard(queue)
+
     # Startup: Start background blur worker (4 hours interval)
-    blur_worker = BlurWorker(check_interval=14400, threshold=100.0)
+    # Pass broadcast_progress as callback
+    blur_worker = BlurWorker(check_interval=14400, threshold=100.0, progress_callback=broadcast_progress)
     blur_worker_task = asyncio.create_task(blur_worker.start_loop())
     app.state.blur_worker = blur_worker
 

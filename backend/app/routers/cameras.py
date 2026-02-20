@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import cv2
 import threading
+import asyncio
 
 from app import schemas
 from app.db.session import get_db
@@ -135,6 +136,29 @@ def check_camera_status(
     if db_camera is None:
         raise CameraNotFoundException(camera_id)
     return db_camera
+
+
+@router.get("/events")
+async def events_endpoint(request: Request):
+    """
+    SSE endpoint for real-time camera updates (progress bars, etc.)
+    """
+    queue = asyncio.Queue()
+    request.app.state.sse_queues.add(queue)
+    
+    async def event_generator():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                data = await queue.get()
+                yield f"data: {data}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            request.app.state.sse_queues.discard(queue)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/check-blur", response_model=schemas.MessageResponse)

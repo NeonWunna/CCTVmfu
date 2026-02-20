@@ -34,5 +34,10 @@ export default {
     },
     triggerBlurCheck() {
         return api.post('/cameras/check-blur');
+    },
+    getEventsSource() {
+        // Return native EventSource
+        const url = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/cameras/events` : '/api/cameras/events';
+        return new EventSource(url);
     }
 };
