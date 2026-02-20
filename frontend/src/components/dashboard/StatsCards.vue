@@ -254,8 +254,9 @@ const selectFilter = (filterValue) => {
 
 .check-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
   background: rgba(249, 115, 22, 0.2);
   border: 1px solid rgba(249, 115, 22, 0.4);
   color: #fdba74;
@@ -272,10 +273,11 @@ const selectFilter = (filterValue) => {
   background: rgba(249, 115, 22, 0.35);
   border-color: rgba(249, 115, 22, 0.6);
   color: #fff7ed;
+  transform: translateY(-50%) scale(1.05); /* Account for translate */
 }
 
 .check-btn:active {
-  transform: scale(0.96);
+  transform: translateY(-50%) scale(0.96);
 }
 
 .stats-card--skeleton {
