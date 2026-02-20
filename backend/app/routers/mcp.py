@@ -15,6 +15,10 @@ from app.services.mcp_service import MCPService
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+@router.get("/")
+async def mcp_test_endpoint():
+    return {"status": "mcp_router_reachable", "path": "/mcp/"}
+
 # ---------------------------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------------------------
