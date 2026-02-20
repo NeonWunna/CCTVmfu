@@ -43,7 +43,10 @@ class MCPService:
             "name": camera.name,
             "location": camera.location,
             "ip_address": camera.ip_address,
-            "status": status
+            "status": status,
+            "image_status": camera.image_status,
+            "sharpness_value": camera.sharpness_value,
+            "last_image_check": camera.last_image_check
         }
 
     async def check_camera_status(self, search_term: str) -> List[Dict[str, Any]]:
@@ -82,7 +85,10 @@ class MCPService:
                 "name": cam.name,
                 "location": cam.location,
                 "ip_address": cam.ip_address,
-                "status": cam.status # Return stored status
+                "status": cam.status, # Return stored status
+                "image_status": cam.image_status,
+                "sharpness_value": cam.sharpness_value,
+                "last_image_check": cam.last_image_check
             }
             for cam in cameras
         ]
