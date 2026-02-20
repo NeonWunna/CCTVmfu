@@ -4,7 +4,7 @@ import logging
 import json
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -21,8 +21,12 @@ async def mcp_test_endpoint():
     return {"status": "mcp_router_reachable", "path": "/mcp/"}
 
 @router.get("/ws")
-async def mcp_test_ws_get():
-    return {"status": "mcp_ws_path_matched", "message": "Please use a WebSocket client to connect to this endpoint."}
+async def mcp_test_ws_get(request: Request):
+    return {
+        "status": "mcp_ws_path_matched",
+        "message": "Please use a WebSocket client to connect to this endpoint.",
+        "headers": dict(request.headers)
+    }
 
 # ---------------------------------------------------------------------------
 # Schemas
