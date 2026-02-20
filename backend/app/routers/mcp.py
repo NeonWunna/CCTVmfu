@@ -66,6 +66,12 @@ TOOL_DEFINITIONS = [
     }
 ]
 
+@router.get("/status")
+async def mcp_status_debug(request: Request):
+    headers = dict(request.headers)
+    logger.info(f"MCP Status Debug called. Headers: {headers}")
+    return {"status": "ok", "headers": headers}
+
 # ---------------------------------------------------------------------------
 # WebSocket Handler
 # ---------------------------------------------------------------------------
@@ -76,7 +82,16 @@ async def mcp_websocket_endpoint(websocket: WebSocket, db: Session = Depends(get
     WebSocket endpoint for MCP.
     Handles JSON-RPC over persistent connection.
     """
-    await websocket.accept()
+    headers = dict(websocket.headers)
+    logger.info(f"Incoming WebSocket connection attempt. Headers: {headers}")
+    
+    try:
+        await websocket.accept()
+        logger.info("WebSocket connection accepted.")
+    except Exception as e:
+        logger.error(f"Failed to accept WebSocket connection: {str(e)}")
+        return
+
     session_id = str(uuid.uuid4())
     logger.info(f"MCP WebSocket session started: {session_id}")
     
