@@ -99,7 +99,7 @@ class BlurWorker:
                     needs_update = True
                 
                 # Update score and timestamp
-                cam.sharpness_value = variance
+                cam.sharpness_value = float(variance)
                 cam.last_image_check = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
                 
                 # Commit periodically or per camera? Per camera is safer for long running loop
