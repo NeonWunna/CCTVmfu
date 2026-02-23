@@ -59,12 +59,7 @@ const getStatusLabel = (status) => {
 
 const statusLabel = computed(() => getStatusLabel(props.camera?.status));
 const statusClass = computed(() => props.camera?.status || 'online');
-const hasStreamUrl = computed(() => Boolean(props.streamUrl));
-const resolvedStreamUrl = computed(() => {
-  if (!props.streamUrl) return '';
-  const separator = props.streamUrl.includes('?') ? '&' : '?';
-  return `${props.streamUrl}${separator}ts=${streamNonce.value}`;
-});
+const hasStreamUrl = computed(() => Boolean(props.camera?.rtsp_url || props.camera?.rtspUrl));
 const timestampText = computed(() => thailandNow.value);
 
 const handleImageError = () => {
