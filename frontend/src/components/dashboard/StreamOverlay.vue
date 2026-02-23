@@ -342,13 +342,14 @@ onBeforeUnmount(() => {
 }
 
 .status-badge--blurry {
-  background: rgba(249, 115, 22, 0.18);
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
   border-color: rgba(249, 115, 22, 0.4);
-  color: #fdba74;
 }
 
 .status-badge--blurry .status-dot {
   background: #f97316;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
 }
 
 .stream-frame {

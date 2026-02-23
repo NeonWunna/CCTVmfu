@@ -178,9 +178,13 @@ const hasCamera = computed(() => Boolean(props.camera));
 }
 
 .status-chip--blurry {
-  background: rgba(236, 72, 153, 0.2);
-  color: #f9a8d4;
-  border-color: rgba(236, 72, 153, 0.34);
+  background: rgba(249, 115, 22, 0.15);
+  color: #fdba74;
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.status-chip--blurry::before {
+  background: #f97316;
 }
 
 .camera-meta {

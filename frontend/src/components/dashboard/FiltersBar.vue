@@ -414,7 +414,7 @@ const updateFilter = (event) => {
 .status-pill--blurry {
   color: #fdba74;
   background: rgba(249, 115, 22, 0.16);
-  border-color: rgba(249, 115, 22, 0.36);
+  border-color: rgba(249, 115, 22, 0.35);
 }
 
 @keyframes loading-shimmer {

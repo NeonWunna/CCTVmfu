@@ -709,11 +709,6 @@ onBeforeUnmount(() => {
   color: #f97316;
   border-color: rgba(249, 115, 22, 0.3);
 }
-.status-badge.no_signal {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.3);
-}
 
 .status-badge.online .status-dot {
   background: #10b981;

@@ -98,7 +98,7 @@ const getStatusLabel = (status) => {
 const getStatusColor = (status) => {
   if (status === 'offline') return '#ef4444';
   if (status === 'no_signal') return '#3b82f6';
-  if (status === 'blurry') return '#a855f7';
+  if (status === 'blurry') return '#f97316'; // Orange color for blurry
   return '#22c55e';
 };
 
