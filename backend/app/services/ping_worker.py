@@ -45,6 +45,9 @@ class PingWorker:
                 return camera_id, "no_signal"
                 
             # 4. Web UP + RTSP UP -> ONLINE
+            # Preserve "blurry" status if it was set by BlurWorker
+            if current_status == "blurry":
+                return camera_id, "blurry"
             return camera_id, "online"
 
     async def run_once(self):

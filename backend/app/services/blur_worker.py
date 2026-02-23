@@ -86,6 +86,13 @@ class BlurWorker:
                 # Update DB
                 # Always update last_image_check
                 needs_update = False
+                
+                # Check if we need to update the main status to 'blurry'
+                if new_image_status == "blur" and cam.status != "blurry":
+                    logger.info(f"Camera {cam.id} status changed to blurry! (Score: {variance:.2f})")
+                    cam.status = "blurry"
+                    needs_update = True
+                    
                 if cam.image_status != new_image_status:
                     logger.info(f"Camera {cam.id} image status changed: {cam.image_status} -> {new_image_status} (Score: {variance:.2f})")
                     cam.image_status = new_image_status
