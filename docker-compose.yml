@@ -56,7 +56,7 @@ services:
       - cctv-network
 
   go2rtc:
-    image: alexxit/go2rtc:1.9
+    image: alexxit/go2rtc:latest
     container_name: cctv_go2rtc
     restart: always
     ports:
