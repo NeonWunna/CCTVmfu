@@ -191,18 +191,16 @@ onBeforeUnmount(() => {
         <p>{{ camera?.ipAddress || 'Camera IP unavailable' }}</p>
       </div>
 
-      <img
+      <iframe
         v-else
-        :src="resolvedStreamUrl"
+        :src="`/stream/webrtc.html?src=${encodeURIComponent(camera?.rtsp_url || camera?.rtspUrl || '')}`"
         class="stream-image"
-        alt="Live camera feed"
-        loading="eager"
-        decoding="async"
-        fetchpriority="high"
-        draggable="false"
+        title="Live camera feed"
+        frameborder="0"
+        allowfullscreen
+        scrolling="no"
         @error="handleImageError"
-        @load="handleImageLoad"
-      />
+      ></iframe>
 
       <div v-if="hasStreamUrl && !streamFailed" class="timestamp-pill">
         {{ timestampText }}
