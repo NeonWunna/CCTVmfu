@@ -109,6 +109,37 @@ const closeDropdown = () => {
   showDropdown.value = false;
 };
 
+const hideIframeControls = (event) => {
+  try {
+    const iframeDoc = event.target.contentDocument || event.target.contentWindow.document;
+    if (!iframeDoc) return;
+    
+    const style = iframeDoc.createElement('style');
+    style.innerHTML = `
+      video::-webkit-media-controls { display: none !important; }
+      video { pointer-events: none; }
+      .info { display: none !important; }
+    `;
+    iframeDoc.head.appendChild(style);
+
+    const removeControls = () => {
+      iframeDoc.querySelectorAll('video').forEach(v => {
+        v.removeAttribute('controls');
+        v.controls = false;
+      });
+    };
+    
+    removeControls();
+    
+    const observer = new MutationObserver(removeControls);
+    if (iframeDoc.body) {
+      observer.observe(iframeDoc.body, { childList: true, subtree: true });
+    }
+  } catch (e) {
+    console.warn("Could not hide iframe controls:", e);
+  }
+};
+
 const goBack = () => {
   router.push('/');
 };
@@ -335,6 +366,7 @@ onBeforeUnmount(() => {
               allowfullscreen
               scrolling="no"
               @error="e => e.target.style.display = 'none'"
+              @load="hideIframeControls"
             ></iframe>
 
             <button class="fullscreen-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
