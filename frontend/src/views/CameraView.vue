@@ -326,13 +326,16 @@ onBeforeUnmount(() => {
               <div class="scan-overlay"></div>
             </div>
 
-            <img
+            <iframe
               v-else
-              :src="`/api/cameras/${cameraData.id}/stream`"
+              :src="`/stream/webrtc.html?src=${encodeURIComponent(cameraData.rtspUrl)}`"
               class="video-stream"
-              alt="Live Camera Feed"
+              title="Live Camera Feed"
+              frameborder="0"
+              allowfullscreen
+              scrolling="no"
               @error="e => e.target.style.display = 'none'"
-            />
+            ></iframe>
 
             <button class="fullscreen-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
               <svg v-if="!isFullscreen" fill="none" stroke="currentColor" viewBox="0 0 24 24">

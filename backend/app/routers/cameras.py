@@ -171,58 +171,7 @@ def delete_camera(
     return schemas.MessageResponse(message="Camera deleted successfully")
 
 
-def generate_frames(rtsp_url: str):
-    """
-    Generator function to read frames from RTSP stream and yield them as MJPEG.
-    WARNING: This simple implementation is blocking and may consume significant resources.
-    For production, consider using a dedicated streaming server or async-compatible library.
-    """
-    # Prefer FFmpeg backend for RTSP handling when available.
-    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
-
-    # Fallback to default backend if FFmpeg backend is unavailable on this build.
-    if not cap.isOpened():
-        cap.release()
-        cap = cv2.VideoCapture(rtsp_url)
-
-    # Reduce decoder queue to keep frames as fresh as possible.
-    # Not all backends honor this; it's safe to attempt.
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-    
-    # Try to open the stream
-    if not cap.isOpened():
-        # Fallback to a placeholder or error frame? 
-        # For now, just stop.
-        return
-
-    try:
-        while True:
-            # Grab first available frame packet.
-            if not cap.grab():
-                break
-
-            # Drop a few queued packets so we retrieve a newer frame.
-            # This trades frame continuity for lower latency.
-            for _ in range(2):
-                if not cap.grab():
-                    break
-
-            success, frame = cap.retrieve()
-            if not success or frame is None:
-                continue
-            
-            # Encode frame as JPEG
-            ret, buffer = cv2.imencode('.jpg', frame)
-            if not ret:
-                continue
-            frame = buffer.tobytes()
-            
-            # Yield frame in MJPEG format
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    finally:
-        cap.release()
-
+from fastapi.responses import RedirectResponse
 
 @router.get("/{camera_id}/stream")
 def stream_camera(
@@ -230,7 +179,7 @@ def stream_camera(
     db: Session = Depends(get_db)
 ):
     """
-    Stream camera video as MJPEG.
+    Redirect to go2rtc WebRTC stream.
     """
     service = CameraService(db)
     camera = service.get_camera(camera_id)
@@ -238,7 +187,7 @@ def stream_camera(
     if not camera or not camera.rtsp_url:
         return Response(status_code=404, content="Camera or RTSP URL not found")
 
-    return StreamingResponse(
-        generate_frames(camera.rtsp_url), 
-        media_type="multipart/x-mixed-replace; boundary=frame"
-    )
+    import urllib.parse
+    encoded_url = urllib.parse.quote(camera.rtsp_url)
+    # Redirect to Nginx reverse proxy routing to go2rtc
+    return RedirectResponse(url=f"/stream/webrtc.html?src={encoded_url}")

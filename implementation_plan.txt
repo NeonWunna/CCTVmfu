@@ -1,0 +1,47 @@
+# Video Streaming Optimization Plan
+
+## Goal Description
+
+The current video streaming mechanism uses OpenCV in Python (`backend/app/routers/cameras.py`) to fetch RTSP streams, decode them, and encode them to MJPEG. This causes significant stuttering (กระตุก) because:
+
+1. **CPU Bottleneck**: Decoding and encoding video in Python is extremely CPU-intensive. The backend container is also strictly limited to `0.5` CPU cores in `docker-compose.yml`.
+2. **Multiple Connections**: Each user watching the stream opens a _new_ RTSP connection to the camera, which overwhelms the camera's network and hardware.
+3. **Frame Dropping**: The Python code artificially drops 2 out of 3 frames to keep the stream real-time, causing a jittery frame rate.
+
+**Solution: Add a Dedicated Streaming Server (`go2rtc`)**
+We will introduce `go2rtc` (a modern, lightning-fast, zero-dependency streaming server written in Go) to the `docker-compose.yml`. It acts as a lightweight proxy. It connects to the camera _once_, and can serve the stream to hundreds of users via WebRTC, MSE, or MJPEG with near-zero CPU usage.
+
+## Proposed Changes
+
+### Docker infrastructure
+
+#### `docker-compose.yml`
+
+- Add `go2rtc` service using the `alexxit/go2rtc` Docker image.
+- Expose port `1984` (API/Web) and `8555` (WebRTC) if needed.
+
+#### `nginx/nginx.conf`
+
+- Add a reverse proxy rule for `/stream/` to route traffic to the `go2rtc` container, so the frontend can access it without dealing with CORS or exposed ports.
+
+### Backend Update
+
+#### `backend/app/routers/cameras.py`
+
+- Refactor or remove the `generate_frames()` Python MJPEG encoder.
+- Update the `/{camera_id}/stream` endpoint to redirect or proxy to `go2rtc`, or change the endpoint to return the `go2rtc` stream URL structure. (e.g., returning `/stream/api/stream.mjpeg?src={rtsp_url}`)
+
+### Frontend Update
+
+#### `frontend/src/views/CameraView.vue`
+
+- Update the `<img :src=".../stream">` tag to point to the new `go2rtc` URL format.
+
+## Verification Plan
+
+### Manual Verification
+
+1. Run `docker-compose up -d` with the new configuration.
+2. Open the frontend dashboard and navigate to a Live Camera View.
+3. Observe the frame rate and stuttering. It should drop to near-zero latency with smooth playback depending on the camera's source FPS.
+4. Check the backend server CLI logs and `docker stats`—the CPU usage should be drastically reduced compared to the Python `cv2` method.
