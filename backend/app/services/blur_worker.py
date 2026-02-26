@@ -11,7 +11,7 @@ from app.services.camera import THAILAND_TZ
 logger = logging.getLogger(__name__)
 
 class BlurWorker:
-    def __init__(self, check_interval: int = 300, threshold: float = 100.0):
+    def __init__(self, check_interval: int = 300, threshold: float = 70.0):
         self.check_interval = check_interval # 5 minutes
         self.threshold = threshold
         self.running = False

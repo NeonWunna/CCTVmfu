@@ -2,7 +2,7 @@ import cv2
 import sys
 import os
 
-def check_blur(image_path: str, threshold: float = 100.0):
+def check_blur(image_path: str, threshold: float = 70.0):
     print(f"📸 Testing image: {image_path}")
     
     if not os.path.exists(image_path):

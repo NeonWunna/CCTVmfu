@@ -61,8 +61,8 @@ def check_camera_status(camera_ip: str, rtsp_url: str = None) -> str:
     try:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-        
-        BLUR_THRESHOLD = 100.0
+		
+        BLUR_THRESHOLD = 70.0
         if laplacian_var < BLUR_THRESHOLD:
             return "blurry"
     except Exception as e:
