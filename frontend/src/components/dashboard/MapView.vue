@@ -40,6 +40,7 @@ let pulseFrame = false;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
 const GOOGLE_MAPS_KEY = 'AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM';
+const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
 const loadScript = (id, src) =>
   new Promise((resolve, reject) => {
@@ -126,10 +127,12 @@ const createMarkerIcon = (status, options = {}) => {
   const zoomBoost = zoom <= 12 ? 2.2 : zoom <= 14 ? 1.5 : zoom <= 16 ? 0.8 : 0.2;
   const baseScale = isActive ? 11.5 : 10.5;
   const pulseBoost = pulsing ? 1.1 : 0;
+  const mobileScaleAdjust = isMobileViewport() ? -1.1 : 0;
+  const resolvedScale = Math.max(7.2, baseScale + zoomBoost + pulseBoost + mobileScaleAdjust);
 
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    scale: baseScale + zoomBoost + pulseBoost,
+    scale: resolvedScale,
     fillColor: baseColor,
     fillOpacity: 1,
     strokeColor: '#ffffff',
@@ -333,13 +336,13 @@ const fitToVisibleMarkers = () => {
 
   if (markers.value.length === 1) {
     map.value.setCenter(markers.value[0].getPosition());
-    map.value.setZoom(17);
+    map.value.setZoom(isMobileViewport() ? 16 : 17);
     return;
   }
 
   const bounds = new google.maps.LatLngBounds();
   markers.value.forEach((marker) => bounds.extend(marker.getPosition()));
-  map.value.fitBounds(bounds, 80);
+  map.value.fitBounds(bounds, isMobileViewport() ? 44 : 80);
 
   google.maps.event.addListenerOnce(map.value, 'bounds_changed', () => {
     if ((map.value.getZoom() || 0) > 18) {
@@ -491,7 +494,7 @@ const initMap = async () => {
 
     map.value = new google.maps.Map(mapContainer.value, {
       center: DEFAULT_CENTER,
-      zoom: 16,
+      zoom: isMobileViewport() ? 15 : 16,
       mapTypeId: 'hybrid',
       mapTypeControl: false,
       streetViewControl: false,

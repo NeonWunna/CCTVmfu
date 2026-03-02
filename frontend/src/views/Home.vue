@@ -29,6 +29,7 @@ const loadingCameras = ref(true);
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
 const sidebarExpanded = ref(viewportWidth.value >= 1200);
 const mobileFiltersOpen = ref(false);
+const mobileDrawerTab = ref('status');
 
 const toast = ref({
   show: false,
@@ -275,6 +276,7 @@ const toggleSidebar = () => {
 
 const openMobileFilters = () => {
   if (isMobile.value) {
+    mobileDrawerTab.value = 'status';
     mobileFiltersOpen.value = true;
   }
 };
@@ -357,7 +359,7 @@ watch(selectedCamera, (camera) => {
       @open-mobile-filters="openMobileFilters"
     />
 
-    <section class="stats-strip">
+    <section v-if="!isMobile" class="stats-strip">
       <StatsCards
         :total="totalCount"
         :online="onlineCount"
@@ -470,10 +472,10 @@ watch(selectedCamera, (camera) => {
         class="mobile-drawer-backdrop"
         @click.self="mobileFiltersOpen = false"
       >
-        <aside class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Camera filters">
+        <aside class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Dashboard menu">
           <header class="mobile-drawer__header">
             <div>
-              <h2>Filters & Search</h2>
+              <h2>Dashboard Menu</h2>
               <p>{{ filteredCameras.length }} cameras visible</p>
             </div>
             <button type="button" class="icon-btn" aria-label="Close filters panel" @click="mobileFiltersOpen = false">
@@ -483,18 +485,66 @@ watch(selectedCamera, (camera) => {
             </button>
           </header>
 
-          <FiltersBar
-            :search-query="searchQuery"
-            :selected-filter="selectedFilter"
-            :filter-options="filterOptions"
-            :cameras="filteredCameras"
-            :loading="loadingCameras"
-            :active-camera-id="activeCameraId"
-            @update:search-query="searchQuery = $event"
-            @update:selected-filter="selectFilter"
-            @clear-filters="clearFilters"
-            @focus-camera="focusCamera"
-          />
+          <div class="mobile-drawer__tabs" role="tablist" aria-label="Dashboard menu tabs">
+            <button
+              type="button"
+              class="mobile-tab"
+              :class="{ 'mobile-tab--active': mobileDrawerTab === 'status' }"
+              role="tab"
+              :aria-selected="mobileDrawerTab === 'status'"
+              @click="mobileDrawerTab = 'status'"
+            >
+              Camera Status
+            </button>
+            <button
+              type="button"
+              class="mobile-tab"
+              :class="{ 'mobile-tab--active': mobileDrawerTab === 'filters' }"
+              role="tab"
+              :aria-selected="mobileDrawerTab === 'filters'"
+              @click="mobileDrawerTab = 'filters'"
+            >
+              Filters
+            </button>
+          </div>
+
+          <section
+            v-show="mobileDrawerTab === 'status'"
+            class="mobile-drawer__section mobile-status-strip"
+            aria-label="Camera status"
+          >
+            <h3>Camera Status</h3>
+            <StatsCards
+              :total="totalCount"
+              :online="onlineCount"
+              :offline="offlineCount"
+              :no-signal="noSignalCount"
+              :blurry="blurryCount"
+              :selected-filter="selectedFilter"
+              :loading="loadingCameras"
+              @select-filter="selectFilterFromStats"
+            />
+          </section>
+
+          <section
+            v-show="mobileDrawerTab === 'filters'"
+            class="mobile-drawer__section"
+            aria-label="Filters and search"
+          >
+            <h3>Filters & Search</h3>
+            <FiltersBar
+              :search-query="searchQuery"
+              :selected-filter="selectedFilter"
+              :filter-options="filterOptions"
+              :cameras="filteredCameras"
+              :loading="loadingCameras"
+              :active-camera-id="activeCameraId"
+              @update:search-query="searchQuery = $event"
+              @update:selected-filter="selectFilter"
+              @clear-filters="clearFilters"
+              @focus-camera="focusCamera"
+            />
+          </section>
         </aside>
       </div>
     </transition>
@@ -685,25 +735,27 @@ watch(selectedCamera, (camera) => {
 .mobile-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.64);
-  backdrop-filter: blur(4px);
+  background: rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(6px);
   z-index: 2000;
 }
 
 .mobile-drawer {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 10px;
+  right: 10px;
   bottom: 0;
-  max-height: 82vh;
-  background: rgba(2, 6, 23, 0.97);
-  border-top: 1px solid rgba(148, 163, 184, 0.24);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  padding: 16px;
+  max-height: min(88vh, 88dvh);
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: auto;
+  backdrop-filter: blur(16px) saturate(140%);
 }
 
 .mobile-drawer__header {
@@ -723,6 +775,50 @@ watch(selectedCamera, (camera) => {
   margin: 4px 0 0;
   color: #94a3b8;
   font-size: 0.8rem;
+}
+
+.mobile-drawer__section h3 {
+  margin: 0 0 8px;
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.mobile-drawer__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-tab {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.28);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-tab--active {
+  background: rgba(14, 165, 233, 0.24);
+  border-color: rgba(56, 189, 248, 0.56);
+  color: #e0f2fe;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.26);
+}
+
+.mobile-status-strip :deep(.stats-grid) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-status-strip :deep(.stats-card) {
+  min-height: 72px;
+  padding: 10px;
+}
+
+.mobile-status-strip :deep(.stats-value) {
+  font-size: 1.14rem;
 }
 
 .drawer-fade-enter-active,
@@ -765,19 +861,15 @@ watch(selectedCamera, (camera) => {
     overflow: auto;
   }
 
-  .stats-strip {
-    padding: 10px 12px;
-  }
-
   .workspace {
     display: block;
     padding: 0 12px 12px;
   }
 
   .map-shell {
-    /* Keep map usable across short/tall phones while avoiding percentage height collapse. */
-    height: clamp(320px, calc(100dvh - 248px), 68dvh);
-    min-height: 320px;
+    /* Expand map area on mobile since stats move into the drawer menu. */
+    height: clamp(360px, calc(100dvh - 106px), 86dvh);
+    min-height: 360px;
   }
 
   .map-shell__toolbar {
