@@ -774,7 +774,10 @@ watch(selectedCamera, (camera) => {
   }
 
   .map-shell {
-    min-height: calc(100vh - 248px);
+    /* Explicit mobile height prevents map canvas collapse from percentage-based sizing. */
+    height: calc(100vh - 248px);
+    height: calc(100dvh - 248px);
+    min-height: 320px;
   }
 
   .map-shell__toolbar {
