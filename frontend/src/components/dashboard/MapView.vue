@@ -40,7 +40,9 @@ let pulseFrame = false;
 
 const DEFAULT_CENTER = { lat: 20.0443, lng: 99.8937 };
 const GOOGLE_MAPS_KEY = 'AIzaSyDBMns5PZsDXIfXsT1E1_79jx2934NTUHM';
-const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
+const isMobileViewport = () =>
+  typeof window !== 'undefined' &&
+  (window.innerWidth < 768 || (window.innerWidth <= 1024 && window.innerHeight <= 560));
 
 const loadScript = (id, src) =>
   new Promise((resolve, reject) => {

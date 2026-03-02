@@ -6,6 +6,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  compactMode: {
+    type: Boolean,
+    default: false
+  },
   showMobileFiltersButton: {
     type: Boolean,
     default: true
@@ -70,7 +74,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header class="app-header">
+  <header class="app-header" :class="{ 'app-header--compact': compactMode }">
     <div class="brand">
       <img :src="logoUrl" alt="MFU Logo" class="logo">
       <div class="brand-copy">
@@ -83,6 +87,7 @@ onBeforeUnmount(() => {
       <button
         v-if="showMobileFiltersButton"
         class="mobile-filters-btn"
+        :class="{ 'mobile-filters-btn--visible': compactMode }"
         type="button"
         aria-label="Open dashboard menu"
         @click="$emit('open-mobile-filters')"
@@ -128,6 +133,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .app-header {
+  position: relative;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -174,6 +181,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .mobile-filters-btn {
@@ -194,8 +203,14 @@ onBeforeUnmount(() => {
   height: 16px;
 }
 
+.mobile-filters-btn--visible {
+  display: inline-flex;
+  align-items: center;
+}
+
 .profile-menu {
   position: relative;
+  z-index: 1300;
 }
 
 .profile-trigger {
@@ -209,6 +224,7 @@ onBeforeUnmount(() => {
   padding: 6px 10px 6px 6px;
   cursor: pointer;
   min-width: 0;
+  touch-action: manipulation;
 }
 
 .profile-trigger:focus-visible,
@@ -265,7 +281,8 @@ onBeforeUnmount(() => {
   background: rgba(15, 23, 42, 0.96);
   box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
   overflow: hidden;
-  z-index: 30;
+  z-index: 1400;
+  pointer-events: auto;
 }
 
 .dropdown-item {
@@ -298,6 +315,20 @@ onBeforeUnmount(() => {
   transform: translateY(-4px);
 }
 
+.app-header--compact {
+  padding: 12px 14px;
+}
+
+.app-header--compact .logo {
+  width: 44px;
+  height: 44px;
+}
+
+.app-header--compact .brand-copy p,
+.app-header--compact .profile-meta {
+  display: none;
+}
+
 @media (max-width: 840px) {
   .app-header {
     padding: 14px 16px;
@@ -311,6 +342,13 @@ onBeforeUnmount(() => {
   .mobile-filters-btn {
     display: inline-flex;
     align-items: center;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: 66px;
+    right: 10px;
+    width: min(220px, calc(100vw - 20px));
   }
 }
 </style>

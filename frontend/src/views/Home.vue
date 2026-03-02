@@ -27,6 +27,7 @@ const streamUrl = ref('');
 const loadingCameras = ref(true);
 
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
+const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 720);
 const sidebarExpanded = ref(viewportWidth.value >= 1200);
 const mobileFiltersOpen = ref(false);
 const mobileDrawerTab = ref('status');
@@ -53,7 +54,10 @@ const filterOptions = [
   { value: 'blurry', label: 'Blurry' }
 ];
 
-const isMobile = computed(() => viewportWidth.value < 768);
+const isCompactLandscape = computed(() =>
+  viewportWidth.value <= 1024 && viewportHeight.value <= 560
+);
+const isMobile = computed(() => viewportWidth.value < 768 || isCompactLandscape.value);
 const activeCameraId = computed(() => selectedCamera.value?.id ?? null);
 
 const formatThailandDateTime = (date = new Date()) => {
@@ -283,7 +287,8 @@ const openMobileFilters = () => {
 
 const handleResize = () => {
   viewportWidth.value = window.innerWidth;
-  if (viewportWidth.value >= 768) {
+  viewportHeight.value = window.innerHeight;
+  if (!isMobile.value) {
     mobileFiltersOpen.value = false;
   }
 };
@@ -329,7 +334,7 @@ watch(selectedCamera, (camera) => {
 </script>
 
 <template>
-  <div class="dashboard-page">
+  <div class="dashboard-page" :class="{ 'dashboard-page--mobile': isMobile }">
     <Toast
       :show="toast.show"
       :message="toast.message"
@@ -354,6 +359,7 @@ watch(selectedCamera, (camera) => {
       :logo-url="logoUrl"
       :user-name="userName"
       :user-role="userRole"
+      :compact-mode="isMobile"
       @camera-settings="goToCameraSettings"
       @logout="logout"
       @open-mobile-filters="openMobileFilters"
@@ -372,7 +378,13 @@ watch(selectedCamera, (camera) => {
       />
     </section>
 
-    <section class="workspace" :class="{ 'workspace--collapsed': !sidebarExpanded || isMobile }">
+    <section
+      class="workspace"
+      :class="{
+        'workspace--collapsed': !sidebarExpanded || isMobile,
+        'workspace--mobile': isMobile
+      }"
+    >
       <aside
         v-if="!isMobile"
         class="sidebar-panel"
@@ -588,6 +600,39 @@ watch(selectedCamera, (camera) => {
 
 .workspace--collapsed {
   grid-template-columns: 88px 1fr;
+}
+
+.workspace--mobile {
+  display: block;
+  padding: 0 12px 12px;
+}
+
+.workspace--mobile .map-shell {
+  /* Apply mobile map sizing for portrait and rotated phones. */
+  height: clamp(300px, calc(100dvh - 108px), 88dvh);
+  min-height: 300px;
+}
+
+.workspace--mobile .map-shell__toolbar {
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  max-width: none;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.workspace--mobile .toolbar-btn {
+  padding: 7px 10px;
+  font-size: 0.76rem;
+}
+
+.workspace--mobile .camera-info-wrap {
+  top: auto;
+  bottom: 8px;
+  right: 8px;
+  left: 8px;
+  width: auto;
 }
 
 .sidebar-panel {
@@ -854,44 +899,17 @@ watch(selectedCamera, (camera) => {
 }
 
 @media (max-width: 767px) {
-  .dashboard-page {
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow: auto;
+  .mobile-drawer {
+    left: 6px;
+    right: 6px;
+    padding: 12px;
   }
+}
 
-  .workspace {
-    display: block;
-    padding: 0 12px 12px;
-  }
-
-  .map-shell {
-    /* Expand map area on mobile since stats move into the drawer menu. */
-    height: clamp(360px, calc(100dvh - 106px), 86dvh);
-    min-height: 360px;
-  }
-
-  .map-shell__toolbar {
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    max-width: none;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .toolbar-btn {
-    padding: 7px 10px;
-    font-size: 0.76rem;
-  }
-
-  .camera-info-wrap {
-    top: auto;
-    bottom: 8px;
-    right: 8px;
-    left: 8px;
-    width: auto;
-  }
+.dashboard-page--mobile {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
 }
 </style>
