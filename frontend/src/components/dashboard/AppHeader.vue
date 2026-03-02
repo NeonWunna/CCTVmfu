@@ -6,6 +6,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  showMobileFiltersButton: {
+    type: Boolean,
+    default: true
+  },
   userName: {
     type: String,
     default: 'Admin User'
@@ -77,6 +81,7 @@ onBeforeUnmount(() => {
 
     <div class="actions">
       <button
+        v-if="showMobileFiltersButton"
         class="mobile-filters-btn"
         type="button"
         @click="$emit('open-mobile-filters')"
