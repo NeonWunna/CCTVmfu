@@ -23,54 +23,47 @@ const hasCamera = computed(() => Boolean(props.camera));
 
 <template>
   <aside
+    v-if="hasCamera"
     class="camera-info"
-    :class="{ 'camera-info--empty': !hasCamera }"
     aria-live="polite"
   >
-    <template v-if="hasCamera">
-      <header class="camera-info__header">
-        <div>
-          <p>Selected Camera</p>
-          <h3>{{ camera.name }}</h3>
-        </div>
-        <button type="button" class="close-btn" aria-label="Close camera details" @click="$emit('close')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </header>
-
-      <span class="status-chip" :class="`status-chip--${camera.status}`">{{ statusText }}</span>
-
-      <dl class="camera-meta">
-        <div>
-          <dt>IP Address</dt>
-          <dd>{{ camera.ipAddress || 'N/A' }}</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>{{ camera.location || 'N/A' }}</dd>
-        </div>
-        <div>
-          <dt>Last Updated</dt>
-          <dd>{{ camera.lastUpdate || 'N/A' }}</dd>
-        </div>
-      </dl>
-
-      <div class="actions">
-        <button type="button" class="primary" @click="$emit('view-stream', camera)">
-          View Stream
-        </button>
-        <button type="button" class="secondary" @click="$emit('details', camera)">
-          Details
-        </button>
+    <header class="camera-info__header">
+      <div>
+        <p>Selected Camera</p>
+        <h3>{{ camera.name }}</h3>
       </div>
-    </template>
+      <button type="button" class="close-btn" aria-label="Close camera details" @click="$emit('close')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
 
-    <template v-else>
-      <h3>Select a Camera</h3>
-      <p>Click a marker or choose a camera in the filters panel to inspect details.</p>
-    </template>
+    <span class="status-chip" :class="`status-chip--${camera.status}`">{{ statusText }}</span>
+
+    <dl class="camera-meta">
+      <div>
+        <dt>IP Address</dt>
+        <dd>{{ camera.ipAddress || 'N/A' }}</dd>
+      </div>
+      <div>
+        <dt>Location</dt>
+        <dd>{{ camera.location || 'N/A' }}</dd>
+      </div>
+      <div>
+        <dt>Last Updated</dt>
+        <dd>{{ camera.lastUpdate || 'N/A' }}</dd>
+      </div>
+    </dl>
+
+    <div class="actions">
+      <button type="button" class="primary" @click="$emit('view-stream', camera)">
+        View Stream
+      </button>
+      <button type="button" class="secondary" @click="$emit('details', camera)">
+        Details
+      </button>
+    </div>
   </aside>
 </template>
 
@@ -84,23 +77,6 @@ const hasCamera = computed(() => Boolean(props.camera));
   color: #e2e8f0;
   padding: 14px;
   pointer-events: auto;
-}
-
-.camera-info--empty {
-  text-align: left;
-}
-
-.camera-info--empty h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  color: #f8fafc;
-}
-
-.camera-info--empty p {
-  margin: 0;
-  color: #94a3b8;
-  font-size: 0.85rem;
-  line-height: 1.4;
 }
 
 .camera-info__header {
@@ -243,6 +219,23 @@ const hasCamera = computed(() => Boolean(props.camera));
 @media (max-width: 640px) {
   .camera-info {
     padding: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .camera-info {
+    border-radius: 12px;
+    padding: 10px;
+    max-height: 44vh;
+    overflow-y: auto;
+  }
+
+  .camera-info__header h3 {
+    font-size: 0.95rem;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>

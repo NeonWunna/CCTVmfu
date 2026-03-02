@@ -702,7 +702,30 @@ watch(
 
 @media (max-width: 768px) {
   .map-view {
-    min-height: 56vh;
+    min-height: 100%;
+  }
+
+  .empty-state {
+    bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    width: calc(100% - 16px);
+  }
+
+  .empty-state h3 {
+    font-size: 0.88rem;
+  }
+
+  .empty-state p {
+    font-size: 0.76rem;
+  }
+
+  .map-error {
+    top: 10px;
+    width: calc(100% - 24px);
+    text-align: center;
+    font-size: 0.78rem;
+    padding: 8px 10px;
   }
 }
 </style>

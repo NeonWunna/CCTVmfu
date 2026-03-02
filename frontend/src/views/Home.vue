@@ -452,7 +452,7 @@ watch(selectedCamera, (camera) => {
           />
         </transition>
 
-        <div v-if="!isStreamOpen" class="camera-info-wrap">
+        <div v-if="!isStreamOpen && selectedCamera" class="camera-info-wrap">
           <CameraInfoPanel
             class="camera-info-panel"
             :camera="selectedCamera"
@@ -638,6 +638,7 @@ watch(selectedCamera, (camera) => {
   position: absolute;
   top: 12px;
   left: 12px;
+  max-width: calc(100% - 24px);
   z-index: 9;
   display: flex;
   gap: 8px;
@@ -774,22 +775,30 @@ watch(selectedCamera, (camera) => {
   }
 
   .map-shell {
-    /* Explicit mobile height prevents map canvas collapse from percentage-based sizing. */
-    height: calc(100vh - 248px);
-    height: calc(100dvh - 248px);
+    /* Keep map usable across short/tall phones while avoiding percentage height collapse. */
+    height: clamp(320px, calc(100dvh - 248px), 68dvh);
     min-height: 320px;
   }
 
   .map-shell__toolbar {
-    top: 10px;
-    left: 10px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    max-width: none;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-btn {
+    padding: 7px 10px;
+    font-size: 0.76rem;
   }
 
   .camera-info-wrap {
     top: auto;
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
+    bottom: 8px;
+    right: 8px;
+    left: 8px;
     width: auto;
   }
 }
