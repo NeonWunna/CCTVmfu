@@ -3,12 +3,19 @@ import cv2
 import logging
 import time
 import asyncio
+import requests
+import numpy as np
+import urllib.parse
 from datetime import datetime, timedelta
 from app import models
 from app.db.session import SessionLocal
 from app.services.camera import THAILAND_TZ
 
 logger = logging.getLogger(__name__)
+
+# go2rtc API base URL (container name on same docker network)
+GO2RTC_API_URL = "http://cctv_go2rtc:1984"
+
 
 class BlurWorker:
     def __init__(self, check_interval: int = 300, threshold: float = 50.0):
@@ -17,27 +24,69 @@ class BlurWorker:
         self.running = False
         self._shutdown = False
 
-    def check_sharpness(self, rtsp_url: str) -> float:
+    def _fetch_frame_from_go2rtc(self, rtsp_url: str) -> np.ndarray | None:
         """
-        Capture a frame and calculate Laplacian variance.
-        Returns variance (float). Returns 0.0 if failed.
+        Fetch a JPEG frame from go2rtc snapshot API.
+        Returns decoded frame (numpy array) or None if failed.
         """
-        if not rtsp_url:
-            return 0.0
-            
         try:
-            # Open stream
+            encoded_url = urllib.parse.quote(rtsp_url, safe='')
+            snapshot_url = f"{GO2RTC_API_URL}/api/frame.jpeg?src={encoded_url}"
+            
+            response = requests.get(snapshot_url, timeout=10)
+            if response.status_code == 200 and response.content:
+                # Decode JPEG to numpy array
+                nparr = np.frombuffer(response.content, np.uint8)
+                frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                return frame
+            else:
+                logger.warning(f"go2rtc snapshot failed: status={response.status_code}")
+                return None
+        except Exception as e:
+            logger.warning(f"go2rtc snapshot error for {rtsp_url}: {e}")
+            return None
+
+    def _fetch_frame_direct(self, rtsp_url: str) -> np.ndarray | None:
+        """
+        Fetch frame directly via OpenCV RTSP (fallback).
+        """
+        try:
             cap = cv2.VideoCapture(rtsp_url)
             if not cap.isOpened():
-                return 0.0
+                return None
             
-            # Read one frame
             ret, frame = cap.read()
             cap.release()
             
             if not ret or frame is None:
-                return 0.0
-                
+                return None
+            return frame
+        except Exception as e:
+            logger.warning(f"Direct RTSP error for {rtsp_url}: {e}")
+            return None
+
+    def check_sharpness(self, rtsp_url: str) -> float:
+        """
+        Capture a frame and calculate Laplacian variance.
+        Tries go2rtc snapshot API first, falls back to direct RTSP.
+        Returns variance (float). Returns 0.0 if failed.
+        """
+        if not rtsp_url:
+            return 0.0
+
+        # Try go2rtc snapshot API first (works even with auth issues)
+        frame = self._fetch_frame_from_go2rtc(rtsp_url)
+        
+        # Fallback to direct RTSP if go2rtc failed
+        if frame is None:
+            logger.info(f"Falling back to direct RTSP for blur check")
+            frame = self._fetch_frame_direct(rtsp_url)
+
+        if frame is None:
+            logger.error(f"Could not fetch frame for blur check: {rtsp_url}")
+            return 0.0
+
+        try:
             # Convert to grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
@@ -47,7 +96,7 @@ class BlurWorker:
             
             return variance
         except Exception as e:
-            logger.error(f"Error checking blur for {rtsp_url}: {e}")
+            logger.error(f"Error calculating blur for {rtsp_url}: {e}")
             return 0.0
 
     async def run_once(self):

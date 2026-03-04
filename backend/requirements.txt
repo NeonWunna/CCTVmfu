@@ -5,6 +5,9 @@ sqlalchemy
 psycopg2-binary
 pydantic-settings
 
+# HTTP requests
+requests
+
 # Testing
 pytest
 httpx
