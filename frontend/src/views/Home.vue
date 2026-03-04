@@ -25,6 +25,7 @@ const selectedCamera = ref(null);
 const isStreamOpen = ref(false);
 const streamUrl = ref('');
 const loadingCameras = ref(true);
+const isCheckingBlurry = ref(false);
 
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
 const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 720);
@@ -152,6 +153,28 @@ const onlineCount = computed(() => cctvs.value.filter((camera) => camera.status 
 const offlineCount = computed(() => cctvs.value.filter((camera) => camera.status === 'offline').length);
 const noSignalCount = computed(() => cctvs.value.filter((camera) => camera.status === 'no_signal').length);
 const blurryCount = computed(() => cctvs.value.filter((camera) => camera.status === 'blurry').length);
+
+const checkBlurryCameras = async () => {
+  if (isCheckingBlurry.value) return;
+
+  const blurryTargets = cctvs.value.filter((camera) => camera.status === 'blurry');
+  if (blurryTargets.length === 0) {
+    showToast('No blurry cameras to check right now', 'info');
+    return;
+  }
+
+  isCheckingBlurry.value = true;
+  try {
+    await Promise.all(blurryTargets.map((camera) => api.checkCameraStatus(camera.id)));
+    await fetchCameras();
+    showToast('Blurry cameras rechecked', 'success');
+  } catch (error) {
+    console.error('Error checking blurry cameras:', error);
+    showToast('Failed to recheck blurry cameras', 'error');
+  } finally {
+    isCheckingBlurry.value = false;
+  }
+};
 
 const filteredCameras = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -375,6 +398,7 @@ watch(selectedCamera, (camera) => {
         :selected-filter="selectedFilter"
         :loading="loadingCameras"
         @select-filter="selectFilterFromStats"
+        @check-blurry="checkBlurryCameras"
       />
     </section>
 
@@ -535,6 +559,7 @@ watch(selectedCamera, (camera) => {
               :selected-filter="selectedFilter"
               :loading="loadingCameras"
               @select-filter="selectFilterFromStats"
+              @check-blurry="checkBlurryCameras"
             />
           </section>
 
