@@ -89,9 +89,18 @@ class CameraService:
             
             # Handle coordinates update if lat or long provided
             if camera.latitude is not None or camera.longitude is not None:
-                current_coords = db_camera.coordinates.split(',') if db_camera.coordinates else ["0", "0"]
-                current_lat = float(current_coords[0].strip()) if len(current_coords) > 0 else 0.0
-                current_long = float(current_coords[1].strip()) if len(current_coords) > 1 else 0.0
+                current_lat = 0.0
+                current_long = 0.0
+                
+                # Safely parse existing coordinates
+                if db_camera.coordinates and ',' in db_camera.coordinates:
+                    try:
+                        parts = db_camera.coordinates.split(',')
+                        current_lat = float(parts[0].strip()) if len(parts) > 0 and parts[0].strip() else 0.0
+                        current_long = float(parts[1].strip()) if len(parts) > 1 and parts[1].strip() else 0.0
+                    except (ValueError, IndexError):
+                        current_lat = 0.0
+                        current_long = 0.0
                 
                 new_lat = camera.latitude if camera.latitude is not None else current_lat
                 new_long = camera.longitude if camera.longitude is not None else current_long
