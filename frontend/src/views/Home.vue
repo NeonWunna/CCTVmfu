@@ -165,7 +165,7 @@ const checkBlurryCameras = async () => {
 
   isCheckingBlurry.value = true;
   try {
-    await Promise.all(blurryTargets.map((camera) => api.checkCameraStatus(camera.id)));
+    await Promise.all(blurryTargets.map((camera) => api.checkCameraBlur(camera.id)));
     await fetchCameras();
     showToast('Blurry cameras rechecked', 'success');
   } catch (error) {

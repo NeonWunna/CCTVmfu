@@ -8,7 +8,6 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app import models, schemas
 import logging
 
 logger = logging.getLogger(__name__)
@@ -150,6 +149,56 @@ class CameraService:
             Total camera count
         """
         return self.db.query(models.Camera).count()
+
+    def check_camera_blur(self, camera_id: int, threshold: float = 50.0) -> Optional[models.Camera]:
+        """
+        Run a blur check on a single camera and update its image/status fields.
+        - Uses the same Laplacian-variance logic as BlurWorker.
+        - If the camera was blurry and is now clear, remove the blurry status.
+        """
+        db_camera = self.get_camera(camera_id)
+        if not db_camera:
+            return None
+
+        if not db_camera.rtsp_url:
+            logger.warning(f"Camera {camera_id} has no RTSP URL; skipping blur check")
+            return db_camera
+
+        try:
+            # Local import to avoid circular refs and heavy imports when unused
+            from app.services.blur_worker import BlurWorker
+
+            worker = BlurWorker(threshold=threshold)
+            variance = worker.check_sharpness(db_camera.rtsp_url)
+
+            new_image_status = "blur" if variance < threshold else "normal"
+            status_changed = False
+
+            # Update main status based on blur outcome
+            if new_image_status == "blur" and db_camera.status != "blurry":
+                db_camera.status = "blurry"
+                status_changed = True
+            elif new_image_status == "normal" and db_camera.status == "blurry":
+                # Camera regained clarity; restore to online (or keep existing if not blurry-driven)
+                db_camera.status = "online"
+                status_changed = True
+
+            if db_camera.image_status != new_image_status:
+                db_camera.image_status = new_image_status
+                status_changed = True
+
+            db_camera.sharpness_value = float(variance)
+            db_camera.last_image_check = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+            if status_changed:
+                db_camera.last_update = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+            self.db.commit()
+            self.db.refresh(db_camera)
+        except Exception as e:
+            logger.error(f"Error running blur check for camera {camera_id}: {e}")
+
+        return db_camera
 
     def check_camera_status(self, camera_id: int) -> Optional[models.Camera]:
         """

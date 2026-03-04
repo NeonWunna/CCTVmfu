@@ -23,6 +23,9 @@ export default {
     deleteCamera(id) {
         return api.delete(`/cameras/${id}`);
     },
+    checkCameraBlur(id) {
+        return api.post(`/cameras/${id}/check-blur`);
+    },
     getStatus() {
         return api.get('/status');
     },

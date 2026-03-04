@@ -146,6 +146,21 @@ def check_camera_status(
     return db_camera
 
 
+@router.post("/{camera_id}/check-blur", response_model=schemas.Camera)
+def check_camera_blur(
+    camera_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Run a one-off blur detection for a specific camera and update image/status fields.
+    """
+    service = CameraService(db)
+    db_camera = service.check_camera_blur(camera_id)
+    if db_camera is None:
+        raise CameraNotFoundException(camera_id)
+    return db_camera
+
+
 @router.delete("/{camera_id}", response_model=schemas.MessageResponse)
 def delete_camera(
     camera_id: int, 
