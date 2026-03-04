@@ -32,7 +32,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['select-filter']);
+const emit = defineEmits(['select-filter', 'check-blurry']);
 
 const cards = computed(() => [
   {
@@ -85,6 +85,17 @@ const getIconPaths = (key) => iconPaths[key] || [];
 const selectFilter = (filterValue) => {
   emit('select-filter', filterValue);
 };
+
+const triggerBlurryCheck = () => {
+  emit('check-blurry');
+};
+
+const handleBlurryCheckKeydown = (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    triggerBlurryCheck();
+  }
+};
 </script>
 
 <template>
@@ -129,6 +140,18 @@ const selectFilter = (filterValue) => {
         <span class="stats-label">{{ card.label }}</span>
         <strong class="stats-value">{{ card.value }}</strong>
       </span>
+
+      <span
+        v-if="card.key === 'blurry'"
+        class="blurry-check-pill"
+        role="button"
+        tabindex="0"
+        aria-label="Check blurry cameras"
+        @click.stop="triggerBlurryCheck"
+        @keydown.stop="handleBlurryCheckKeydown"
+      >
+        Check
+      </span>
     </button>
   </section>
 </template>
@@ -157,6 +180,7 @@ const selectFilter = (filterValue) => {
   cursor: pointer;
   min-height: 86px;
   transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  position: relative;
 }
 
 .stats-card:hover {
@@ -211,6 +235,34 @@ const selectFilter = (filterValue) => {
 .stats-card--blurry .stats-icon {
   color: #fed7aa;
   background: rgba(249, 115, 22, 0.24);
+}
+
+.blurry-check-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(249, 146, 54, 0.9));
+  color: #0b1021;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.3);
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+}
+
+.blurry-check-pill:hover,
+.blurry-check-pill:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(249, 115, 22, 0.35);
+  outline: none;
+}
+
+.blurry-check-pill:active {
+  transform: translateY(0);
 }
 
 .stats-copy {
