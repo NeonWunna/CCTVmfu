@@ -243,13 +243,13 @@ const handleBlurryCheckKeydown = (event) => {
   right: 8px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(249, 146, 54, 0.9));
-  color: #0b1021;
+  background: #0b0f1f;
+  color: #f97316;
   font-weight: 700;
   font-size: 0.78rem;
   letter-spacing: 0.01em;
-  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.3);
-  border: 1px solid rgba(249, 115, 22, 0.5);
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.25);
+  border: 1px solid #f97316;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
 }
