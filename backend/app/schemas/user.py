@@ -26,6 +26,7 @@ class UserInDB(UserBase):
 
     id: int
     google_id: str
+    role: str = "user"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -41,6 +42,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     name: str
     picture: Optional[str] = None
+    role: str = "user"
 
     class Config:
         """Pydantic configuration."""

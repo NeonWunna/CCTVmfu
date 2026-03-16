@@ -14,6 +14,8 @@ export const useAuthStore = defineStore('auth', () => {
         return !!token.value && !isTokenExpired(token.value);
     });
 
+    const isSuperAdmin = computed(() => user.value?.role === 'superadmin');
+
     const userProfile = computed(() => user.value);
 
     // Actions
@@ -27,7 +29,8 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = {
                 id: decoded.sub,
                 email: decoded.email,
-                name: decoded.name
+                name: decoded.name,
+                role: decoded.role || 'user'
             };
         } catch (error) {
             console.error('Failed to decode token:', error);
@@ -55,7 +58,8 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = {
                 id: decoded.sub,
                 email: decoded.email,
-                name: decoded.name
+                name: decoded.name,
+                role: decoded.role || 'user'
             };
             return true;
         } catch (error) {
@@ -83,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
         token,
         // Getters
         isAuthenticated,
+        isSuperAdmin,
         userProfile,
         // Actions
         login,

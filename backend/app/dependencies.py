@@ -100,3 +100,26 @@ def get_current_active_user(
     """
     # For future: Add checks for user.is_active, user.is_banned, etc.
     return current_user
+
+
+def require_superadmin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Require current user to have superadmin role.
+
+    Args:
+        current_user: Current authenticated user
+
+    Returns:
+        User: Current superadmin user
+
+    Raises:
+        HTTPException 403: If user is not superadmin
+    """
+    if current_user.role != "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: superadmin role required"
+        )
+    return current_user

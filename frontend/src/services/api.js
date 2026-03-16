@@ -74,5 +74,16 @@ export default {
     },
     getAuthStatus() {
         return api.get('/auth/status');
+    },
+
+    // User management endpoints (superadmin only)
+    getUsers() {
+        return api.get('/users');
+    },
+    deleteUser(id) {
+        return api.delete(`/users/${id}`);
+    },
+    updateUserRole(id, role) {
+        return api.put(`/users/${id}/role`, { role });
     }
 };

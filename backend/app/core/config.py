@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str = "http://localhost:8020/api/auth/google/callback"
     FRONTEND_URL: str = "http://localhost:8010"
 
+    # Superadmin
+    SUPERADMIN_EMAILS: str = "6531501163@lamduan.mfu.ac.th"  # comma-separated
+
     # JWT
     JWT_SECRET_KEY: str = ""  # Generate with: openssl rand -hex 32
     JWT_ALGORITHM: str = "HS256"

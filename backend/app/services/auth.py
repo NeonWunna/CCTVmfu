@@ -64,6 +64,10 @@ class AuthService:
         name = google_user.get("name", email)
         picture = google_user.get("picture")
 
+        # Determine role based on superadmin emails list
+        superadmin_emails = [e.strip() for e in settings.SUPERADMIN_EMAILS.split(",") if e.strip()]
+        role = "superadmin" if email in superadmin_emails else "user"
+
         # Try to find existing user by Google ID
         user = self.db.query(User).filter(User.google_id == google_id).first()
 
@@ -72,6 +76,8 @@ class AuthService:
             user.name = name
             user.email = email
             user.picture = picture
+            # Always sync role based on config (so adding to SUPERADMIN_EMAILS takes effect on next login)
+            user.role = role
             self.db.commit()
             self.db.refresh(user)
         else:
@@ -80,7 +86,8 @@ class AuthService:
                 google_id=google_id,
                 email=email,
                 name=name,
-                picture=picture
+                picture=picture,
+                role=role
             )
             self.db.add(user)
             self.db.commit()
@@ -101,7 +108,8 @@ class AuthService:
         token_data = {
             "sub": str(user.id),
             "email": user.email,
-            "name": user.name
+            "name": user.name,
+            "role": user.role
         }
         access_token = create_access_token(data=token_data)
         return access_token

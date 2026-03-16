@@ -18,6 +18,7 @@ class User(Base):
     google_id = Column(String(255), unique=True, nullable=False)
     name = Column(String(255), nullable=False)
     picture = Column(String(500), nullable=True)
+    role = Column(String(50), nullable=False, default="user")  # 'user' or 'superadmin'
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

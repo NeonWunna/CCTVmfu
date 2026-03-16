@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import CameraSettings from '../views/CameraSettings.vue'
 import CameraView from '../views/CameraView.vue'
+import AdminPanel from '../views/AdminPanel.vue'
 import { useAuthStore } from '../stores/auth'
 import { isTokenExpired, getTokenFromStorage } from '../utils/jwt'
 
@@ -31,6 +32,12 @@ const router = createRouter({
             name: 'CameraView',
             component: CameraView,
             meta: { requiresAuth: true }
+          },
+          {
+            path: '/admin',
+            name: 'AdminPanel',
+            component: AdminPanel,
+            meta: { requiresAuth: true, requiresSuperAdmin: true }
           }
     ]
 })
@@ -48,19 +55,15 @@ router.beforeEach(async (to, from, next) => {
         } else {
             // Valid token exists
             if (!authStore.user) {
-                // User not loaded yet - fetch from API
-                try {
-                    await authStore.fetchUser();
-                    next();
-                } catch (error) {
-                    // Failed to fetch user - redirect to login
-                    console.error('Failed to load user:', error);
-                    next('/login');
-                }
-            } else {
-                // User already loaded
-                next();
+                // User not loaded yet - restore from token
+                await authStore.checkAuth();
             }
+            // Check superadmin requirement
+            if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
+                next('/');
+                return;
+            }
+            next();
         }
     } else if (to.name === 'login' && token && !isTokenExpired(token)) {
         // Already logged in - redirect to home

@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
 
 const props = defineProps({
   logoUrl: {
@@ -25,6 +27,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['camera-settings', 'logout', 'open-mobile-filters']);
+
+const router = useRouter();
+const authStore = useAuthStore();
+const isSuperAdmin = computed(() => authStore.isSuperAdmin);
 
 const profileMenuOpen = ref(false);
 const profileMenuRef = ref(null);
@@ -57,6 +63,11 @@ const handleDocumentClick = (event) => {
 const goToCameraSettings = () => {
   closeProfileMenu();
   emit('camera-settings');
+};
+
+const goToAdminPanel = () => {
+  closeProfileMenu();
+  router.push('/admin');
 };
 
 const logout = () => {
@@ -118,6 +129,9 @@ onBeforeUnmount(() => {
 
         <transition name="menu-fade">
           <div v-if="profileMenuOpen" class="profile-dropdown" role="menu">
+            <button v-if="isSuperAdmin" type="button" class="dropdown-item admin" role="menuitem" @click="goToAdminPanel">
+              🛡 Admin Panel
+            </button>
             <button type="button" class="dropdown-item" role="menuitem" @click="goToCameraSettings">
               Camera Settings
             </button>
@@ -302,6 +316,14 @@ onBeforeUnmount(() => {
 
 .dropdown-item.logout {
   color: #fca5a5;
+}
+
+.dropdown-item.admin {
+  color: #c4b5fd;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+.dropdown-item.admin:hover {
+  background: rgba(139, 92, 246, 0.15);
 }
 
 .menu-fade-enter-active,

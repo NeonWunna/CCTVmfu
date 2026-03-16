@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
-from app.routers import cameras, health, mcp, auth
+from app.routers import cameras, health, mcp, auth, users
 from app.services import CameraService
 from app.services.ping_worker import PingWorker
 from app.services.blur_worker import BlurWorker
@@ -92,4 +92,5 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(cameras.router, prefix="/api", tags=["cameras"])
+app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(mcp.router, prefix="/mcp", tags=["mcp"])
