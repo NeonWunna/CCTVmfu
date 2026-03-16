@@ -1,4 +1,5 @@
 """Models package - SQLAlchemy database models."""
 from .camera import Camera
+from .user import User
 
-__all__ = ["Camera"]
+__all__ = ["Camera", "User"]

@@ -15,6 +15,14 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/cctv_db
       - PYTHONUNBUFFERED=1
+      # Google OAuth - Load from .env file on server
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      # JWT
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-f0db8a2984d6777d5e5f2048ed560f257b9b0b98bee58b8914aecc6dc2a53164}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
     volumes:
       - ./backend:/app
     depends_on:

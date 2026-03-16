@@ -1,33 +1,41 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const isLoading = ref(false);
 const googleLoading = ref(false);
 
-const loginWithGoogle = async () => {
+const loginWithGoogle = () => {
   googleLoading.value = true;
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // For testing, allow Google login
-  localStorage.setItem('isAuthenticated', 'true');
-  router.push('/');
+  // Redirect to backend OAuth endpoint
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
+  window.location.href = `${apiUrl}/auth/google`;
 };
 
-const loginWithSSO = async () => {
+const loginWithSSO = () => {
   isLoading.value = true;
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Set authentication token
-  localStorage.setItem('isAuthenticated', 'true');
-  // Navigate to the Dashboard
-  router.push('/');
+  // SSO can be implemented similarly to Google OAuth
+  // For now, keep it disabled or redirect to Google OAuth
+  loginWithGoogle();
 };
+
+onMounted(() => {
+  // Check for token in URL (from OAuth callback)
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+
+  if (token) {
+    // Login with the received token
+    authStore.login(token);
+
+    // Clean up URL and redirect to home
+    window.history.replaceState({}, document.title, '/login');
+    router.replace('/');
+  }
+});
 </script>
 
 <template>

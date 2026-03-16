@@ -3,7 +3,7 @@ Camera Router
 API endpoints for camera CRUD operations.
 """
 from fastapi import APIRouter, Depends, Response
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List
 import cv2
@@ -13,24 +13,28 @@ from app import schemas
 from app.db.session import get_db
 from app.services import CameraService
 from app.exceptions import CameraNotFoundException
+from app.dependencies import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/cameras")
 
 
 @router.get("", response_model=List[schemas.Camera])
 def list_cameras(
-    skip: int = 0, 
-    limit: int = 1000, 
+    skip: int = 0,
+    limit: int = 1000,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Retrieve all cameras with pagination.
-    
+
     Args:
         skip: Number of records to skip (offset)
         limit: Maximum number of records to return
+        current_user: Current authenticated user (injected)
         db: Database session (injected)
-    
+
     Returns:
         List of camera objects
     """
@@ -40,16 +44,18 @@ def list_cameras(
 
 @router.post("", response_model=schemas.Camera)
 def create_camera(
-    camera: schemas.CameraCreate, 
+    camera: schemas.CameraCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Create a new camera.
-    
+
     Args:
         camera: Camera data for creation
+        current_user: Current authenticated user (injected)
         db: Database session (injected)
-    
+
     Returns:
         Created camera object
     """
@@ -58,7 +64,7 @@ def create_camera(
 
 
 @router.api_route("/events", methods=["GET", "POST"])
-def get_camera_events():
+def get_camera_events(current_user: User = Depends(get_current_user)):
     """
     Placeholder for camera-related events (SSE or similar).
     Added to prevent route conflict with /{camera_id}.
@@ -68,19 +74,21 @@ def get_camera_events():
 
 @router.get("/{camera_id}", response_model=schemas.Camera)
 def get_camera(
-    camera_id: int, 
+    camera_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Retrieve a specific camera by ID.
-    
+
     Args:
         camera_id: ID of the camera to retrieve
+        current_user: Current authenticated user (injected)
         db: Database session (injected)
-    
+
     Returns:
         Camera object
-    
+
     Raises:
         CameraNotFoundException: If camera with given ID doesn't exist
     """
@@ -93,21 +101,23 @@ def get_camera(
 
 @router.put("/{camera_id}", response_model=schemas.Camera)
 def update_camera(
-    camera_id: int, 
-    camera: schemas.CameraUpdate, 
+    camera_id: int,
+    camera: schemas.CameraUpdate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Update an existing camera.
-    
+
     Args:
         camera_id: ID of the camera to update
         camera: Updated camera data
+        current_user: Current authenticated user (injected)
         db: Database session (injected)
-    
+
     Returns:
         Updated camera object
-    
+
     Raises:
         CameraNotFoundException: If camera with given ID doesn't exist
     """
@@ -120,6 +130,7 @@ def update_camera(
 
 @router.post("/check-status", response_model=schemas.MessageResponse)
 def check_all_cameras_status(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -133,7 +144,8 @@ def check_all_cameras_status(
 
 @router.post("/{camera_id}/check", response_model=schemas.Camera)
 def check_camera_status(
-    camera_id: int, 
+    camera_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -149,6 +161,7 @@ def check_camera_status(
 @router.post("/{camera_id}/check-blur", response_model=schemas.Camera)
 def check_camera_blur(
     camera_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -163,19 +176,21 @@ def check_camera_blur(
 
 @router.delete("/{camera_id}", response_model=schemas.MessageResponse)
 def delete_camera(
-    camera_id: int, 
+    camera_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Delete a camera.
-    
+
     Args:
         camera_id: ID of the camera to delete
+        current_user: Current authenticated user (injected)
         db: Database session (injected)
-    
+
     Returns:
         Confirmation message
-    
+
     Raises:
         CameraNotFoundException: If camera with given ID doesn't exist
     """
@@ -186,11 +201,10 @@ def delete_camera(
     return schemas.MessageResponse(message="Camera deleted successfully")
 
 
-from fastapi.responses import RedirectResponse
-
 @router.get("/{camera_id}/stream")
 def stream_camera(
     camera_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -198,7 +212,7 @@ def stream_camera(
     """
     service = CameraService(db)
     camera = service.get_camera(camera_id)
-    
+
     if not camera or not camera.rtsp_url:
         return Response(status_code=404, content="Camera or RTSP URL not found")
 

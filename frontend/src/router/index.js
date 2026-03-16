@@ -3,6 +3,8 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import CameraSettings from '../views/CameraSettings.vue'
 import CameraView from '../views/CameraView.vue'
+import { useAuthStore } from '../stores/auth'
+import { isTokenExpired, getTokenFromStorage } from '../utils/jwt'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,17 +35,38 @@ const router = createRouter({
     ]
 })
 
-// Mock authentication guard
-router.beforeEach((to, from, next) => {
-    // Check for authentication flag in localStorage
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+// Authentication guard with JWT validation
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
+    const token = getTokenFromStorage();
 
-    if (to.meta.requiresAuth && !isAuthenticated) {
-        next('/login');
-    } else if (to.name === 'login' && isAuthenticated) {
-        // Redirect to home if already logged in and trying to access login page
+    if (to.meta.requiresAuth) {
+        // Route requires authentication
+        if (!token || isTokenExpired(token)) {
+            // No token or expired - redirect to login
+            next('/login');
+        } else {
+            // Valid token exists
+            if (!authStore.user) {
+                // User not loaded yet - fetch from API
+                try {
+                    await authStore.fetchUser();
+                    next();
+                } catch (error) {
+                    // Failed to fetch user - redirect to login
+                    console.error('Failed to load user:', error);
+                    next('/login');
+                }
+            } else {
+                // User already loaded
+                next();
+            }
+        }
+    } else if (to.name === 'login' && token && !isTokenExpired(token)) {
+        // Already logged in - redirect to home
         next('/');
     } else {
+        // Public route or unauthenticated user on login page
         next();
     }
 });
