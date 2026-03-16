@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.sessions import SessionMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -13,6 +14,7 @@ from app.routers import cameras, health, mcp, auth
 from app.services import CameraService
 from app.services.ping_worker import PingWorker
 from app.services.blur_worker import BlurWorker
+from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,6 +78,14 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Session Middleware (required for OAuth with authlib)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.JWT_SECRET_KEY,
+    session_cookie="session",
+    max_age=7 * 24 * 60 * 60  # 7 days
 )
 
 # Include Routers
