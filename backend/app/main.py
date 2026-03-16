@@ -74,7 +74,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # CORS Middleware Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://cctvmap.mfu.ac.th",
+        "http://localhost:5173",
+        "http://localhost:8010",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

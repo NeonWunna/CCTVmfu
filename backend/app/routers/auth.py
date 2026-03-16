@@ -49,7 +49,9 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
         # Redirect to frontend with token
         # Frontend will handle storing the token and redirecting to dashboard
-        frontend_url = f"http://localhost:5173/login?token={access_token}"
+        import os
+        frontend_base = os.getenv("FRONTEND_URL", "https://cctvmap.mfu.ac.th")
+        frontend_url = f"{frontend_base}/login?token={access_token}"
 
         return RedirectResponse(url=frontend_url)
 
