@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
@@ -10,6 +11,7 @@ import StatsCards from '../components/dashboard/StatsCards.vue';
 import api from '../services/api';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const userName = ref('Admin User');
 const userRole = ref('Security Administrator');
@@ -222,10 +224,9 @@ const logout = () => {
     message: 'Are you sure you want to logout?',
     loading: false,
     onConfirm: () => {
-      localStorage.removeItem('isAuthenticated');
+      authStore.logout();
       confirmModal.value.show = false;
       router.push('/login');
-      showToast('Logged out successfully', 'info');
     }
   };
 };

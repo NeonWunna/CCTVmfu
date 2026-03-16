@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import logoUrl from '../assets/mfu-logo.png';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
@@ -8,6 +9,7 @@ import api from '../services/api';
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 const cameraId = route.params.id;
 
 // ===== STATE =====
@@ -155,11 +157,10 @@ const logout = () => {
     title: 'Confirm Logout',
     message: 'Are you sure you want to logout?',
     onConfirm: () => {
-      localStorage.removeItem('isAuthenticated');
+      authStore.logout();
       confirmModal.value.show = false;
       closeDropdown();
       router.push('/login');
-      showToast('Logged out successfully', 'info');
     }
   };
 };

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import logoUrl from '../assets/mfu-logo.png';
 import api from '../services/api';
 import Toast from '../components/ui/Toast.vue';
@@ -13,6 +14,7 @@ import CameraInfoPanel from '../components/dashboard/CameraInfoPanel.vue';
 import StreamOverlay from '../components/dashboard/StreamOverlay.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const mapViewRef = ref(null);
 
 const userName = ref('Admin User');
@@ -285,10 +287,9 @@ const logout = () => {
     message: 'Are you sure you want to logout?',
     loading: false,
     onConfirm: () => {
-      localStorage.removeItem('isAuthenticated');
+      authStore.logout();
       confirmModal.value.show = false;
       router.push('/login');
-      showToast('Logged out successfully', 'info');
     }
   };
 };
