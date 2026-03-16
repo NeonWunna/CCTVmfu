@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --timeout-keep-alive 120
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8020 --reload --timeout-keep-alive 120
     container_name: cctv_backend
     deploy:
       resources:
@@ -24,6 +24,8 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-f0db8a2984d6777d5e5f2048ed560f257b9b0b98bee58b8914aecc6dc2a53164}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
+    ports:
+      - "8020:8020"
     volumes:
       - ./backend:/app
     depends_on:
@@ -46,6 +48,8 @@ services:
   frontend:
     build: ./frontend
     container_name: cctv_frontend
+    ports:
+      - "8010:80"
     networks:
       - cctv-network
 
