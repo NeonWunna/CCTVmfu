@@ -11,6 +11,7 @@ from app.services.auth import AuthService, oauth
 from app.schemas.user import UserResponse, TokenResponse
 from app.dependencies import get_current_user
 from app.models.user import User
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -21,7 +22,9 @@ async def google_login(request: Request):
     Initiate Google OAuth flow.
     Redirects user to Google consent screen.
     """
-    redirect_uri = request.url_for('google_callback')
+    # Use explicit redirect URI from config instead of dynamic URL generation.
+    # request.url_for() produces wrong URIs when behind an Nginx reverse proxy.
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -49,7 +52,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
         # Redirect to frontend with token
         # Frontend will handle storing the token and redirecting to dashboard
-        frontend_url = f"http://localhost:5173/login?token={access_token}"
+        frontend_url = f"{settings.FRONTEND_URL}/login?token={access_token}"
 
         return RedirectResponse(url=frontend_url)
 
