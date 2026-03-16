@@ -76,6 +76,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://cctvmap.mfu.ac.th",
+        "http://192.168.11.67:8010",
         "http://localhost:5173",
         "http://localhost:8010",
     ],
