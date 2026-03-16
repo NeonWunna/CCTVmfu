@@ -13,6 +13,7 @@ requests
 python-jose[cryptography]  # JWT encoding/decoding
 passlib[bcrypt]            # Password hashing
 authlib                    # OAuth 2.0 client library
+itsdangerous               # Required by SessionMiddleware
 
 # Testing
 pytest
