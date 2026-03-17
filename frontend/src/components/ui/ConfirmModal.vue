@@ -321,11 +321,11 @@ const getIcon = () => {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   gap: 0.75rem;
-  justify-content: flex-end;
 }
 
 .btn-cancel,
 .btn-confirm {
+  flex: 1;
   padding: 0.875rem 1.75rem;
   border-radius: 10px;
   font-size: 0.9375rem;
@@ -336,7 +336,6 @@ const getIcon = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
 }
 
 .btn-cancel {
