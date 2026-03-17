@@ -15,6 +15,7 @@ import StreamOverlay from '../components/dashboard/StreamOverlay.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const isUser = computed(() => authStore.isUser);
 const mapViewRef = ref(null);
 
 const userName = ref('Admin User');
@@ -464,7 +465,7 @@ watch(selectedCamera, (camera) => {
           </button>
 
           <button
-            v-if="selectedCamera && !isStreamOpen"
+            v-if="selectedCamera && !isStreamOpen && !isUser"
             type="button"
             class="toolbar-btn toolbar-btn--ghost"
             @click="openStreamOverlay(selectedCamera)"
@@ -495,6 +496,7 @@ watch(selectedCamera, (camera) => {
           <CameraInfoPanel
             class="camera-info-panel"
             :camera="selectedCamera"
+            :is-user="isUser"
             @view-stream="openStreamOverlay"
             @details="openCameraDetails"
             @close="selectedCamera = null"

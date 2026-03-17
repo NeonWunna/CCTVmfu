@@ -25,13 +25,13 @@ const router = createRouter({
             path: '/camera-settings',
             name: 'CameraSettings',
             component: CameraSettings,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
             path: '/camera/:id',
             name: 'CameraView',
             component: CameraView,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, requiresAdmin: true }
           },
           {
             path: '/admin',
@@ -60,6 +60,11 @@ router.beforeEach(async (to, from, next) => {
             }
             // Check superadmin requirement
             if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
+                next('/');
+                return;
+            }
+            // Check admin requirement (superadmin or any elevated role)
+            if (to.meta.requiresAdmin && authStore.isUser) {
                 next('/');
                 return;
             }

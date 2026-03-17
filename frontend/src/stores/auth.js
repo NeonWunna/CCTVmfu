@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     const isSuperAdmin = computed(() => user.value?.role === 'superadmin');
+    const isUser = computed(() => user.value?.role === 'user');
 
     const userProfile = computed(() => user.value);
 
@@ -88,6 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
         // Getters
         isAuthenticated,
         isSuperAdmin,
+        isUser,
         userProfile,
         // Actions
         login,

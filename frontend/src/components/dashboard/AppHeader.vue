@@ -31,6 +31,7 @@ const emit = defineEmits(['camera-settings', 'logout', 'open-mobile-filters']);
 const router = useRouter();
 const authStore = useAuthStore();
 const isSuperAdmin = computed(() => authStore.isSuperAdmin);
+const isUser = computed(() => authStore.isUser);
 
 const profileMenuOpen = ref(false);
 const profileMenuRef = ref(null);
@@ -132,7 +133,7 @@ onBeforeUnmount(() => {
             <button v-if="isSuperAdmin" type="button" class="dropdown-item admin" role="menuitem" @click="goToAdminPanel">
               🛡 Admin Panel
             </button>
-            <button type="button" class="dropdown-item" role="menuitem" @click="goToCameraSettings">
+            <button v-if="!isUser" type="button" class="dropdown-item" role="menuitem" @click="goToCameraSettings">
               Camera Settings
             </button>
             <button type="button" class="dropdown-item logout" role="menuitem" @click="logout">

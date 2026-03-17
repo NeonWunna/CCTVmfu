@@ -5,6 +5,10 @@ const props = defineProps({
   camera: {
     type: Object,
     default: null
+  },
+  isUser: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -56,7 +60,7 @@ const hasCamera = computed(() => Boolean(props.camera));
       </div>
     </dl>
 
-    <div class="actions">
+    <div v-if="!isUser" class="actions">
       <button type="button" class="primary" @click="$emit('view-stream', camera)">
         View Stream
       </button>
