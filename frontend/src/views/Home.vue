@@ -18,8 +18,13 @@ const authStore = useAuthStore();
 const isUser = computed(() => authStore.isUser);
 const mapViewRef = ref(null);
 
-const userName = ref('Admin User');
-const userRole = ref('Security Administrator');
+const userName = computed(() => authStore.user?.name || 'User');
+const userRole = computed(() => {
+  const role = authStore.user?.role;
+  if (role === 'superadmin') return 'Super Admin';
+  if (role === 'admin') return 'Admin';
+  return 'User';
+});
 
 const cctvs = ref([]);
 const searchQuery = ref('');
