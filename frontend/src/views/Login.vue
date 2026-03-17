@@ -5,21 +5,12 @@ import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const isLoading = ref(false);
 const googleLoading = ref(false);
 
 const loginWithGoogle = () => {
   googleLoading.value = true;
-  // Redirect to backend OAuth endpoint
   const apiUrl = import.meta.env.VITE_API_URL || '/api';
   window.location.href = `${apiUrl}/auth/google`;
-};
-
-const loginWithSSO = () => {
-  isLoading.value = true;
-  // SSO can be implemented similarly to Google OAuth
-  // For now, keep it disabled or redirect to Google OAuth
-  loginWithGoogle();
 };
 
 onMounted(() => {
@@ -71,7 +62,7 @@ onMounted(() => {
           <button 
             class="login-btn google-btn" 
             @click="loginWithGoogle"
-            :disabled="googleLoading || isLoading"
+            :disabled="googleLoading"
           >
             <svg v-if="!googleLoading" class="google-icon" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -81,22 +72,6 @@ onMounted(() => {
             </svg>
             <div v-else class="spinner"></div>
             <span>{{ googleLoading ? 'Authenticating...' : 'Sign in with Google' }}</span>
-          </button>
-
-          <div class="divider">
-            <span>OR</span>
-          </div>
-
-          <button 
-            class="login-btn sso-btn" 
-            @click="loginWithSSO"
-            :disabled="isLoading || googleLoading"
-          >
-            <svg v-if="!isLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-            </svg>
-            <div v-else class="spinner"></div>
-            <span>{{ isLoading ? 'Authenticating...' : 'Sign in with SSO' }}</span>
           </button>
         </div>
 
@@ -112,32 +87,12 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Floating Info Card -->
-      <div class="info-card">
-        <div class="info-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <div>
-            <div class="info-label">24/7 Monitoring</div>
-            <div class="info-value">Always Active</div>
-          </div>
-        </div>
-        <div class="info-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-          </svg>
-          <div>
-            <div class="info-label">Secure Access</div>
-            <div class="info-value">Encrypted</div>
-          </div>
-        </div>
-      </div>
+
     </main>
 
     <!-- Footer -->
     <footer class="footer">
-      <p>© 2025 Mae Fah Luang University. All rights reserved.</p>
+      <p>© 2026 Mae Fah Luang University. All rights reserved.</p>
     </footer>
   </div>
 </template>
