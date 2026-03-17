@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:8010"
 
     # Superadmin
-    SUPERADMIN_EMAILS: str = "6531501163@lamduan.mfu.ac.th"  # comma-separated
+    SUPERADMIN_EMAILS: str = ""  # comma-separated, set via .env
 
     # JWT
     JWT_SECRET_KEY: str = ""  # Generate with: openssl rand -hex 32
