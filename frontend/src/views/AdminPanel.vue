@@ -53,7 +53,7 @@ const confirmDelete = (user) => {
 };
 
 const toggleRole = async (user) => {
-  const newRole = user.role === 'superadmin' ? 'user' : 'superadmin';
+  const newRole = user.role === 'user' ? 'admin' : 'user';
   try {
     await api.updateUserRole(user.id, newRole);
     showToast(`Role updated to "${newRole}" for ${user.email}`, 'success');
@@ -146,12 +146,12 @@ onMounted(fetchUsers);
               <td>
                 <div class="action-buttons">
                   <button
-                    v-if="user.email !== authStore.user?.email"
+                    v-if="user.email !== authStore.user?.email && user.role !== 'superadmin'"
                     class="btn btn-role"
-                    :title="user.role === 'superadmin' ? 'Demote to user' : 'Promote to superadmin'"
+                    :title="user.role === 'admin' ? 'Demote to user' : 'Promote to admin'"
                     @click="toggleRole(user)"
                   >
-                    {{ user.role === 'superadmin' ? '⬇ Demote' : '⬆ Promote' }}
+                    {{ user.role === 'admin' ? '⬇ Demote' : '⬆ Promote to Admin' }}
                   </button>
                   <button
                     v-if="user.email !== authStore.user?.email"
@@ -355,6 +355,11 @@ onMounted(fetchUsers);
   background: rgba(139, 92, 246, 0.2);
   color: #c4b5fd;
   border: 1px solid rgba(139, 92, 246, 0.35);
+}
+.role-badge.admin {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.35);
 }
 .role-badge.user {
   background: rgba(100, 116, 139, 0.2);

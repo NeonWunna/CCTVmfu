@@ -66,10 +66,10 @@ def update_user_role(
     Superadmin only. Valid roles: 'user', 'superadmin'.
     """
     new_role = role_data.get("role")
-    if new_role not in ("user", "superadmin"):
+    if new_role not in ("user", "admin", "superadmin"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid role. Must be 'user' or 'superadmin'"
+            detail="Invalid role. Must be 'user', 'admin', or 'superadmin'"
         )
 
     user = db.query(User).filter(User.id == user_id).first()
