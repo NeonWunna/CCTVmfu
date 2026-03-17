@@ -2,13 +2,14 @@
 Users Router
 API endpoints for user management (superadmin only).
 """
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UserCreateByAdmin
 from app.dependencies import require_superadmin
 
 router = APIRouter(prefix="/users")
@@ -24,6 +25,36 @@ def list_users(
     Superadmin only.
     """
     return db.query(User).order_by(User.created_at.desc()).all()
+
+
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def create_user_by_admin(
+    body: UserCreateByAdmin,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new user manually (by superadmin).
+    The user can later log in via Google OAuth with the registered email.
+    """
+    existing = db.query(User).filter(User.email == body.email).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists"
+        )
+
+    new_user = User(
+        email=body.email,
+        name=body.name,
+        role=body.role,
+        google_id=f"manual_{uuid.uuid4().hex}",  # synthetic ID; replaced on first OAuth login
+        picture=None,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
 @router.delete("/{user_id}")

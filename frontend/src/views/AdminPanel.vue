@@ -14,6 +14,43 @@ const loading = ref(true);
 const toast = ref({ show: false, message: '', type: 'info' });
 const confirmModal = ref({ show: false, title: '', message: '', onConfirm: null, loading: false });
 
+// ── Add User Modal ──────────────────────────────────────────
+const addUserModal = ref({ show: false });
+const addUserForm = ref({ email: '', name: '', role: 'user' });
+const addUserLoading = ref(false);
+const addUserError = ref('');
+
+const openAddUser = () => {
+  addUserForm.value = { email: '', name: '', role: 'user' };
+  addUserError.value = '';
+  addUserModal.value.show = true;
+};
+
+const closeAddUser = () => {
+  addUserModal.value.show = false;
+};
+
+const submitAddUser = async () => {
+  addUserError.value = '';
+  const { email, name, role } = addUserForm.value;
+  if (!email.trim() || !name.trim()) {
+    addUserError.value = 'Email and name are required.';
+    return;
+  }
+  addUserLoading.value = true;
+  try {
+    await api.createUser({ email: email.trim(), name: name.trim(), role });
+    showToast(`User "${name}" added successfully`, 'success');
+    closeAddUser();
+    await fetchUsers();
+  } catch (err) {
+    addUserError.value = err.response?.data?.detail || 'Failed to add user.';
+  } finally {
+    addUserLoading.value = false;
+  }
+};
+// ────────────────────────────────────────────────────────────
+
 const showToast = (message, type = 'info') => {
   toast.value = { show: true, message, type };
 };
@@ -87,6 +124,68 @@ onMounted(fetchUsers);
       @close="confirmModal.show = false"
     />
 
+    <!-- Add User Modal -->
+    <transition name="modal-fade">
+      <div v-if="addUserModal.show" class="modal-backdrop" @click.self="closeAddUser">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="add-user-title">
+          <header class="modal-header">
+            <h3 id="add-user-title">➕ Add New User</h3>
+            <button type="button" class="modal-close" aria-label="Close" @click="closeAddUser">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </header>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="add-email">Email <span class="req">*</span></label>
+              <input
+                id="add-email"
+                v-model="addUserForm.email"
+                type="email"
+                placeholder="user@lamduan.mfu.ac.th"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="add-name">Full Name <span class="req">*</span></label>
+              <input
+                id="add-name"
+                v-model="addUserForm.name"
+                type="text"
+                placeholder="e.g. Somchai Jaidee"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="add-role">Role</label>
+              <select id="add-role" v-model="addUserForm.role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+              </select>
+            </div>
+
+            <p v-if="addUserError" class="form-error">{{ addUserError }}</p>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn btn-cancel" @click="closeAddUser">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-submit"
+              :disabled="addUserLoading"
+              @click="submitAddUser"
+            >
+              <span v-if="addUserLoading" class="btn-spinner" />
+              {{ addUserLoading ? 'Adding...' : 'Add User' }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    </transition>
+
     <!-- Header -->
     <header class="admin-header">
       <div class="header-left">
@@ -109,6 +208,7 @@ onMounted(fetchUsers);
       <div class="panel">
         <div class="panel-header">
           <h2>Users <span class="count">{{ users.length }}</span></h2>
+          <button type="button" class="btn btn-add" @click="openAddUser">➕ Add User</button>
         </div>
 
         <div v-if="loading" class="loading-state">
@@ -401,5 +501,170 @@ onMounted(fetchUsers);
   font-size: 0.78rem;
   color: #475569;
   font-style: italic;
+}
+
+/* ── Panel header layout ─────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0d9488 100%);
+  border-color: transparent;
+  color: #f8fafc;
+  font-size: 0.82rem;
+}
+.btn-add:hover { opacity: 0.88; }
+
+/* ── Add User Modal ──────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 460px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.6);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #f8fafc;
+}
+
+.modal-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.modal-close svg { width: 14px; height: 14px; }
+.modal-close:hover { background: rgba(51, 65, 85, 0.5); }
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.req { color: #f87171; }
+
+.form-group input,
+.form-group select {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  padding: 10px 13px;
+  outline: none;
+  transition: border-color 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-group input::placeholder { color: #475569; }
+.form-group input:focus,
+.form-group select:focus { border-color: #38bdf8; }
+.form-group select option { background: #0f172a; }
+
+.form-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.btn-cancel {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+}
+.btn-cancel:hover { background: rgba(51, 65, 85, 0.6); }
+
+.btn-submit {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0d9488 100%);
+  border-color: transparent;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  justify-content: center;
+}
+.btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-submit:not(:disabled):hover { opacity: 0.88; }
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Modal transition ────────────────────────────── */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

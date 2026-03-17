@@ -3,7 +3,7 @@ User Schemas
 Pydantic models for user data validation.
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -48,6 +48,14 @@ class UserResponse(BaseModel):
     class Config:
         """Pydantic configuration."""
         from_attributes = True
+
+
+class UserCreateByAdmin(BaseModel):
+    """Schema for creating a user manually (by superadmin), without Google OAuth."""
+
+    email: EmailStr = Field(..., description="User email address")
+    name: str = Field(..., min_length=1, max_length=255, description="User full name")
+    role: Literal["user", "admin", "superadmin"] = Field("user", description="User role")
 
 
 class TokenResponse(BaseModel):

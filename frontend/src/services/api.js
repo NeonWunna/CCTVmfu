@@ -85,5 +85,8 @@ export default {
     },
     updateUserRole(id, role) {
         return api.put(`/users/${id}/role`, { role });
+    },
+    createUser(data) {
+        return api.post('/users', data);
     }
 };
