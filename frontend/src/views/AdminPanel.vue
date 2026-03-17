@@ -163,7 +163,6 @@ onMounted(fetchUsers);
               <select id="add-role" v-model="addUserForm.role">
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
-                <option value="superadmin">Super Admin</option>
               </select>
             </div>
 
