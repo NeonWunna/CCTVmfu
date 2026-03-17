@@ -64,9 +64,9 @@ class AuthService:
         name = google_user.get("name", email)
         picture = google_user.get("picture")
 
-        # Determine role based on superadmin emails list
+        # Determine if this email is a superadmin
         superadmin_emails = [e.strip() for e in settings.SUPERADMIN_EMAILS.split(",") if e.strip()]
-        role = "superadmin" if email in superadmin_emails else "user"
+        is_superadmin_email = email in superadmin_emails
 
         # Try to find existing user by Google ID
         user = self.db.query(User).filter(User.google_id == google_id).first()
@@ -76,18 +76,23 @@ class AuthService:
             user.name = name
             user.email = email
             user.picture = picture
-            # Always sync role based on config (so adding to SUPERADMIN_EMAILS takes effect on next login)
-            user.role = role
+            # Only force-apply superadmin role if email is in the superadmin list.
+            # Otherwise, preserve the manually-assigned role (e.g., 'admin')
+            # so that promotions done via Admin Panel survive across logins.
+            if is_superadmin_email:
+                user.role = "superadmin"
+            # else: keep existing role unchanged
             self.db.commit()
             self.db.refresh(user)
         else:
-            # Create new user
+            # Create new user — default is 'user', or 'superadmin' if in list
+            new_role = "superadmin" if is_superadmin_email else "user"
             user = User(
                 google_id=google_id,
                 email=email,
                 name=name,
                 picture=picture,
-                role=role
+                role=new_role
             )
             self.db.add(user)
             self.db.commit()
