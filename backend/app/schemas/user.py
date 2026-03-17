@@ -43,6 +43,7 @@ class UserResponse(BaseModel):
     name: str
     picture: Optional[str] = None
     role: str = "user"
+    created_at: Optional[datetime] = None
 
     class Config:
         """Pydantic configuration."""

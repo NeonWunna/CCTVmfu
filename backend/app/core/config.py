@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     # For production with PostgreSQL, set DATABASE_URL in .env
     DATABASE_URL: str = "sqlite:///./cctv.db"
 
-    # Google OAuth
+    # Google OAuthe
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8020/api/auth/google/callback"
