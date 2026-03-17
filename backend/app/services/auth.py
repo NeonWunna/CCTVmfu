@@ -85,18 +85,32 @@ class AuthService:
             self.db.commit()
             self.db.refresh(user)
         else:
-            # Create new user — default is 'user', or 'superadmin' if in list
-            new_role = "superadmin" if is_superadmin_email else "user"
-            user = User(
-                google_id=google_id,
-                email=email,
-                name=name,
-                picture=picture,
-                role=new_role
-            )
-            self.db.add(user)
-            self.db.commit()
-            self.db.refresh(user)
+            # Fallback: look up by email (covers users pre-registered by admin)
+            user = self.db.query(User).filter(User.email == email).first()
+
+            if user:
+                # User was pre-registered manually — bind their real Google ID
+                # and update profile info, but PRESERVE the role already assigned.
+                user.google_id = google_id
+                user.name = name
+                user.picture = picture
+                if is_superadmin_email:
+                    user.role = "superadmin"
+                self.db.commit()
+                self.db.refresh(user)
+            else:
+                # Brand-new user — create with default role
+                new_role = "superadmin" if is_superadmin_email else "user"
+                user = User(
+                    google_id=google_id,
+                    email=email,
+                    name=name,
+                    picture=picture,
+                    role=new_role
+                )
+                self.db.add(user)
+                self.db.commit()
+                self.db.refresh(user)
 
         return user
 
