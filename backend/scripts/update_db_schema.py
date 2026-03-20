@@ -26,13 +26,10 @@ def update_schema():
         ]
         
         for col_name, col_type in columns:
-            try:
-                print(f"Adding column {col_name}...")
-                connection.execute(text(f"ALTER TABLE cameras ADD COLUMN {col_name} {col_type}"))
-                print(f"Added column {col_name}")
-            except Exception as e:
-                print(f"Could not add column {col_name} (might already exist): {e}")
-                
+            print(f"Adding column {col_name} if not exists...")
+            connection.execute(text(f"ALTER TABLE cameras ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+            print(f"  OK: {col_name}")
+
         connection.commit()
     print("Schema update complete.")
 
