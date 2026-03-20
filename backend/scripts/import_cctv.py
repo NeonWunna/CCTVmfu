@@ -13,7 +13,7 @@ def import_cctv_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    json_files = ['cctvinfo2.json', 'oldcctvinfo.json']
+    json_files = ['cctvinfo2.json', 'oldcctvinfo2.json']
     
     db = SessionLocal()
     current_ip = None # Initialize current_ip
@@ -58,20 +58,19 @@ def import_cctv_data():
                 current_ip = ip_address # Update current_ip for error tracking
                 # print(f"Processing IP: {ip_address}") # Debug output
 
-                # Extract generated RTSP or use specific field
-                rtsp_url = item.get('ANPR&PTZ RTSP')
-                
+                # Extract RTSP URL from ANPR&PTZ RTSP field
+                rtsp_url = item.get('ANPR&PTZ RTSP') or item.get('enable rtsp')
+
                 # Check if rtsp_url is None or empty string
                 if not rtsp_url or str(rtsp_url).strip() == "":
-                   if json_filename == 'oldcctvinfo.json':
-                       # For oldcctvinfo.json, user requested to leave it empty or "-"
-                       rtsp_url = ""
-                   else:
-                       # Generate default RTSP URL if missing for other files (e.g. cctvinfo2.json)
-                       # Default format: rtsp://<ip>:554/LiveMedia/ch1/Media1/trackID=1
-                       rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+                    if json_filename == 'oldcctvinfo2.json':
+                        # oldcctvinfo2.json cameras without RTSP — leave empty
+                        rtsp_url = ""
+                    else:
+                        # Generate default RTSP URL if missing for other files (e.g. cctvinfo2.json)
+                        rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
                 else:
-                   rtsp_url = str(rtsp_url).strip()
+                    rtsp_url = str(rtsp_url).strip()
 
                 # Map JSON fields to model fields
                 camera_data = {
@@ -79,6 +78,9 @@ def import_cctv_data():
                     'name': str(item.get('CAMERA NAME_NEW')) if item.get('CAMERA NAME_NEW') is not None else None,
                     'location': str(item.get('Location')) if item.get('Location') is not None else None,
                     'coordinates': f"{item.get('Latitude')}, {item.get('Longtitude')}",
+                    'building': str(item.get('BUILDING', '')).strip() or None,
+                    'floor': str(item.get('FLOOR', '')).strip() or None,
+                    'position': str(item.get('POSITION', '')).strip() or None,
                     'status': 'down', # Default status, will be updated by background service
                     'rtsp_url': rtsp_url
                 }

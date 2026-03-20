@@ -19,7 +19,10 @@ def update_schema():
             ("sharpness_value", "FLOAT"), 
             ("last_image_check", "TIMESTAMP"),
             ("blur_consistency_count", "INTEGER DEFAULT 0"),
-            ("normal_consistency_count", "INTEGER DEFAULT 0")
+            ("normal_consistency_count", "INTEGER DEFAULT 0"),
+            ("building", "VARCHAR(100)"),
+            ("floor", "VARCHAR(20)"),
+            ("position", "VARCHAR(255)"),
         ]
         
         for col_name, col_type in columns:
