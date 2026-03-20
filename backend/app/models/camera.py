@@ -18,12 +18,10 @@ class Camera(Base):
     location = Column(String(255), nullable=False)
     ip_address = Column(String(45), unique=True, nullable=False)  # IPv6 max length
     coordinates = Column(String(100), nullable=True)
-    building = Column(String(100), nullable=True)
-    floor = Column(String(20), nullable=True)
-    position = Column(String(255), nullable=True)
     brand = Column(String(100), nullable=True)
     status = Column(String(20), default="up", nullable=False)
     version = Column(String(500), nullable=True)
+    rtsp_url = Column(String(500), nullable=True)
     rtsp_url = Column(String(500), nullable=True)
     last_update = Column(String(50), nullable=True)
     
