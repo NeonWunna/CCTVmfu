@@ -360,7 +360,7 @@ onBeforeUnmount(() => {
 
             <iframe
               v-else
-              :src="`/stream/webrtc.html?src=${encodeURIComponent(cameraData.rtspUrl)}`"
+              :src="`/stream/stream.html?src=${encodeURIComponent(cameraData.rtspUrl)}`"
               class="video-stream"
               title="Live Camera Feed"
               frameborder="0"
