@@ -1,4 +1,5 @@
 
+import os
 import cv2
 import logging
 import asyncio
@@ -12,8 +13,8 @@ from app.services.camera import THAILAND_TZ
 
 logger = logging.getLogger(__name__)
 
-# go2rtc API base URL (container name on same docker network)
-GO2RTC_API_URL = "http://cctv_go2rtc:1984"
+# go2rtc API base URL — overridable via env var (default: docker service hostname)
+GO2RTC_API_URL = os.getenv("GO2RTC_API_URL", "http://cctv_go2rtc:1984")
 
 # Max concurrent blur checks — prevents CPU starvation on low-core containers
 BLUR_SEMAPHORE = asyncio.Semaphore(3)
@@ -51,21 +52,22 @@ class BlurWorker:
             logger.warning(f"go2rtc snapshot error for {rtsp_url}: {e}")
             return None
 
-    def check_sharpness(self, rtsp_url: str) -> float:
+    def check_sharpness(self, rtsp_url: str) -> float | None:
         """
         Fetch a frame via go2rtc snapshot API and calculate Laplacian variance.
         Direct RTSP (cv2.VideoCapture) is intentionally NOT used as fallback
         because it has no timeout and can hang indefinitely, blocking CPU.
-        Returns variance (float). Returns 0.0 if failed.
+        Returns variance (float) or None if frame could not be fetched.
+        Returning None tells the caller to skip status update (not mark blurry).
         """
         if not rtsp_url:
-            return 0.0
+            return None
 
         frame = self._fetch_frame_from_go2rtc(rtsp_url)
 
         if frame is None:
             logger.warning(f"Could not fetch frame via go2rtc for: {rtsp_url}")
-            return 0.0
+            return None  # Skip — do NOT mark camera as blurry due to network failure
 
         try:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -74,7 +76,7 @@ class BlurWorker:
             return variance
         except Exception as e:
             logger.error(f"Error calculating blur for {rtsp_url}: {e}")
-            return 0.0
+            return None
 
     async def _check_camera_safe(self, cam) -> tuple:
         """

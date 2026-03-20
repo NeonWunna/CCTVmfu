@@ -79,7 +79,8 @@ services:
       - "8554:8554" # RTSP
       - "8555:8555/tcp" # WebRTC TCP
       - "8555:8555/udp" # WebRTC UDP
-    network_mode: host
+    networks:
+      - cctv-network
 
 networks:
   cctv-network:
