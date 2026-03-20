@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -13,6 +13,17 @@ const users = ref([]);
 const loading = ref(true);
 const toast = ref({ show: false, message: '', type: 'info' });
 const confirmModal = ref({ show: false, title: '', message: '', onConfirm: null, loading: false });
+
+const searchQuery = ref('');
+
+const filteredUsers = computed(() => {
+  if (!searchQuery.value) return users.value;
+  const q = searchQuery.value.toLowerCase();
+  return users.value.filter(u => 
+    (u.name && u.name.toLowerCase().includes(q)) || 
+    (u.email && u.email.toLowerCase().includes(q))
+  );
+});
 
 // ── Add User Modal ──────────────────────────────────────────
 const addUserModal = ref({ show: false });
@@ -206,8 +217,14 @@ onMounted(fetchUsers);
     <main class="admin-content">
       <div class="panel">
         <div class="panel-header">
-          <h2>Users <span class="count">{{ users.length }}</span></h2>
-          <button type="button" class="btn btn-add" @click="openAddUser">➕ Add User</button>
+          <h2>Users <span class="count">{{ filteredUsers.length }}</span></h2>
+          <div class="panel-actions">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" class="search-icon" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" v-model="searchQuery" placeholder="Search name or email..." />
+            </div>
+            <button type="button" class="btn btn-add" @click="openAddUser">➕ Add User</button>
+          </div>
         </div>
 
         <div v-if="loading" class="loading-state">
@@ -215,8 +232,9 @@ onMounted(fetchUsers);
           <p>Loading users...</p>
         </div>
 
-        <div v-else-if="users.length === 0" class="empty-state">
-          <p>No users found.</p>
+        <div v-else-if="filteredUsers.length === 0" class="empty-state">
+          <p v-if="users.length === 0">No users found.</p>
+          <p v-else>No users match your search.</p>
         </div>
 
         <table v-else class="users-table">
@@ -230,7 +248,7 @@ onMounted(fetchUsers);
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user.id" :class="{ 'row--self': user.email === authStore.user?.email }">
+            <tr v-for="user in filteredUsers" :key="user.id" :class="{ 'row--self': user.email === authStore.user?.email }">
               <td>
                 <div class="user-info">
                   <div class="avatar">{{ user.name?.slice(0,2).toUpperCase() }}</div>
@@ -507,6 +525,58 @@ onMounted(fetchUsers);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-box input {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  padding: 8px 12px 8px 32px;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  width: 220px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.search-box input::placeholder {
+  color: #64748b;
+}
+
+@media (max-width: 600px) {
+  .search-box input {
+    width: 160px;
+  }
 }
 
 .btn-add {
