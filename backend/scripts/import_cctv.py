@@ -58,15 +58,18 @@ def import_cctv_data():
                 current_ip = ip_address # Update current_ip for error tracking
                 # print(f"Processing IP: {ip_address}") # Debug output
 
-                # Extract RTSP URL — try 'enable rtsp' first (used by oldcctvinfo2.json),
-                # then fall back to 'ANPR&PTZ RTSP'.
-                def get_rtsp(item):
-                    for field in ('enable rtsp', 'ANPR&PTZ RTSP'):
+                # Extract RTSP URL:
+                # 1. Check 'ANPR&PTZ RTSP' — has full rtsp:// URL for ANPR cameras
+                # 2. Check 'enable rtsp' — has full rtsp:// URL for some cameras
+                # 3. Generate default URL from IP (for cameras with 'ok' or missing value)
+                def get_rtsp(item, ip):
+                    for field in ('ANPR&PTZ RTSP', 'enable rtsp'):
                         val = str(item.get(field, '') or '').strip()
                         if val.lower().startswith('rtsp://'):
                             return val
-                    return ''
-                rtsp_url = get_rtsp(item)
+                    # generate default MFU stream URL
+                    return f"rtsp://mfustream:mediamfu2025@{ip}/Streaming/Channels/101"
+                rtsp_url = get_rtsp(item, ip_address)
 
                 # Map JSON fields to model fields
                 camera_data = {
