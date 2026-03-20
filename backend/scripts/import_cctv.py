@@ -58,19 +58,23 @@ def import_cctv_data():
                 current_ip = ip_address # Update current_ip for error tracking
                 # print(f"Processing IP: {ip_address}") # Debug output
 
-                # Extract RTSP URL from ANPR&PTZ RTSP field
-                rtsp_url = item.get('ANPR&PTZ RTSP') or item.get('enable rtsp')
+                # Extract RTSP URL — only accept values that are actual rtsp:// URLs
+                def get_rtsp(item):
+                    for field in ('ANPR&PTZ RTSP', 'enable rtsp'):
+                        val = str(item.get(field, '') or '').strip()
+                        if val.lower().startswith('rtsp://'):
+                            return val
+                    return ''
+                rtsp_url = get_rtsp(item)
 
-                # Check if rtsp_url is None or empty string
-                if not rtsp_url or str(rtsp_url).strip() == "":
+                # If no valid RTSP URL found
+                if not rtsp_url:
                     if json_filename == 'oldcctvinfo2.json':
                         # oldcctvinfo2.json cameras without RTSP — leave empty
                         rtsp_url = ""
                     else:
-                        # Generate default RTSP URL if missing for other files (e.g. cctvinfo2.json)
+                        # Generate default RTSP URL for cctvinfo2.json cameras
                         rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
-                else:
-                    rtsp_url = str(rtsp_url).strip()
 
                 # Map JSON fields to model fields
                 camera_data = {
@@ -89,15 +93,16 @@ def import_cctv_data():
                 existing_camera = db.query(Camera).filter(Camera.ip_address == ip_address).first()
 
                 if existing_camera:
-                    # Update existing camera
+                    # Update existing camera — do NOT overwrite status (preserves online/offline state)
+                    skip_fields = {'status'}
                     changed = False
                     for key, value in camera_data.items():
-                        # converting coordinates to proper string format for comparison might be tricky so we just update
-                        # simpler to just update fields
+                        if key in skip_fields:
+                            continue
                         if getattr(existing_camera, key) != value:
                             setattr(existing_camera, key, value)
                             changed = True
-                    
+
                     if changed:
                         count_updated += 1
                 else:
