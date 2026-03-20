@@ -10,7 +10,7 @@
         "Longtitude": "99.8968E",
         "Location": "อาคาร AD1 ชั้น 1 East",
         "enable rtsp": "",
-        "ANPR&PTZ RTSP": "rtsp://mfustream:mediamfu2025@172.28.109.31/Streaming/Channels/101",
+        "ANPR&PTZ RTSP": "rtsp://mfustream:mediamfu2025@172.28.109.31/Streaming/Channels/101/",
         "PTZ": "",
         "": ""
     },
