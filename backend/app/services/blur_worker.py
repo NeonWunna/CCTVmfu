@@ -80,12 +80,15 @@ class BlurWorker:
         """
         Check a single camera with concurrency limit + hard timeout.
         Returns (cam, variance) or (cam, None) on failure/timeout.
+        Uses asyncio.wait_for() for Python 3.9+ compatibility.
         """
         async with BLUR_SEMAPHORE:
             try:
-                async with asyncio.timeout(BLUR_TIMEOUT):
-                    variance = await asyncio.to_thread(self.check_sharpness, cam.rtsp_url)
-                    return cam, variance
+                variance = await asyncio.wait_for(
+                    asyncio.to_thread(self.check_sharpness, cam.rtsp_url),
+                    timeout=BLUR_TIMEOUT
+                )
+                return cam, variance
             except asyncio.TimeoutError:
                 logger.warning(f"Blur check timed out ({BLUR_TIMEOUT}s) for camera {cam.id} ({cam.ip_address})")
                 return cam, None
