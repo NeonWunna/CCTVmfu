@@ -13,7 +13,7 @@ def import_cctv_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    json_files = ['cctvinfo2.json', 'oldcctvinfo2.json']
+    json_files = ['cctvinfo2.json', 'oldcctvinfo.json']
     
     db = SessionLocal()
     current_ip = None # Initialize current_ip
@@ -58,18 +58,20 @@ def import_cctv_data():
                 current_ip = ip_address # Update current_ip for error tracking
                 # print(f"Processing IP: {ip_address}") # Debug output
 
-                # Extract RTSP URL:
-                # 1. Check 'ANPR&PTZ RTSP' — has full rtsp:// URL for ANPR cameras
-                # 2. Check 'enable rtsp' — has full rtsp:// URL for some cameras
-                # 3. Generate default URL from IP (for cameras with 'ok' or missing value)
-                def get_rtsp(item, ip):
-                    for field in ('ANPR&PTZ RTSP', 'enable rtsp'):
-                        val = str(item.get(field, '') or '').strip()
-                        if val.lower().startswith('rtsp://'):
-                            return val
-                    # generate default MFU stream URL
-                    return f"rtsp://mfustream:mediamfu2025@{ip}/Streaming/Channels/101"
-                rtsp_url = get_rtsp(item, ip_address)
+                # Extract generated RTSP or use specific field
+                rtsp_url = item.get('ANPR&PTZ RTSP')
+                
+                # Check if rtsp_url is None or empty string
+                if not rtsp_url or str(rtsp_url).strip() == "":
+                   if json_filename == 'oldcctvinfo.json':
+                       # For oldcctvinfo.json, user requested to leave it empty or "-"
+                       rtsp_url = ""
+                   else:
+                       # Generate default RTSP URL if missing for other files (e.g. cctvinfo2.json)
+                       # Default format: rtsp://<ip>:554/LiveMedia/ch1/Media1/trackID=1
+                       rtsp_url = f"rtsp://{ip_address}:554/LiveMedia/ch1/Media1/trackID=1"
+                else:
+                   rtsp_url = str(rtsp_url).strip()
 
                 # Map JSON fields to model fields
                 camera_data = {
@@ -77,6 +79,7 @@ def import_cctv_data():
                     'name': str(item.get('CAMERA NAME_NEW')) if item.get('CAMERA NAME_NEW') is not None else None,
                     'location': str(item.get('Location')) if item.get('Location') is not None else None,
                     'coordinates': f"{item.get('Latitude')}, {item.get('Longtitude')}",
+                    'status': 'down', # Default status, will be updated by background service
                     'rtsp_url': rtsp_url
                 }
 
@@ -84,12 +87,11 @@ def import_cctv_data():
                 existing_camera = db.query(Camera).filter(Camera.ip_address == ip_address).first()
 
                 if existing_camera:
-                    # Update existing camera — do NOT overwrite status (preserves online/offline from ping_worker)
-                    skip_fields = {'status'}
+                    # Update existing camera
                     changed = False
                     for key, value in camera_data.items():
-                        if key in skip_fields:
-                            continue
+                        # converting coordinates to proper string format for comparison might be tricky so we just update
+                        # simpler to just update fields
                         if getattr(existing_camera, key) != value:
                             setattr(existing_camera, key, value)
                             changed = True
@@ -97,8 +99,8 @@ def import_cctv_data():
                     if changed:
                         count_updated += 1
                 else:
-                    # Create new camera — set initial status 'down'
-                    new_camera = Camera(**camera_data, status='down')
+                    # Create new camera
+                    new_camera = Camera(**camera_data)
                     db.add(new_camera)
                     db.flush() # Ensure it's visible to subsequent queries in same transaction
                     count_new += 1
