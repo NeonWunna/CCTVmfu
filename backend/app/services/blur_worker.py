@@ -1,12 +1,11 @@
 
 import cv2
 import logging
-import time
 import asyncio
 import requests
 import numpy as np
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime
 from app import models
 from app.db.session import SessionLocal
 from app.services.camera import THAILAND_TZ
@@ -16,10 +15,16 @@ logger = logging.getLogger(__name__)
 # go2rtc API base URL (container name on same docker network)
 GO2RTC_API_URL = "http://cctv_go2rtc:1984"
 
+# Max concurrent blur checks — prevents CPU starvation on low-core containers
+BLUR_SEMAPHORE = asyncio.Semaphore(3)
+
+# Per-camera hard timeout (seconds) — prevents any single camera from hanging
+BLUR_TIMEOUT = 30
+
 
 class BlurWorker:
     def __init__(self, check_interval: int = 300, threshold: float = 50.0):
-        self.check_interval = check_interval # 5 minutes
+        self.check_interval = check_interval
         self.threshold = threshold
         self.running = False
         self._shutdown = False
@@ -28,14 +33,14 @@ class BlurWorker:
         """
         Fetch a JPEG frame from go2rtc snapshot API.
         Returns decoded frame (numpy array) or None if failed.
+        Uses a short timeout to avoid blocking the thread executor.
         """
         try:
             encoded_url = urllib.parse.quote(rtsp_url, safe='')
             snapshot_url = f"{GO2RTC_API_URL}/api/frame.jpeg?src={encoded_url}"
-            
+
             response = requests.get(snapshot_url, timeout=10)
             if response.status_code == 200 and response.content:
-                # Decode JPEG to numpy array
                 nparr = np.frombuffer(response.content, np.uint8)
                 frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 return frame
@@ -46,123 +51,100 @@ class BlurWorker:
             logger.warning(f"go2rtc snapshot error for {rtsp_url}: {e}")
             return None
 
-    def _fetch_frame_direct(self, rtsp_url: str) -> np.ndarray | None:
-        """
-        Fetch frame directly via OpenCV RTSP (fallback).
-        """
-        try:
-            cap = cv2.VideoCapture(rtsp_url)
-            if not cap.isOpened():
-                return None
-            
-            ret, frame = cap.read()
-            cap.release()
-            
-            if not ret or frame is None:
-                return None
-            return frame
-        except Exception as e:
-            logger.warning(f"Direct RTSP error for {rtsp_url}: {e}")
-            return None
-
     def check_sharpness(self, rtsp_url: str) -> float:
         """
-        Capture a frame and calculate Laplacian variance.
-        Tries go2rtc snapshot API first, falls back to direct RTSP.
+        Fetch a frame via go2rtc snapshot API and calculate Laplacian variance.
+        Direct RTSP (cv2.VideoCapture) is intentionally NOT used as fallback
+        because it has no timeout and can hang indefinitely, blocking CPU.
         Returns variance (float). Returns 0.0 if failed.
         """
         if not rtsp_url:
             return 0.0
 
-        # Try go2rtc snapshot API first (works even with auth issues)
         frame = self._fetch_frame_from_go2rtc(rtsp_url)
-        
-        # Fallback to direct RTSP if go2rtc failed
-        if frame is None:
-            logger.info(f"Falling back to direct RTSP for blur check")
-            frame = self._fetch_frame_direct(rtsp_url)
 
         if frame is None:
-            logger.error(f"Could not fetch frame for blur check: {rtsp_url}")
+            logger.warning(f"Could not fetch frame via go2rtc for: {rtsp_url}")
             return 0.0
 
         try:
-            # Convert to grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            # Calculate Laplacian variance
             laplacian = cv2.Laplacian(gray, cv2.CV_64F)
             variance = laplacian.var()
-            
             return variance
         except Exception as e:
             logger.error(f"Error calculating blur for {rtsp_url}: {e}")
             return 0.0
 
+    async def _check_camera_safe(self, cam) -> tuple:
+        """
+        Check a single camera with concurrency limit + hard timeout.
+        Returns (cam, variance) or (cam, None) on failure/timeout.
+        """
+        async with BLUR_SEMAPHORE:
+            try:
+                async with asyncio.timeout(BLUR_TIMEOUT):
+                    variance = await asyncio.to_thread(self.check_sharpness, cam.rtsp_url)
+                    return cam, variance
+            except asyncio.TimeoutError:
+                logger.warning(f"Blur check timed out ({BLUR_TIMEOUT}s) for camera {cam.id} ({cam.ip_address})")
+                return cam, None
+            except Exception as e:
+                logger.error(f"Blur check error for camera {cam.id}: {e}")
+                return cam, None
+
     async def run_once(self):
         """
-        Run blur check for all UP cameras.
-        Sequential execution is acceptable here as confirmed in design.
+        Run blur check for all ONLINE cameras concurrently (capped by semaphore).
         """
         logger.info("Starting background blur check...")
         start_time = datetime.now()
-        
+
         db = SessionLocal()
         try:
-            # Filter for cameras that are ONLINE and have a non-empty rtsp_url
             cameras = db.query(models.Camera).filter(
                 models.Camera.status == "online",
                 models.Camera.rtsp_url != None,
                 models.Camera.rtsp_url != ""
             ).all()
-            
+
+            if not cameras:
+                logger.info("No online cameras with RTSP to check.")
+                return
+
+            # Run all checks concurrently (semaphore limits to BLUR_SEMAPHORE at a time)
+            tasks = [self._check_camera_safe(cam) for cam in cameras]
+            results = await asyncio.gather(*tasks)
+
             updates_count = 0
-            
-            for cam in cameras:
+            for cam, variance in results:
                 if self._shutdown:
                     break
-                    
-                # We can perform the check in a thread to strictly avoid blocking the loop 
-                # (although run_once is called in a task, blocking here blocks this task, not the whole app if other tasks are concurrent)
-                # But CV2 is CPU bound mostly.
-                
-                # Check blur
-                variance = await asyncio.to_thread(self.check_sharpness, cam.rtsp_url)
-                
-                # Determine status
+                if variance is None:
+                    # Timeout or error — skip update, don't change status
+                    continue
+
                 new_image_status = "blur" if variance < self.threshold else "normal"
-                
-                # Update DB
-                # Always update last_image_check
+
                 needs_update = False
-                
-                # Check if we need to update the main status to 'blurry'
                 if new_image_status == "blur" and cam.status != "blurry":
-                    logger.info(f"Camera {cam.id} status changed to blurry! (Score: {variance:.2f})")
+                    logger.info(f"Camera {cam.id} changed to blurry! (Score: {variance:.2f})")
                     cam.status = "blurry"
                     needs_update = True
-                    
+
                 if cam.image_status != new_image_status:
-                    logger.info(f"Camera {cam.id} image status changed: {cam.image_status} -> {new_image_status} (Score: {variance:.2f})")
+                    logger.info(f"Camera {cam.id} image_status: {cam.image_status} → {new_image_status} (Score: {variance:.2f})")
                     cam.image_status = new_image_status
                     needs_update = True
-                
-                # Update score and timestamp
+
                 cam.sharpness_value = float(variance)
                 cam.last_image_check = datetime.now(THAILAND_TZ).strftime("%Y-%m-%d %H:%M:%S")
-                
-                # Commit periodically or per camera? Per camera is safer for long running loop
-                # optimization: commit every 10?
-                db.commit() 
-                db.refresh(cam)
                 updates_count += 1
-                
-                # Small sleep to be nice to CPU?
-                await asyncio.sleep(0.1)
 
+            db.commit()
             elapsed = (datetime.now() - start_time).total_seconds()
-            logger.info(f"Blur check completed in {elapsed:.2f}s. Scanned {len(cameras)} cameras.")
-            
+            logger.info(f"Blur check done in {elapsed:.2f}s. Scanned {len(cameras)}, updated {updates_count} cameras.")
+
         except Exception as e:
             logger.error(f"Error in blur worker run: {e}")
         finally:
@@ -176,8 +158,7 @@ class BlurWorker:
                 await self.run_once()
             except Exception as e:
                 logger.error(f"Critical error in blur loop: {e}")
-            
-            # sleep for interval
+
             for _ in range(self.check_interval):
                 if not self.running:
                     break

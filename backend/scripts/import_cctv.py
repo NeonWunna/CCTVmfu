@@ -13,7 +13,7 @@ def import_cctv_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    json_files = ['cctvinfo2.json', 'oldcctvinfo.json']
+    json_files = ['cctvinfo2.json', 'oldcctvinfo2.json']
     
     db = SessionLocal()
     current_ip = None # Initialize current_ip
