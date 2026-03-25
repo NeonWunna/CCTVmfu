@@ -43,24 +43,38 @@ class BlurWorker:
     def _fetch_frame_from_go2rtc(self, rtsp_url: str) -> np.ndarray | None:
         """
         Fetch a JPEG frame from go2rtc snapshot API.
-        Returns decoded frame (numpy array) or None if failed.
-        Uses a short timeout to avoid blocking the thread executor.
+        Retries once after 2s if go2rtc returns 500 (stream not yet connected).
+        Returns decoded grayscale frame (numpy array) or None if failed.
         """
-        try:
-            encoded_url = urllib.parse.quote(rtsp_url, safe='')
-            snapshot_url = f"{GO2RTC_API_URL}/api/frame.jpeg?src={encoded_url}"
+        import time
 
-            response = requests.get(snapshot_url, timeout=10)
-            if response.status_code == 200 and response.content:
-                nparr = np.frombuffer(response.content, np.uint8)
-                frame = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)  # decode directly as grayscale
-                return frame
-            else:
-                logger.warning(f"go2rtc snapshot failed: status={response.status_code}")
+        encoded_url = urllib.parse.quote(rtsp_url, safe='')
+        snapshot_url = f"{GO2RTC_API_URL}/api/frame.jpeg?src={encoded_url}"
+
+        MAX_RETRIES = 2
+        RETRY_DELAY = 2  # seconds — give go2rtc time to establish RTSP connection
+
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(snapshot_url, timeout=10)
+                if response.status_code == 200 and response.content:
+                    nparr = np.frombuffer(response.content, np.uint8)
+                    frame = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+                    return frame
+
+                if response.status_code == 500 and attempt < MAX_RETRIES - 1:
+                    # go2rtc hasn't connected to this stream yet — wait and retry
+                    logger.debug(f"go2rtc returned 500, retrying in {RETRY_DELAY}s... ({rtsp_url})")
+                    time.sleep(RETRY_DELAY)
+                    continue
+
+                logger.debug(f"go2rtc snapshot failed: status={response.status_code} for {rtsp_url}")
                 return None
-        except Exception as e:
-            logger.warning(f"go2rtc snapshot error for {rtsp_url}: {e}")
-            return None
+            except Exception as e:
+                logger.debug(f"go2rtc snapshot error for {rtsp_url}: {e}")
+                return None
+
+        return None
 
     def check_sharpness(self, rtsp_url: str) -> float:
         """
