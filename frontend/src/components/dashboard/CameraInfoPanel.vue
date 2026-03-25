@@ -44,6 +44,10 @@ const hasCamera = computed(() => Boolean(props.camera));
     </header>
 
     <span class="status-chip" :class="`status-chip--${camera.status}`">{{ statusText }}</span>
+    <span v-if="camera.status === 'blurry' && camera.sharpness_value != null" class="blur-score">
+      Score: {{ camera.sharpness_value.toFixed(1) }}
+      <span class="blur-score__threshold">(threshold: 50)</span>
+    </span>
 
     <dl class="camera-meta">
       <div>
@@ -165,6 +169,26 @@ const hasCamera = computed(() => Boolean(props.camera));
 
 .status-chip--blurry::before {
   background: #f97316;
+}
+
+.blur-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  color: #fdba74;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.blur-score__threshold {
+  color: #94a3b8;
+  font-weight: 400;
 }
 
 .camera-meta {
