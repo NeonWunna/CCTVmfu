@@ -63,8 +63,8 @@ def import_cctv_data():
                 
                 # Check if rtsp_url is None or empty string
                 if not rtsp_url or str(rtsp_url).strip() == "":
-                   if json_filename == 'oldcctvinfo.json':
-                       # For oldcctvinfo.json, user requested to leave it empty or "-"
+                   if json_filename in ('oldcctvinfo.json', 'oldcctvinfo3.json'):
+                       # For oldcctvinfo files, leave RTSP empty if not provided
                        rtsp_url = ""
                    else:
                        # Generate default RTSP URL if missing for other files (e.g. cctvinfo2.json)
