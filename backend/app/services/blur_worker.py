@@ -204,6 +204,10 @@ class BlurWorker:
                         logger.info(f"Camera {cam_id} changed to blurry! (Score: {variance:.2f})")
                         update_dict["status"] = "blurry"
                         needs_status_change = True
+                    elif new_image_status == "normal" and original.status == "blurry":
+                        logger.info(f"Camera {cam_id} recovered from blurry → online (Score: {variance:.2f})")
+                        update_dict["status"] = "online"
+                        needs_status_change = True
 
                     if original.image_status != new_image_status:
                         logger.info(f"Camera {cam_id} image_status: {original.image_status} → {new_image_status} (Score: {variance:.2f})")
