@@ -29,6 +29,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  hideCheck: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -142,7 +146,7 @@ const handleBlurryCheckKeydown = (event) => {
       </span>
 
       <span
-        v-if="card.key === 'blurry'"
+        v-if="card.key === 'blurry' && !hideCheck"
         class="blurry-check-pill"
         role="button"
         tabindex="0"

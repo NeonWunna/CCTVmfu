@@ -404,6 +404,7 @@ watch(selectedCamera, (camera) => {
         :blurry="blurryCount"
         :selected-filter="selectedFilter"
         :loading="loadingCameras"
+        :hide-check="isUser"
         @select-filter="selectFilterFromStats"
         @check-blurry="checkBlurryCameras"
       />
@@ -566,6 +567,7 @@ watch(selectedCamera, (camera) => {
               :blurry="blurryCount"
               :selected-filter="selectedFilter"
               :loading="loadingCameras"
+              :hide-check="isUser"
               @select-filter="selectFilterFromStats"
               @check-blurry="checkBlurryCameras"
             />
