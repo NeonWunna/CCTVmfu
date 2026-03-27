@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import argparse
 
 # Add parent directory to path to allow importing app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -9,13 +10,29 @@ from app.db.session import SessionLocal, engine
 from app.db.base import Base
 from app.models.camera import Camera
 
-def import_cctv_data():
+def import_cctv_data(clear_db=False):
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
 
-    json_files = ['cctvinfo2.json', 'oldcctvinfo4.json']
-    
     db = SessionLocal()
+    
+    if clear_db:
+        print("Clearing existing cameras from database...")
+        try:
+            from sqlalchemy import text
+            db.query(Camera).delete()
+            # Also reset identity/sequence if using PostgreSQL to start IDs from 1
+            db.execute(text("TRUNCATE TABLE cameras RESTART IDENTITY CASCADE"))
+            db.commit()
+            print("Database cleared.")
+        except Exception as e:
+            # Fallback to simple delete if TRUNCATE fails (e.g., SQLite)
+            db.rollback()
+            db.query(Camera).delete()
+            db.commit()
+            print("Database cleared (using simple DELETE).")
+
+    json_files = ['cctvinfo2.json', 'oldcctvinfo4.json']
     current_ip = None # Initialize current_ip
     try:
         count_new = 0
@@ -63,7 +80,7 @@ def import_cctv_data():
                 
                 # Check if rtsp_url is None or empty string
                 if not rtsp_url or str(rtsp_url).strip() == "":
-                   if json_filename in ('oldcctvinfo.json', 'oldcctvinfo3.json'):
+                   if json_filename in ('oldcctvinfo.json', 'oldcctvinfo3.json', 'oldcctvinfo4.json'):
                        # For oldcctvinfo files, leave RTSP empty if not provided
                        rtsp_url = ""
                    else:
@@ -119,4 +136,8 @@ def import_cctv_data():
         db.close()
 
 if __name__ == "__main__":
-    import_cctv_data()
+    parser = argparse.ArgumentParser(description='Import CCTV cameras from JSON files')
+    parser.add_argument('--clear', action='store_true', help='Clear existing cameras before importing')
+    args = parser.parse_args()
+    
+    import_cctv_data(clear_db=args.clear)
