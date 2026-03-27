@@ -46,7 +46,7 @@ def import_cctv_data(clear_db=False):
                 continue
 
             print(f"Reading data from {json_file_path}...")
-            with open(json_file_path, 'r', encoding='utf-8') as f:
+            with open(json_file_path, 'r', encoding='utf-8-sig') as f:
                 content = f.read().strip()
                 
             # Fix format: if it's a sequence of objects separated by commas but not in an array
