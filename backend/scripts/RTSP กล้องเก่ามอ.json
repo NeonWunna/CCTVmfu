@@ -98,7 +98,8 @@
  {
   "WKT": "POINT (99.893476 20.046068)",
   "name": "AS-FL.G",
-  "ip": "172.28.106.40"
+  "ip": "172.28.106.40",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.40\/Streaming\/Channels\/101"
  },
  {
   "WKT": "POINT (99.893555 20.046143)",
@@ -265,7 +266,8 @@
  {
   "WKT": "POINT (99.894992 20.042996)",
   "name": "C5-C4-Side",
-  "ip": "172.28.111.19"
+  "ip": "172.28.111.19",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.895046 20.04249)",
@@ -282,7 +284,8 @@
  {
   "WKT": "POINT (99.89379 20.04736)",
   "name": "D1-1st-Floor",
-  "ip": "172.28.106.49"
+  "ip": "172.28.106.49",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.49\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.893663 20.047323)",
@@ -365,27 +368,32 @@
  {
   "WKT": "POINT (99.896326 20.046062)",
   "name": "S3-MotorPark",
-  "ip": "172.28.109.36"
+  "ip": "172.28.109.36",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.894791 20.047186)",
   "name": "S6-CarPark-StairWay1",
-  "ip": "172.28.109.11"
+  "ip": "172.28.109.11",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.11:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.894772 20.047188)",
   "name": "S6-CarPark-StairWay2",
-  "ip": "172.28.109.12"
+  "ip": "172.28.109.12",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.12:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.895197 20.04785)",
   "name": "S7-A-In",
-  "ip": "172.28.114.12"
+  "ip": "172.28.114.12",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.895223 20.047876)",
   "name": "S7-A-Out",
-  "ip": "172.28.114.11"
+  "ip": "172.28.114.11",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.895559 20.047665)",
@@ -440,12 +448,14 @@
  {
   "WKT": "POINT (99.894435 20.048173)",
   "name": "Dorm F1-Fl3",
-  "ip": "172.28.106.17"
+  "ip": "172.28.106.17",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.894561 20.048227)",
   "name": "Dorm F1-5",
-  "ip": "172.28.106.15"
+  "ip": "172.28.106.15",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.15\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.893872 20.048369)",
@@ -468,7 +478,8 @@
  {
   "WKT": "POINT (99.892997 20.048559)",
   "name": "F4 10.1.40.64",
-  "ip": "172.28.107.71"
+  "ip": "172.28.107.71",
+  "rtsp": "cisco"
  },
  {
   "WKT": "POINT (99.89293 20.048413)",
@@ -485,17 +496,20 @@
  {
   "WKT": "POINT (99.89264 20.048566)",
   "name": "DORM-F4-5",
-  "ip": "172.28.107.72"
+  "ip": "172.28.107.72",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.72\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.892691 20.04869)",
   "name": "DORM-F4-6",
-  "ip": "172.28.107.73"
+  "ip": "172.28.107.73",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.73\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.892704 20.048536)",
   "name": "F4-7",
-  "ip": "172.28.107.74"
+  "ip": "172.28.107.74",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.74\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.892766 20.048672)",
@@ -546,7 +560,8 @@
  {
   "WKT": "POINT (99.892001 20.049852)",
   "name": "F5-8",
-  "ip": "172.28.107.67"
+  "ip": "172.28.107.67",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.67\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.89224 20.049761)",
@@ -579,7 +594,8 @@
  {
   "WKT": "POINT (99.892013 20.050413)",
   "name": "F6-FL2",
-  "ip": "172.28.107.56"
+  "ip": "172.28.107.56",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.56:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.891985 20.050387)",
@@ -590,17 +606,20 @@
  {
   "WKT": "POINT (99.89199 20.050332)",
   "name": "F6-FL3",
-  "ip": "172.28.107.57"
+  "ip": "172.28.107.57",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.57:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892067 20.050442)",
   "name": "F6-FL4-1",
-  "ip": "172.28.107.58"
+  "ip": "172.28.107.58",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.58:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892226 20.050244)",
   "name": "F6-FL4-2",
-  "ip": "172.28.107.59"
+  "ip": "172.28.107.59",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.59:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.891829 20.050519)",
@@ -609,62 +628,74 @@
  {
   "WKT": "POINT (99.892966 20.049785)",
   "name": "F7-FL1-MainOUT",
-  "ip": "172.28.107.34"
+  "ip": "172.28.107.34",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.34:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892947 20.049732)",
   "name": "F7-FL1-MainIN",
-  "ip": "172.28.107.35"
+  "ip": "172.28.107.35",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.35:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.893011 20.050072)",
   "name": "F8-FL1-MainOUT",
-  "ip": "172.28.107.24"
+  "ip": "172.28.107.24",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.24:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.893027 20.05014)",
   "name": "F8-FL1-MainIN",
-  "ip": "172.28.107.25"
+  "ip": "172.28.107.25",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.25:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892918 20.049767)",
   "name": "F7-FL1-Right",
-  "ip": "172.28.107.37"
+  "ip": "172.28.107.37",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.37:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.893006 20.04974)",
   "name": "F7-FL1-Left",
-  "ip": "172.28.107.36"
+  "ip": "172.28.107.36",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.36:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892891 20.049734)",
   "name": "F7-FL2-Right",
-  "ip": "172.28.107.39"
+  "ip": "172.28.107.39",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.39:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892869 20.049702)",
   "name": "F7-FL3-Right",
-  "ip": "172.28.107.41"
+  "ip": "172.28.107.41",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.41:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892837 20.049674)",
   "name": "F7-FL4-Right",
-  "ip": "172.28.107.43"
+  "ip": "172.28.107.43",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.43:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892979 20.049702)",
   "name": "F7-FL2-Left",
-  "ip": "172.28.107.38"
+  "ip": "172.28.107.38",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.38:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892955 20.049656)",
   "name": "F7-FL3-Left",
-  "ip": "172.28.107.40"
+  "ip": "172.28.107.40",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.40:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892928 20.049631)",
   "name": "F7-FL4-Left",
-  "ip": "172.28.107.42"
+  "ip": "172.28.107.42",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.42:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892918 20.050405)",
@@ -681,42 +712,50 @@
  {
   "WKT": "POINT (99.892979 20.050176)",
   "name": "F8-FL4-Left",
-  "ip": "172.28.107.32"
+  "ip": "172.28.107.32",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.32:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892967 20.05015)",
   "name": "F8-FL3-Left",
-  "ip": "172.28.107.30"
+  "ip": "172.28.107.30",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.892959 20.050136)",
   "name": "F8-FL2-Left",
-  "ip": "172.28.107.28"
+  "ip": "172.28.107.28",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.28:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892946 20.050116)",
   "name": "F8-FL1-Left",
-  "ip": "172.28.107.26"
+  "ip": "172.28.107.26",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.26:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89308 20.05014)",
   "name": "F8-FL4-Right",
-  "ip": "172.28.107.33"
+  "ip": "172.28.107.33",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.33:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.893072 20.050124)",
   "name": "F8-FL3-Right",
-  "ip": "172.28.107.31"
+  "ip": "172.28.107.31",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.31:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89306 20.050101)",
   "name": "F8-FL2-Right",
-  "ip": "172.28.107.29"
+  "ip": "172.28.107.29",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.29:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89305 20.050081)",
   "name": "F8-FL1-Right",
-  "ip": "172.28.107.27"
+  "ip": "172.28.107.27",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.893132 20.05059)",
@@ -763,7 +802,8 @@
  {
   "WKT": "POINT (99.893137 20.050517)",
   "name": "Saktong3-FLG-Left",
-  "ip": "172.28.107.11"
+  "ip": "172.28.107.11",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.89306 20.050703)",
@@ -814,47 +854,56 @@
  {
   "WKT": "POINT (99.897886 20.057716)",
   "name": "L5-FL1-Out",
-  "ip": "172.28.108.39"
+  "ip": "172.28.108.39",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.39:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897948 20.057691)",
   "name": "L5-FL1-IN",
-  "ip": "172.28.108.38"
+  "ip": "172.28.108.38",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.38:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897825 20.057671)",
   "name": "L5-FL1-L",
-  "ip": "172.28.108.43"
+  "ip": "172.28.108.43",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.43:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897857 20.05765)",
   "name": "L5-FL2-L",
-  "ip": "172.28.108.45"
+  "ip": "172.28.108.45",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.45:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897934 20.05762)",
   "name": "L5-FL4-L",
-  "ip": "172.28.108.50"
+  "ip": "172.28.108.50",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.50:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897905 20.057638)",
   "name": "L5-FL3-L",
-  "ip": "172.28.108.47"
+  "ip": "172.28.108.47",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.47:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897935 20.057816)",
   "name": "L5-FL1-R",
-  "ip": "172.28.108.44"
+  "ip": "172.28.108.44",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.44:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.897967 20.05779)",
   "name": "L5-FL2-R",
-  "ip": "172.28.108.46"
+  "ip": "172.28.108.46",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.46:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898004 20.057763)",
   "name": "L5-FL3-R",
-  "ip": "172.28.108.48"
+  "ip": "172.28.108.48",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.48:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898039 20.057722)",
@@ -877,42 +926,50 @@
  {
   "WKT": "POINT (99.898276 20.058145)",
   "name": "L4-FL1-L",
-  "ip": "172.28.108.28"
+  "ip": "172.28.108.28",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.28:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.8983 20.058123)",
   "name": "L4-FL2-L",
-  "ip": "172.28.108.30"
+  "ip": "172.28.108.30",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.30:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898319 20.058102)",
   "name": "L4-FL3-L",
-  "ip": "172.28.108.32"
+  "ip": "172.28.108.32",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.32:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898343 20.058072)",
   "name": "L4-FL4-L",
-  "ip": "172.28.108.34"
+  "ip": "172.28.108.34",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.34:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898334 20.058184)",
   "name": "L4-FL1-R",
-  "ip": "172.28.108.29"
+  "ip": "172.28.108.29",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.29:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898364 20.058168)",
   "name": "L4-FL2-R",
-  "ip": "172.28.108.31"
+  "ip": "172.28.108.31",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.31:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898393 20.058148)",
   "name": "L4-FL3-R",
-  "ip": "172.28.108.33"
+  "ip": "172.28.108.33",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.33:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898416 20.05813)",
   "name": "L4-FL4-R",
-  "ip": "172.28.108.35"
+  "ip": "172.28.108.35",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.35:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900653 20.058194)",
@@ -929,42 +986,50 @@
  {
   "WKT": "POINT (99.900696 20.058238)",
   "name": "MKP-FL1-L",
-  "ip": "172.28.108.13"
+  "ip": "172.28.108.13",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.13:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900714 20.058222)",
   "name": "MKP-FL2-L",
-  "ip": "172.28.108.15"
+  "ip": "172.28.108.15",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.15:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900732 20.058201)",
   "name": "MKP-FL3-L",
-  "ip": "172.28.108.17"
+  "ip": "172.28.108.17",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.17:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900749 20.058179)",
   "name": "MKP-FL4-L",
-  "ip": "172.28.108.19"
+  "ip": "172.28.108.19",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.19:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900617 20.058184)",
   "name": "MKP-FL1-R",
-  "ip": "172.28.108.14"
+  "ip": "172.28.108.14",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.14:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.90063 20.058169)",
   "name": "MKP-FL2-R",
-  "ip": "172.28.108.16"
+  "ip": "172.28.108.16",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.16:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900648 20.058147)",
   "name": "MKP-FL3-R",
-  "ip": "172.28.108.18"
+  "ip": "172.28.108.18",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.18:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.900668 20.058128)",
   "name": "MKP-FL4-R",
-  "ip": "172.28.108.20"
+  "ip": "172.28.108.20",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.20:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.894645 20.057281)",
@@ -993,32 +1058,38 @@
  {
   "WKT": "POINT (99.89425 20.046021)",
   "name": "S1-101",
-  "ip": "172.28.109.13"
+  "ip": "172.28.109.13",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.13\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.894222 20.046018)",
   "name": "S1-201",
-  "ip": "172.28.109.15"
+  "ip": "172.28.109.15",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.15\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.894255 20.045846)",
   "name": "S1-102",
-  "ip": "172.28.109.14"
+  "ip": "172.28.109.14",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.14\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.89423 20.045846)",
   "name": "S1-202",
-  "ip": "172.28.109.16"
+  "ip": "172.28.109.16",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.16\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.894518 20.045803)",
   "name": "S1-Lift-FL2",
-  "ip": "172.28.109.17"
+  "ip": "172.28.109.17",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.17\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8944031 20.0456356)",
   "name": "S1-MainGate",
-  "ip": "172.28.109.18"
+  "ip": "172.28.109.18",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.109.14\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.891846 20.051313)",
@@ -1029,7 +1100,8 @@
  {
   "WKT": "POINT (99.892063 20.051393)",
   "name": "Boonsong-02",
-  "ip": "172.28.107.45"
+  "ip": "172.28.107.45",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.892027 20.051374)",
@@ -1040,17 +1112,20 @@
  {
   "WKT": "POINT (99.89198 20.051366)",
   "name": "Boonsong-FL2-R",
-  "ip": "172.28.107.86"
+  "ip": "172.28.107.86",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.86:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892004 20.05135)",
   "name": "Boonsong-FL3-R",
-  "ip": "172.28.107.87"
+  "ip": "172.28.107.87",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.87:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892031 20.051335)",
   "name": "Boonsong-FL4-R",
-  "ip": "172.28.107.88"
+  "ip": "172.28.107.88",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.88:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892023 20.051451)",
@@ -1061,12 +1136,14 @@
  {
   "WKT": "POINT (99.892048 20.05144)",
   "name": "Boonsong-FL3-L",
-  "ip": "172.28.108.101"
+  "ip": "172.28.108.101",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.892079 20.051427)",
   "name": "Boonsong-FL4-L",
-  "ip": "172.28.108.102"
+  "ip": "172.28.108.102",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.892087 20.05067)",
@@ -1077,22 +1154,26 @@
  {
   "WKT": "POINT (99.892107 20.050862)",
   "name": "Prasert-02",
-  "ip": "172.28.107.49"
+  "ip": "172.28.107.49",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.891996 20.050821)",
   "name": "Prasert-FL2-R",
-  "ip": "172.28.107.83"
+  "ip": "172.28.107.83",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.83:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892032 20.050804)",
   "name": "Prasert-FL3-R",
-  "ip": "172.28.107.84"
+  "ip": "172.28.107.84",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.84:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892067 20.050787)",
   "name": "Prasert-FL4-R",
-  "ip": "172.28.107.85"
+  "ip": "172.28.107.85",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.85:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892058 20.050934)",
@@ -1145,17 +1226,20 @@
  {
   "WKT": "POINT (99.892569 20.050551)",
   "name": "Pao-FL2-R",
-  "ip": "172.28.107.80"
+  "ip": "172.28.107.80",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.80:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.892588 20.05058)",
   "name": "Pao-FL3-R",
-  "ip": "172.28.107.81"
+  "ip": "172.28.107.81",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.81:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89261 20.050606)",
   "name": "Pao-FL4-R",
-  "ip": "172.28.107.82"
+  "ip": "172.28.107.82",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.107.82:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898952 20.058558)",
@@ -1172,22 +1256,26 @@
  {
   "WKT": "POINT (99.899001 20.058603)",
   "name": "L2-FL1-R",
-  "ip": "172.28.108.80"
+  "ip": "172.28.108.80",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.80:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898894 20.058584)",
   "name": "L2-FL1-L",
-  "ip": "172.28.108.79"
+  "ip": "172.28.108.79",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.79:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899027 20.058594)",
   "name": "L2-FL2-R",
-  "ip": "172.28.108.82"
+  "ip": "172.28.108.82",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.82:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898902 20.058551)",
   "name": "L2-FL2-L",
-  "ip": "172.28.108.81"
+  "ip": "172.28.108.81",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.81:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.8990407 20.0585793)",
@@ -1204,7 +1292,8 @@
  {
   "WKT": "POINT (99.89906 20.058554)",
   "name": "L2-FL4-L",
-  "ip": "172.28.108.86"
+  "ip": "172.28.108.86",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.86:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898938 20.058508)",
@@ -1227,42 +1316,50 @@
  {
   "WKT": "POINT (99.899407 20.058184)",
   "name": "L1-FL1-R",
-  "ip": "172.28.108.68"
+  "ip": "172.28.108.68",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.68:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899267 20.058138)",
   "name": "L1-FL1-L",
-  "ip": "172.28.108.67"
+  "ip": "172.28.108.67",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.67:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899429 20.058172)",
   "name": "L1-FL2-R",
-  "ip": "172.28.108.70"
+  "ip": "172.28.108.70",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.70:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89928 20.058115)",
   "name": "L1-FL2-L",
-  "ip": "172.28.108.69"
+  "ip": "172.28.108.69",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.69:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899452 20.058154)",
   "name": "L1-FL3-R",
-  "ip": "172.28.108.72"
+  "ip": "172.28.108.72",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.72:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899295 20.058102)",
   "name": "L1-FL3-L",
-  "ip": "172.28.108.71"
+  "ip": "172.28.108.71",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.71:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.89947 20.058136)",
   "name": "L1-FL4-R",
-  "ip": "172.28.108.74"
+  "ip": "172.28.108.74",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.74:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.899312 20.058095)",
   "name": "L1-FL4-L",
-  "ip": "172.28.108.73"
+  "ip": "172.28.108.73",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.73:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898662 20.057892)",
@@ -1279,27 +1376,32 @@
  {
   "WKT": "POINT (99.898711 20.057922)",
   "name": "L3-FL1-R",
-  "ip": "172.28.108.58"
+  "ip": "172.28.108.58",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.58:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898612 20.057903)",
   "name": "L3-FL1-L",
-  "ip": "172.28.108.57"
+  "ip": "172.28.108.57",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.57:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898738 20.057904)",
   "name": "L3-FL2-R",
-  "ip": "172.28.108.60"
+  "ip": "172.28.108.60",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.60:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898623 20.057879)",
   "name": "L3-FL2-L",
-  "ip": "172.28.108.59"
+  "ip": "172.28.108.59",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.59:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898753 20.057882)",
   "name": "L3-FL3-R",
-  "ip": "172.28.108.62"
+  "ip": "172.28.108.62",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.62:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898634 20.057862)",
@@ -1316,12 +1418,14 @@
  {
   "WKT": "POINT (99.898652 20.057833)",
   "name": "L3-FL4-L",
-  "ip": "172.28.108.63"
+  "ip": "172.28.108.63",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.63:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.898607 20.057704)",
   "name": "DORM-L3-04",
-  "ip": "172.28.108.56"
+  "ip": "172.28.108.56",
+  "rtsp": "cisco"
  },
  {
   "WKT": "POINT (99.898776 20.057767)",
@@ -1332,7 +1436,8 @@
  {
   "WKT": "POINT (99.894267 20.042141)",
   "name": "M3 Floor2",
-  "ip": "172.28.111.30"
+  "ip": "172.28.111.30",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.111.30\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.894283 20.042133)",
@@ -1377,7 +1482,8 @@
  {
   "WKT": "POINT (99.890738 20.043765)",
   "name": "Fl8 Mid",
-  "ip": "172.28.113.47"
+  "ip": "172.28.113.47",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.890917 20.04399)",
@@ -1388,7 +1494,8 @@
  {
   "WKT": "POINT (99.890659 20.043915)",
   "name": "Fl8 2",
-  "ip": "172.28.113.45"
+  "ip": "172.28.113.45",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.890374 20.043641)",
@@ -1555,12 +1662,14 @@
  {
   "WKT": "POINT (99.8903407 20.043924)",
   "name": "Floor G",
-  "ip": "172.28.113.11"
+  "ip": "172.28.113.11",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8903635 20.0437262)",
   "name": "Floor G",
-  "ip": "172.28.113.12"
+  "ip": "172.28.113.12",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8902924 20.0439933)",
@@ -1571,7 +1680,8 @@
  {
   "WKT": "POINT (99.8902119 20.0438118)",
   "name": "Floor1 A3",
-  "ip": "172.28.113.15"
+  "ip": "172.28.113.15",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8902991 20.04374)",
@@ -1594,22 +1704,26 @@
  {
   "WKT": "POINT (99.8902937 20.0436959)",
   "name": "Floor1 A4",
-  "ip": "172.28.113.16"
+  "ip": "172.28.113.16",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8904761 20.0437652)",
   "name": "Floor1 A2",
-  "ip": "172.28.113.14"
+  "ip": "172.28.113.14",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8908476 20.0439152)",
   "name": "Floor1 A3",
-  "ip": "172.28.113.15"
+  "ip": "172.28.113.15",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8903742 20.0436279)",
   "name": "A Lift Toilet right",
-  "ip": "172.28.113.52"
+  "ip": "172.28.113.52",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8904171 20.0436468)",
@@ -1836,7 +1950,8 @@
  {
   "WKT": "POINT (99.8903617 20.0445203)",
   "name": "Floor3 B6",
-  "ip": "172.28.113.90"
+  "ip": "172.28.113.90",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8903644 20.0443918)",
@@ -1847,7 +1962,8 @@
  {
   "WKT": "POINT (99.890483 20.0441936)",
   "name": "Floor3 B8",
-  "ip": "172.28.113.92"
+  "ip": "172.28.113.92",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8905522 20.0445354)",
@@ -1858,17 +1974,20 @@
  {
   "WKT": "POINT (99.8907212 20.0444044)",
   "name": "Floor3 B9",
-  "ip": "172.28.113.93"
+  "ip": "172.28.113.93",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8907091 20.0442494)",
   "name": "Floor3 B10",
-  "ip": "172.28.113.94"
+  "ip": "172.28.113.94",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8908834 20.044519)",
   "name": "Floor3 B11",
-  "ip": "172.28.113.95"
+  "ip": "172.28.113.95",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8908848 20.0444057)",
@@ -1921,7 +2040,8 @@
  {
   "WKT": "POINT (99.889888 20.0446954)",
   "name": "Floor4 B3",
-  "ip": "172.28.113.100"
+  "ip": "172.28.113.100",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8900798 20.0445304)",
@@ -1956,12 +2076,14 @@
  {
   "WKT": "POINT (99.8903815 20.0443956)",
   "name": "Floor4 B7",
-  "ip": "172.28.113.104"
+  "ip": "172.28.113.104",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.890483 20.0441936)",
   "name": "Floor4 B10",
-  "ip": "172.28.113.104"
+  "ip": "172.28.113.104",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8905641 20.0445194)",
@@ -2104,37 +2226,44 @@
  {
   "WKT": "POINT (99.8935739 20.0467328)",
   "name": "ArchiveHouse in1",
-  "ip": "172.28.106.90"
+  "ip": "172.28.106.90",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.90\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8935726 20.046792)",
   "name": "ArchiveHouse In 2",
-  "ip": "172.28.106.91"
+  "ip": "172.28.106.91",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.91\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8935096 20.0467731)",
   "name": "ArchiveHouse R2",
-  "ip": "172.28.106.92"
+  "ip": "172.28.106.92",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.92\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8934371 20.0467365)",
   "name": "ArchiveHouse R3",
-  "ip": "172.28.106.93"
+  "ip": "172.28.106.93",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.93\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8934291 20.0468084)",
   "name": "ArchiveHouse R4",
-  "ip": " 172.28.106.94"
+  "ip": "172.28.106.94",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.94\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.893354 20.0467567)",
   "name": "ArchiveHouse R5",
-  "ip": "172.28.106.95"
+  "ip": "172.28.106.95",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.95\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8933594 20.0468361)",
   "name": "ArchiveHouse R6",
-  "ip": "172.28.106.96"
+  "ip": "172.28.106.96",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.96\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8934895 20.0465047)",
@@ -2287,12 +2416,14 @@
  {
   "WKT": "POINT (99.8936222 20.04681)",
   "name": "LIB FL5 2",
-  "ip": "172.28.106.66"
+  "ip": "172.28.106.66",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.893582 20.0465039)",
   "name": "LIB FL5 3",
-  "ip": "172.28.106.67"
+  "ip": "172.28.106.67",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8934009 20.0468402)",
@@ -2307,7 +2438,8 @@
  {
   "WKT": "POINT (99.8936148 20.0461018)",
   "name": "AS FL3 CITS",
-  "ip": "172.28.106.37"
+  "ip": "172.28.106.37",
+  "rtsp": "cisco"
  },
  {
   "WKT": "POINT (99.8940767 20.0483419)",
@@ -2324,17 +2456,20 @@
  {
   "WKT": "POINT (99.8940714 20.0483117)",
   "name": "Dorm f2 05",
-  "ip": "172.28.106.22"
+  "ip": "172.28.106.22",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.22\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8939587 20.0483041)",
   "name": "Dorm f2 06",
-  "ip": "172.28.106.23"
+  "ip": "172.28.106.23",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.23\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8940553 20.0482915)",
   "name": "Dorm F2 fl3 6701",
-  "ip": "172.28.106.24"
+  "ip": "172.28.106.24",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8938139 20.0497983)",
@@ -2363,17 +2498,20 @@
  {
   "WKT": "POINT (99.8938943 20.0497882)",
   "name": "F3 7",
-  "ip": "172.28.106.31"
+  "ip": "172.28.106.31",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.31\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8938568 20.0498336)",
   "name": "F3 6",
-  "ip": "172.28.106.30"
+  "ip": "172.28.106.30",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.106.30\/axis-media\/media.amp"
  },
  {
   "WKT": "POINT (99.8937924 20.049763)",
   "name": "F3 Fl3 6701",
-  "ip": "172.28.106.28"
+  "ip": "172.28.106.28",
+  "rtsp": "off"
  },
  {
   "WKT": "POINT (99.8975451 20.0562864)",
@@ -2408,7 +2546,8 @@
  {
   "WKT": "POINT (99.8975497 20.0563868)",
   "name": "L7 FL2 R",
-  "ip": "172.28.108.89"
+  "ip": "172.28.108.89",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.89:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.8976462 20.0562936)",
@@ -2419,7 +2558,8 @@
  {
   "WKT": "POINT (99.8975926 20.0564145)",
   "name": "L7 FL3 R",
-  "ip": "172.28.108.90"
+  "ip": "172.28.108.90",
+  "rtsp": "rtsp:\/\/mfustream:mediamfu2025@172.28.108.14:554\/cam\/realmonitor?channel=1&subtype=0"
  },
  {
   "WKT": "POINT (99.8976891 20.0563011)",
