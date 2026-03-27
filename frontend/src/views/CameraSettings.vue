@@ -1061,10 +1061,11 @@ const handleSearch = () => {
 .modal-container {
   width: min(640px, 100%);
   max-height: 90vh;
-  overflow: auto;
+  overflow-y: auto;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.96);
+  box-sizing: border-box;
 }
 
 .modal-header {
@@ -1092,7 +1093,7 @@ const handleSearch = () => {
 
 .close-button svg { width: 16px; height: 16px; }
 
-.modal-body { padding: 16px; }
+.modal-body { padding: 16px; box-sizing: border-box; overflow: hidden; }
 .form-group { margin-bottom: 14px; }
 .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .form-group label { display: block; margin-bottom: 6px; color: #e2e8f0; font-size: 0.82rem; font-weight: 600; }
@@ -1108,6 +1109,7 @@ const handleSearch = () => {
   color: #e2e8f0;
   padding: 0 10px;
   font-size: 0.84rem;
+  box-sizing: border-box;
 }
 
 .form-group input::placeholder { color: #64748b; }
@@ -1178,5 +1180,17 @@ const handleSearch = () => {
   .table-actions { justify-content: flex-end; }
   .form-row { grid-template-columns: 1fr; }
   .modal-footer { flex-direction: column; }
+  .modal-overlay { padding: 10px; }
+  .modal-container { width: 100%; max-height: 85vh; border-radius: 12px; }
+  .modal-header { padding: 12px 14px; }
+  .modal-header h3 { font-size: 1.05rem; }
+  .modal-body { padding: 12px 14px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group label { font-size: 0.78rem; margin-bottom: 4px; }
+  .form-group input,
+  .form-group select { height: 38px; font-size: 0.82rem; padding: 0 8px; border-radius: 8px; }
+  .modal-footer { margin-top: 14px; padding-top: 12px; gap: 8px; }
+  .button-secondary,
+  .button-primary { height: 38px; font-size: 0.82rem; border-radius: 8px; }
 }
 </style>
