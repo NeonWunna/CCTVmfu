@@ -7,7 +7,6 @@ import api from '../services/api';
 import Toast from '../components/ui/Toast.vue';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
 import AppHeader from '../components/dashboard/AppHeader.vue';
-import StatsCards from '../components/dashboard/StatsCards.vue';
 import FiltersBar from '../components/dashboard/FiltersBar.vue';
 import MapView from '../components/dashboard/MapView.vue';
 import CameraInfoPanel from '../components/dashboard/CameraInfoPanel.vue';
@@ -39,7 +38,6 @@ const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 12
 const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 720);
 const sidebarExpanded = ref(viewportWidth.value >= 1200);
 const mobileFiltersOpen = ref(false);
-const mobileDrawerTab = ref('status');
 
 const toast = ref({
   show: false,
@@ -54,14 +52,6 @@ const confirmModal = ref({
   onConfirm: null,
   loading: false
 });
-
-const filterOptions = [
-  { value: 'all', label: 'All Cameras' },
-  { value: 'online', label: 'Online' },
-  { value: 'offline', label: 'Offline' },
-  { value: 'no_signal', label: 'No Signal' },
-  { value: 'blurry', label: 'Blurry' }
-];
 
 const isCompactLandscape = computed(() =>
   viewportWidth.value <= 1024 && viewportHeight.value <= 560
@@ -156,12 +146,6 @@ const fetchCameras = async () => {
   }
 };
 
-const totalCount = computed(() => cctvs.value.length);
-const onlineCount = computed(() => cctvs.value.filter((camera) => camera.status === 'online').length);
-const offlineCount = computed(() => cctvs.value.filter((camera) => camera.status === 'offline').length);
-const noSignalCount = computed(() => cctvs.value.filter((camera) => camera.status === 'no_signal').length);
-const blurryCount = computed(() => cctvs.value.filter((camera) => camera.status === 'blurry').length);
-
 const checkBlurryCameras = async () => {
   if (isCheckingBlurry.value) return;
 
@@ -225,7 +209,7 @@ const selectFilter = (filterValue) => {
   selectedFilter.value = filterValue;
 };
 
-const selectFilterFromStats = (filterValue) => {
+const selectFilterFromControls = (filterValue) => {
   selectFilter(filterValue);
   if (isMobile.value) {
     mobileFiltersOpen.value = false;
@@ -310,7 +294,6 @@ const toggleSidebar = () => {
 
 const openMobileFilters = () => {
   if (isMobile.value) {
-    mobileDrawerTab.value = 'status';
     mobileFiltersOpen.value = true;
   }
 };
@@ -395,21 +378,6 @@ watch(selectedCamera, (camera) => {
       @open-mobile-filters="openMobileFilters"
     />
 
-    <section v-if="!isMobile" class="stats-strip">
-      <StatsCards
-        :total="totalCount"
-        :online="onlineCount"
-        :offline="offlineCount"
-        :no-signal="noSignalCount"
-        :blurry="blurryCount"
-        :selected-filter="selectedFilter"
-        :loading="loadingCameras"
-        :hide-check="isUser"
-        @select-filter="selectFilterFromStats"
-        @check-blurry="checkBlurryCameras"
-      />
-    </section>
-
     <section
       class="workspace"
       :class="{
@@ -444,14 +412,17 @@ watch(selectedCamera, (camera) => {
           v-if="sidebarExpanded"
           :search-query="searchQuery"
           :selected-filter="selectedFilter"
-          :filter-options="filterOptions"
           :cameras="filteredCameras"
+          :all-cameras="cctvs"
           :loading="loadingCameras"
           :active-camera-id="activeCameraId"
+          :hide-check="isUser"
+          :checking-blurry="isCheckingBlurry"
           @update:search-query="searchQuery = $event"
-          @update:selected-filter="selectFilter"
+          @update:selected-filter="selectFilterFromControls"
           @clear-filters="clearFilters"
           @focus-camera="focusCamera"
+          @check-blurry="checkBlurryCameras"
         />
 
         <div v-else class="collapsed-cta">
@@ -520,7 +491,7 @@ watch(selectedCamera, (camera) => {
         <aside class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Dashboard menu">
           <header class="mobile-drawer__header">
             <div>
-              <h2>Dashboard Menu</h2>
+              <h2>Camera Controls</h2>
               <p>{{ filteredCameras.length }} cameras visible</p>
             </div>
             <button type="button" class="icon-btn" aria-label="Close filters panel" @click="mobileFiltersOpen = false">
@@ -530,66 +501,22 @@ watch(selectedCamera, (camera) => {
             </button>
           </header>
 
-          <div class="mobile-drawer__tabs" role="tablist" aria-label="Dashboard menu tabs">
-            <button
-              type="button"
-              class="mobile-tab"
-              :class="{ 'mobile-tab--active': mobileDrawerTab === 'status' }"
-              role="tab"
-              :aria-selected="mobileDrawerTab === 'status'"
-              @click="mobileDrawerTab = 'status'"
-            >
-              Camera Status
-            </button>
-            <button
-              type="button"
-              class="mobile-tab"
-              :class="{ 'mobile-tab--active': mobileDrawerTab === 'filters' }"
-              role="tab"
-              :aria-selected="mobileDrawerTab === 'filters'"
-              @click="mobileDrawerTab = 'filters'"
-            >
-              Filters
-            </button>
-          </div>
-
-          <section
-            v-show="mobileDrawerTab === 'status'"
-            class="mobile-drawer__section mobile-status-strip"
-            aria-label="Camera status"
-          >
-            <h3>Camera Status</h3>
-            <StatsCards
-              :total="totalCount"
-              :online="onlineCount"
-              :offline="offlineCount"
-              :no-signal="noSignalCount"
-              :blurry="blurryCount"
-              :selected-filter="selectedFilter"
-              :loading="loadingCameras"
-              :hide-check="isUser"
-              @select-filter="selectFilterFromStats"
-              @check-blurry="checkBlurryCameras"
-            />
-          </section>
-
-          <section
-            v-show="mobileDrawerTab === 'filters'"
-            class="mobile-drawer__section"
-            aria-label="Filters and search"
-          >
-            <h3>Filters & Search</h3>
+          <section class="mobile-drawer__section" aria-label="Camera controls">
+            <h3>Search & Status</h3>
             <FiltersBar
               :search-query="searchQuery"
               :selected-filter="selectedFilter"
-              :filter-options="filterOptions"
               :cameras="filteredCameras"
+              :all-cameras="cctvs"
               :loading="loadingCameras"
               :active-camera-id="activeCameraId"
+              :hide-check="isUser"
+              :checking-blurry="isCheckingBlurry"
               @update:search-query="searchQuery = $event"
-              @update:selected-filter="selectFilter"
+              @update:selected-filter="selectFilterFromControls"
               @clear-filters="clearFilters"
               @focus-camera="focusCamera"
+              @check-blurry="checkBlurryCameras"
             />
           </section>
         </aside>
@@ -617,10 +544,6 @@ watch(selectedCamera, (camera) => {
   font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
 }
 
-.stats-strip {
-  padding: 12px var(--space-3);
-}
-
 .workspace {
   flex: 1;
   min-height: 0;
@@ -629,7 +552,7 @@ watch(selectedCamera, (camera) => {
   grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(300px, 360px) 1fr;
   gap: var(--space-2);
-  padding: 0 var(--space-3) var(--space-3);
+  padding: 12px var(--space-3) var(--space-3);
   overflow: hidden;
 }
 
@@ -639,7 +562,7 @@ watch(selectedCamera, (camera) => {
 
 .workspace--mobile {
   display: block;
-  padding: 0 12px 12px;
+  padding: 8px 12px 12px;
 }
 
 .workspace--mobile .map-shell {
@@ -863,44 +786,6 @@ watch(selectedCamera, (camera) => {
   font-size: 0.9rem;
 }
 
-.mobile-drawer__tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.mobile-tab {
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(15, 23, 42, 0.28);
-  color: #cbd5e1;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mobile-tab--active {
-  background: rgba(14, 165, 233, 0.24);
-  border-color: rgba(56, 189, 248, 0.56);
-  color: #e0f2fe;
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.26);
-}
-
-.mobile-status-strip :deep(.stats-grid) {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.mobile-status-strip :deep(.stats-card) {
-  min-height: 72px;
-  padding: 10px;
-}
-
-.mobile-status-strip :deep(.stats-value) {
-  font-size: 1.14rem;
-}
-
 .drawer-fade-enter-active,
 .drawer-fade-leave-active {
   transition: opacity 0.2s ease;
@@ -914,15 +799,11 @@ watch(selectedCamera, (camera) => {
 @media (max-width: 1199px) {
   .workspace {
     grid-template-columns: minmax(260px, 320px) 1fr;
-    padding: 0 var(--space-2) var(--space-2);
+    padding: 12px var(--space-2) var(--space-2);
   }
 
   .workspace--collapsed {
     grid-template-columns: 78px 1fr;
-  }
-
-  .stats-strip {
-    padding: 12px var(--space-2);
   }
 }
 

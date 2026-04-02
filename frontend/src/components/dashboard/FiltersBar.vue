@@ -10,11 +10,11 @@ const props = defineProps({
     type: String,
     default: 'all'
   },
-  filterOptions: {
+  cameras: {
     type: Array,
     default: () => []
   },
-  cameras: {
+  allCameras: {
     type: Array,
     default: () => []
   },
@@ -25,6 +25,14 @@ const props = defineProps({
   activeCameraId: {
     type: [String, Number],
     default: null
+  },
+  hideCheck: {
+    type: Boolean,
+    default: false
+  },
+  checkingBlurry: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -32,12 +40,65 @@ const emit = defineEmits([
   'update:searchQuery',
   'update:selectedFilter',
   'clear-filters',
-  'focus-camera'
+  'focus-camera',
+  'check-blurry'
 ]);
 
 const hasFiltersApplied = computed(() =>
   props.searchQuery.trim() !== '' || props.selectedFilter !== 'all'
 );
+
+const statusCounts = computed(() => {
+  const counts = {
+    all: props.allCameras.length,
+    online: 0,
+    offline: 0,
+    no_signal: 0,
+    blurry: 0
+  };
+
+  for (const camera of props.allCameras) {
+    if (camera.status === 'online') counts.online += 1;
+    if (camera.status === 'offline') counts.offline += 1;
+    if (camera.status === 'no_signal') counts.no_signal += 1;
+    if (camera.status === 'blurry') counts.blurry += 1;
+  }
+
+  return counts;
+});
+
+const statusChips = computed(() => [
+  {
+    value: 'all',
+    label: 'All',
+    count: statusCounts.value.all,
+    icon: 'all'
+  },
+  {
+    value: 'online',
+    label: 'Online',
+    count: statusCounts.value.online,
+    icon: 'online'
+  },
+  {
+    value: 'offline',
+    label: 'Offline',
+    count: statusCounts.value.offline,
+    icon: 'offline'
+  },
+  {
+    value: 'no_signal',
+    label: 'No Signal',
+    count: statusCounts.value.no_signal,
+    icon: 'no_signal'
+  },
+  {
+    value: 'blurry',
+    label: 'Blurry',
+    count: statusCounts.value.blurry,
+    icon: 'blurry'
+  }
+]);
 
 const statusText = (status) => {
   if (status === 'offline') return 'Offline';
@@ -50,57 +111,87 @@ const updateSearch = (event) => {
   emit('update:searchQuery', event.target.value);
 };
 
-const updateFilter = (event) => {
-  emit('update:selectedFilter', event.target.value);
+const selectFilter = (filterValue) => {
+  emit('update:selectedFilter', filterValue);
+};
+
+const triggerBlurryCheck = () => {
+  emit('check-blurry');
+};
+
+const handleBlurryCheckKeydown = (event) => {
+  if (props.checkingBlurry || statusCounts.value.blurry === 0) return;
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    triggerBlurryCheck();
+  }
 };
 </script>
 
 <template>
   <section class="filters-bar" aria-label="Camera search and filters">
-    <div class="controls-group">
-      <div class="control">
-        <label for="camera-search">Search</label>
-        <div class="input-shell">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
-          </svg>
-          <input
-            id="camera-search"
-            :value="searchQuery"
-            type="search"
-            autocomplete="off"
-            placeholder="Search cameras by name or IP"
-            @input="updateSearch"
-          >
-        </div>
-      </div>
-
-      <div class="control">
-        <label for="camera-filter">Status</label>
-        <select id="camera-filter" :value="selectedFilter" @change="updateFilter">
-          <option
-            v-for="option in filterOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
+    <div class="control">
+      <label for="camera-search">Search</label>
+      <div class="input-shell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+        </svg>
+        <input
+          id="camera-search"
+          :value="searchQuery"
+          type="search"
+          autocomplete="off"
+          placeholder="Search cameras by name or IP"
+          @input="updateSearch"
+        >
       </div>
     </div>
 
-    <div class="legend" aria-label="Status legend">
-      <span class="legend-item" title="Camera is reachable and streaming">
-        <span class="dot dot--online"></span>Online
-      </span>
-      <span class="legend-item" title="Device is unreachable">
-        <span class="dot dot--offline"></span>Offline
-      </span>
-      <span class="legend-item" title="Stream has no video signal">
-        <span class="dot dot--no-signal"></span>No Signal
-      </span>
-      <span class="legend-item" title="Image quality is blurred">
-        <span class="dot dot--blurry"></span>Blurry
+    <div class="status-controls" aria-label="Status filters">
+      <button
+        v-for="chip in statusChips"
+        :key="chip.value"
+        type="button"
+        class="status-chip"
+        :class="[
+          `status-chip--${chip.value}`,
+          { 'status-chip--active': selectedFilter === chip.value }
+        ]"
+        @click="selectFilter(chip.value)"
+      >
+        <span class="status-chip__icon" aria-hidden="true">
+          <svg v-if="chip.icon === 'all'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <svg v-else-if="chip.icon === 'online'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg v-else-if="chip.icon === 'offline'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg v-else-if="chip.icon === 'no_signal'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636M12 3v3m0 12v3m9-9h-3M6 12H3" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </span>
+        <span class="status-chip__label">{{ chip.label }}</span>
+        <span class="status-chip__count">{{ chip.count }}</span>
+      </button>
+
+      <span
+        v-if="!hideCheck"
+        class="check-pill"
+        role="button"
+        tabindex="0"
+        :aria-disabled="checkingBlurry || statusCounts.blurry === 0"
+        :class="{ 'check-pill--disabled': checkingBlurry || statusCounts.blurry === 0 }"
+        @click="!checkingBlurry && statusCounts.blurry > 0 && triggerBlurryCheck()"
+        @keydown="handleBlurryCheckKeydown"
+      >
+        {{ checkingBlurry ? 'Checking...' : 'Check blurry' }}
       </span>
     </div>
 
@@ -116,7 +207,10 @@ const updateFilter = (event) => {
     <div class="results">
       <div class="results-header">
         <h3>Matching Cameras</h3>
-        <span>{{ cameras.length }}</span>
+        <span class="results-count">
+          <strong>{{ cameras.length }}</strong>
+          <small>Total</small>
+        </span>
       </div>
 
       <div v-if="loading" class="results-loading" aria-hidden="true">
@@ -153,15 +247,10 @@ const updateFilter = (event) => {
 .filters-bar {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-height: 0;
   height: 100%;
   overflow: hidden;
-}
-
-.controls-group {
-  display: grid;
-  gap: 10px;
 }
 
 .control {
@@ -183,7 +272,7 @@ const updateFilter = (event) => {
   padding: 10px 12px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.72);
 }
 
 .input-shell svg {
@@ -206,77 +295,131 @@ const updateFilter = (event) => {
   color: #64748b;
 }
 
-.control select {
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.65);
-  color: #e2e8f0;
-  padding: 10px 12px;
-  font-size: 0.9rem;
-}
-
 .input-shell:focus-within,
-.control select:focus-visible {
+.status-chip:focus-visible,
+.clear-btn:focus-visible,
+.result-row:focus-visible {
   border-color: rgba(56, 189, 248, 0.7);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  outline: none;
 }
 
-.legend {
+.status-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 8px;
+  align-items: center;
 }
 
-.legend-item {
+.status-chip {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.62);
+  color: #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #cbd5e1;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
-.dot {
-  width: 9px;
-  height: 9px;
+.status-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.46);
+}
+
+.status-chip--active {
+  border-color: rgba(56, 189, 248, 0.64);
+  background: rgba(14, 165, 233, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
+}
+
+.status-chip__icon {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+}
+
+.status-chip__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.status-chip__label {
+  font-weight: 600;
+}
+
+.status-chip__count {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.status-chip--online .status-chip__icon {
+  color: #4ade80;
+}
+
+.status-chip--offline .status-chip__icon {
+  color: #f87171;
+}
+
+.status-chip--no_signal .status-chip__icon {
+  color: #60a5fa;
+}
+
+.status-chip--blurry .status-chip__icon {
+  color: #fb923c;
+}
+
+.status-chip--all .status-chip__icon {
+  color: #7dd3fc;
+}
+
+.check-pill {
+  margin-left: auto;
+  border: 1px solid rgba(249, 115, 22, 0.66);
+  color: #fdba74;
+  background: rgba(124, 45, 18, 0.38);
   border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-.dot--online {
-  background: #22c55e;
+.check-pill:hover {
+  transform: translateY(-1px);
 }
 
-.dot--offline {
-  background: #ef4444;
+.check-pill:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 2px;
 }
 
-.dot--no-signal {
-  background: #3b82f6;
-}
-
-.dot--blurry {
-  background: #f97316;
+.check-pill--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .clear-btn {
-  justify-self: start;
+  width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: rgba(30, 41, 59, 0.7);
   color: #cbd5e1;
   border-radius: 10px;
   padding: 8px 12px;
   font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .clear-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.clear-btn:focus-visible,
-.result-row:focus-visible {
-  outline: 2px solid #38bdf8;
-  outline-offset: 2px;
 }
 
 .results {
@@ -307,6 +450,24 @@ const updateFilter = (event) => {
 .results-header span {
   color: #7dd3fc;
   font-weight: 700;
+}
+
+.results-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.results-count strong {
+  color: #7dd3fc;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.results-count small {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .results-loading {
@@ -415,6 +576,12 @@ const updateFilter = (event) => {
   color: #fdba74;
   background: rgba(249, 115, 22, 0.16);
   border-color: rgba(249, 115, 22, 0.35);
+}
+
+@media (max-width: 560px) {
+  .check-pill {
+    margin-left: 0;
+  }
 }
 
 @keyframes loading-shimmer {
