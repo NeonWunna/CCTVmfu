@@ -110,6 +110,14 @@ onBeforeUnmount(() => {
         <span>Menu</span>
       </button>
 
+      <button v-if="isSuperAdmin" type="button" class="header-action-btn admin-btn" @click="goToAdminPanel">
+        🛡 Admin Panel
+      </button>
+
+      <button v-if="isSuperAdmin" type="button" class="header-action-btn settings-btn" @click="goToCameraSettings">
+        ⚙ Camera Settings
+      </button>
+
       <div ref="profileMenuRef" class="profile-menu">
         <button
           class="profile-trigger"
@@ -130,12 +138,6 @@ onBeforeUnmount(() => {
 
         <transition name="menu-fade">
           <div v-if="profileMenuOpen" class="profile-dropdown" role="menu">
-            <button v-if="isSuperAdmin" type="button" class="dropdown-item admin" role="menuitem" @click="goToAdminPanel">
-              🛡 Admin Panel
-            </button>
-            <button v-if="isSuperAdmin" type="button" class="dropdown-item" role="menuitem" @click="goToCameraSettings">
-              Camera Settings
-            </button>
             <button type="button" class="dropdown-item logout" role="menuitem" @click="logout">
               Logout
             </button>
@@ -319,12 +321,51 @@ onBeforeUnmount(() => {
   color: #fca5a5;
 }
 
-.dropdown-item.admin {
-  color: #c4b5fd;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+.header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.72);
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
-.dropdown-item.admin:hover {
-  background: rgba(139, 92, 246, 0.15);
+
+.header-action-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #f1f5f9;
+}
+
+.header-action-btn:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.admin-btn {
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+}
+
+.admin-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.settings-btn {
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #7dd3fc;
+}
+
+.settings-btn:hover {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.5);
 }
 
 .menu-fade-enter-active,
@@ -359,6 +400,10 @@ onBeforeUnmount(() => {
 
   .brand-copy p,
   .profile-meta {
+    display: none;
+  }
+
+  .header-action-btn {
     display: none;
   }
 
