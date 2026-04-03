@@ -103,10 +103,8 @@ const startStreamRefreshLoop = () => {
 
   if (!props.streamUrl) return;
 
-  // Reconnect periodically to prevent MJPEG stream latency buildup.
-  streamRefreshTimer = setInterval(() => {
-    streamNonce.value = Date.now();
-  }, 20000);
+  // WebRTC handles reconnection automatically.
+  // No periodic refresh needed (unlike MJPEG).
 };
 
 watch(
@@ -222,7 +220,7 @@ onBeforeUnmount(() => {
 
       <iframe
         v-else
-        :src="`/stream/stream.html?src=${encodeURIComponent(camera?.rtsp_url || camera?.rtspUrl || '')}`"
+        :src="`/stream/webrtc.html?src=${encodeURIComponent(camera?.rtsp_url || camera?.rtspUrl || '')}`"
         class="stream-image"
         title="Live camera feed"
         frameborder="0"
