@@ -103,8 +103,12 @@ const startStreamRefreshLoop = () => {
 
   if (!props.streamUrl) return;
 
-  // WebRTC handles reconnection automatically.
-  // No periodic refresh needed (unlike MJPEG).
+  // Reconnect periodically to prevent MSE stream latency buildup.
+  // With 700 cameras on the network, go2rtc MSE buffers can grow —
+  // reconnecting every 15s resets the buffer and keeps latency tight.
+  streamRefreshTimer = setInterval(() => {
+    streamNonce.value = Date.now();
+  }, 15000);
 };
 
 watch(

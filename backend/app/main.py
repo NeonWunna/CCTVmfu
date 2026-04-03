@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     
     # Startup: Start background blur worker (4 hours interval)
     # Threshold: variance < 50 => considered blurry
-    blur_worker = BlurWorker(check_interval=14400, threshold=50.0)
+    blur_worker = BlurWorker(check_interval=21600, threshold=50.0)
     blur_worker_task = asyncio.create_task(blur_worker.start_loop())
     app.state.blur_worker = blur_worker
 
