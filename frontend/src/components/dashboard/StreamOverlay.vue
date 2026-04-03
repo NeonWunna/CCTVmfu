@@ -193,22 +193,24 @@ onBeforeUnmount(() => {
     aria-label="Live camera stream viewer"
   >
     <header class="stream-header">
-      <button type="button" class="back-btn" @click="emit('close')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Map
-      </button>
-
       <div class="camera-summary">
         <p>Live Camera View</p>
         <h3>{{ camera?.name || 'Selected Camera' }}</h3>
       </div>
 
-      <span class="status-badge" :class="`status-badge--${statusClass}`">
-        <span class="status-dot"></span>
-        {{ statusLabel }}
-      </span>
+      <div class="header-actions">
+        <button type="button" class="back-btn" @click="emit('close')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Map
+        </button>
+
+        <span class="status-badge" :class="`status-badge--${statusClass}`">
+          <span class="status-dot"></span>
+          {{ statusLabel }}
+        </span>
+      </div>
     </header>
 
     <div ref="streamFrame" class="stream-frame">
@@ -271,14 +273,21 @@ onBeforeUnmount(() => {
 }
 
 .stream-header {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.82);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -485,24 +494,16 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1024px) {
   .stream-header {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      'back status'
-      'summary summary';
-  }
-
-  .back-btn {
-    grid-area: back;
-    justify-self: start;
+    flex-wrap: wrap;
   }
 
   .camera-summary {
-    grid-area: summary;
+    flex: 1;
+    min-width: 0;
   }
 
-  .status-badge {
-    grid-area: status;
-    justify-self: end;
+  .header-actions {
+    margin-left: auto;
   }
 }
 
