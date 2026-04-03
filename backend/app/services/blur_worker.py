@@ -13,8 +13,8 @@ from app.services.camera import THAILAND_TZ
 
 logger = logging.getLogger(__name__)
 
-# go2rtc API base URL (go2rtc runs in host network mode)
-GO2RTC_API_URL = "http://host.docker.internal:1984"
+# go2rtc API base URL (container name on same docker network)
+GO2RTC_API_URL = "http://cctv_go2rtc:1984"
 
 # ── Tuning constants ──────────────────────────────────────────────────
 # Concurrent snapshot fetches. This is I/O-bound (waiting for go2rtc),

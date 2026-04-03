@@ -29,11 +29,9 @@ webrtc:
     #   username: YOUR_TURN_USERNAME
     #   credential: YOUR_TURN_PASSWORD
 
-  # WebRTC candidate settings
-  # Uncomment if you have a known static public IP:
-  # candidates:
-  #   - YOUR_PUBLIC_IP:8555    # static public IP
-  #   - stun:8555              # dynamic public IP (use STUN to discover)
+  # WebRTC candidate — server's real LAN IP for direct UDP connections
+  candidates:
+    - 192.168.11.67:8555
 
 log:
   level: "info"
