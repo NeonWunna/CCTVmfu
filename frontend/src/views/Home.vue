@@ -11,6 +11,7 @@ import FiltersBar from '../components/dashboard/FiltersBar.vue';
 import MapView from '../components/dashboard/MapView.vue';
 import CameraInfoPanel from '../components/dashboard/CameraInfoPanel.vue';
 import StreamOverlay from '../components/dashboard/StreamOverlay.vue';
+import UserManualModal from '../components/ui/UserManualModal.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -33,6 +34,7 @@ const isStreamOpen = ref(false);
 const streamUrl = ref('');
 const loadingCameras = ref(true);
 const isCheckingBlurry = ref(false);
+const isManualOpen = ref(false);
 
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280);
 const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 720);
@@ -376,6 +378,12 @@ watch(selectedCamera, (camera) => {
       @camera-settings="goToCameraSettings"
       @logout="logout"
       @open-mobile-filters="openMobileFilters"
+      @open-manual="isManualOpen = true"
+    />
+
+    <UserManualModal
+      :show="isManualOpen"
+      @close="isManualOpen = false"
     />
 
     <section

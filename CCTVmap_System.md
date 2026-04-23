@@ -500,6 +500,14 @@ AI Client → WebSocket Connect → /mcp/ws
 - Docker + Docker Compose
 - Google Cloud Console Project (สำหรับ OAuth)
 
+## SERVER SMART CCTV
+Server Smart CCTV
+OS : ubuntu240.4
+IP : 192.168.11.67
+user : scctv
+password : d]hv';'0ixbF@@fvy0ibPt008
+โดยที่ user scctv สามารถ sudo su - เป็น root ได้
+
 ### ขั้นตอน
 
 ```bash
@@ -518,15 +526,6 @@ docker-compose up -d
 docker-compose ps
 docker-compose logs -f backend
 ```
-
-### เข้าใช้งาน
-
-| URL | หน้าที่ |
-|---|---|
-| `http://localhost/` | หน้าหลัก (Frontend) |
-| `http://localhost/docs` | FastAPI Swagger UI |
-| `http://localhost:1984/` | go2rtc Web UI |
-| `http://localhost:8020/api/health` | Backend Health Check |
 
 ### Development Mode (ไม่ใช้ Docker)
 

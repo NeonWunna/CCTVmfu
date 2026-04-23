@@ -26,8 +26,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['camera-settings', 'logout', 'open-mobile-filters']);
-
+const emit = defineEmits(['camera-settings', 'logout', 'open-mobile-filters', 'open-manual']);
 const router = useRouter();
 const authStore = useAuthStore();
 const isSuperAdmin = computed(() => authStore.isSuperAdmin);
@@ -108,6 +107,15 @@ onBeforeUnmount(() => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" />
         </svg>
         <span>Menu</span>
+      </button>
+
+      <button type="button" class="header-action-btn help-btn" @click="$emit('open-manual')" aria-label="Open User Manual">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Help
       </button>
 
       <button v-if="isSuperAdmin" type="button" class="header-action-btn admin-btn" @click="goToAdminPanel">
@@ -366,6 +374,22 @@ onBeforeUnmount(() => {
 .settings-btn:hover {
   background: rgba(14, 165, 233, 0.15);
   border-color: rgba(14, 165, 233, 0.5);
+}
+
+.help-btn {
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #93c5fd;
+  padding: 8px 12px;
+}
+
+.help-btn:hover {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.help-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .menu-fade-enter-active,
