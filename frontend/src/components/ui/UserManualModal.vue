@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useAuthStore } from '../../stores/auth';
 
 const props = defineProps({
   show: {
@@ -9,6 +10,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+const authStore = useAuthStore();
+const canSeeAdmin = computed(() => authStore.user?.role === 'admin' || authStore.user?.role === 'superadmin');
+const canSeeSuperAdmin = computed(() => authStore.user?.role === 'superadmin');
 
 const modalRef = ref(null);
 
@@ -69,7 +74,7 @@ onUnmounted(() => {
             </ul>
           </section>
 
-          <section class="manual-section">
+          <section v-if="canSeeAdmin" class="manual-section">
             <h3 class="section-title">ADMINISTRATOR (Admin)</h3>
             <ul class="feature-list">
               <li>
@@ -87,7 +92,7 @@ onUnmounted(() => {
             </ul>
           </section>
 
-          <section class="manual-section">
+          <section v-if="canSeeSuperAdmin" class="manual-section">
             <h3 class="section-title">SUPER ADMINISTRATOR (SuperAdmin)</h3>
             <ul class="feature-list">
               <li>
